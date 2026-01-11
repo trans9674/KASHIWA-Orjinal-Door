@@ -7,6 +7,14 @@ import { COLORS, HANDLE_COLORS, SHIPPING_FEE_MAP, PRICE_LIST, DOOR_SPEC_MASTER, 
 
 const SIMPLE_HANDLE_OPTIONS = ["セラミックホワイト", "マットブラック", "サテンニッケル"];
 
+// 安全なID生成関数（crypto.randomUUIDが未対応の環境へのフォールバック付き）
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
+
 const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -86,7 +94,7 @@ const App: React.FC = () => {
       storage: { ...prev.storage, color: initialSettings.defaultDoorColor },
       baseboards: prev.baseboards.map(b => ({ ...b, color: initialSettings.defaultBaseboardColor })),
       doors: [{
-        id: crypto.randomUUID(),
+        id: generateId(),
         roomName: 'LDK',
         type: defaultType,
         design: defaultDesign,
@@ -113,7 +121,7 @@ const App: React.FC = () => {
     setOrder(prev => ({
       ...prev,
       doors: [...prev.doors, {
-        id: crypto.randomUUID(),
+        id: generateId(),
         roomName: '',
         type: defaultType,
         design: defaultDesign,

@@ -146,7 +146,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
             position: relative;
             background-color: white;
             background-image: url('${bgImageUrl}');
-            background-size: contain;
+            background-size: 85%;
             background-repeat: no-repeat;
             background-position: center;
             margin: 0 auto;
@@ -173,29 +173,37 @@ export const DoorRow: React.FC<DoorRowProps> = ({
             border-radius: 4px;
           }
           .details-box {
-            padding: 2mm 3mm;
-            display: grid;
-            grid-template-columns: auto auto;
-            gap: 1mm 6mm;
+            margin-top: 4mm;
+            padding: 1.5mm 3mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 1mm;
             background: rgba(255, 255, 255, 0.9);
             border-radius: 4px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
           }
+          .details-row {
+            display: flex;
+            align-items: baseline;
+            gap: 3mm;
+          }
           .details-item {
             display: flex;
             align-items: baseline;
-            gap: 1.5mm;
+            gap: 1mm;
           }
           .details-label {
-            color: #444;
-            font-size: 7pt;
+            color: #555;
+            font-size: 6pt;
             white-space: nowrap;
           }
           .details-value {
             font-weight: bold;
-            font-size: 9pt;
+            font-size: 8pt;
             color: #000;
-            line-height: 1.1;
+            white-space: nowrap;
+            line-height: 1;
           }
           .no-print-bar {
             position: fixed;
@@ -235,20 +243,20 @@ export const DoorRow: React.FC<DoorRowProps> = ({
           <div class="overlay-header">
             <div class="wd-box">${wdText}</div>
             <div class="details-box">
-              <div class="details-item"><span class="details-label">物件名</span><span class="details-value">${siteName || ''}</span></div>
-              <div class="details-item"><span class="details-label">部屋名</span><span class="details-value">${door.roomName || ''}</span></div>
-              
-              <div class="details-item"><span class="details-label">建具種類</span><span class="details-value">${door.type}</span></div>
-              <div class="details-item"><span class="details-label">デザイン</span><span class="details-value">${door.design}</span></div>
-              
-              <div class="details-item"><span class="details-label">幅×高さ</span><span class="details-value">${widthVal}mm × ${heightVal}mm</span></div>
-              <div class="details-item"><span class="details-label">枠仕様</span><span class="details-value">${door.frameType}</span></div>
-              
-              <div class="details-item"><span class="details-label">吊元</span><span class="details-value">${door.hangingSide}</span></div>
-              <div class="details-item"><span class="details-label">扉カラー</span><span class="details-value">${door.doorColor}</span></div>
-              
-              <div class="details-item"><span class="details-label">枠カラー</span><span class="details-value">${door.frameColor}</span></div>
-              <div class="details-item"><span class="details-label">ハンドル</span><span class="details-value">${door.handleColor}</span></div>
+              <div class="details-row">
+                <div class="details-item"><span class="details-label">物件名</span><span class="details-value">${siteName || ''}</span></div>
+                <div class="details-item"><span class="details-label">部屋名</span><span class="details-value">${door.roomName || ''}</span></div>
+                <div class="details-item"><span class="details-label">種類</span><span class="details-value">${door.type}</span></div>
+                <div class="details-item"><span class="details-label">デザイン</span><span class="details-value">${door.design}</span></div>
+                <div class="details-item"><span class="details-label">サイズ</span><span class="details-value">${widthVal}×${heightVal}</span></div>
+              </div>
+              <div class="details-row">
+                <div class="details-item"><span class="details-label">枠仕様</span><span class="details-value">${door.frameType}</span></div>
+                <div class="details-item"><span class="details-label">吊元</span><span class="details-value">${door.hangingSide}</span></div>
+                <div class="details-item"><span class="details-label">扉色</span><span class="details-value">${door.doorColor}</span></div>
+                <div class="details-item"><span class="details-label">枠色</span><span class="details-value">${door.frameColor}</span></div>
+                <div class="details-item"><span class="details-label">ハンドル</span><span class="details-value">${door.handleColor}</span></div>
+              </div>
             </div>
           </div>
         </div>
