@@ -173,7 +173,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
             border-radius: 4px;
           }
           .details-box {
-            margin-top: 4mm;
+            margin-top: 9mm;
             padding: 1.5mm 3mm;
             display: flex;
             flex-direction: column;
@@ -195,12 +195,12 @@ export const DoorRow: React.FC<DoorRowProps> = ({
           }
           .details-label {
             color: #555;
-            font-size: 6pt;
+            font-size: 8pt;
             white-space: nowrap;
           }
           .details-value {
             font-weight: bold;
-            font-size: 8pt;
+            font-size: 11pt;
             color: #000;
             white-space: nowrap;
             line-height: 1;

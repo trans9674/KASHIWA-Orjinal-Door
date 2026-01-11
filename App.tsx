@@ -586,7 +586,7 @@ const App: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden animate-in zoom-in">
             <div className="bg-gray-900 p-6 text-white font-bold text-2xl flex items-center gap-3">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-              初期設定
+              初期設定【柏木工 オリジナルドア】
             </div>
             <div className="p-8 grid grid-cols-2 gap-8">
               <div className="space-y-4">
