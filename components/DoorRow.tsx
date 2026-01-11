@@ -153,7 +153,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
           }
           .overlay-header {
             position: absolute;
-            top: 10mm;
+            top: 12mm;
             left: 10mm;
             display: flex;
             align-items: flex-start;
@@ -173,7 +173,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
             border-radius: 4px;
           }
           .details-box {
-            margin-top: 9mm;
+            margin-top: 5mm;
             padding: 1.5mm 3mm;
             display: flex;
             flex-direction: column;
@@ -195,12 +195,12 @@ export const DoorRow: React.FC<DoorRowProps> = ({
           }
           .details-label {
             color: #555;
-            font-size: 8pt;
+            font-size: 7pt;
             white-space: nowrap;
           }
           .details-value {
             font-weight: bold;
-            font-size: 11pt;
+            font-size: 10pt;
             color: #000;
             white-space: nowrap;
             line-height: 1;
