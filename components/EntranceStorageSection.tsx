@@ -393,7 +393,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
               value={storage.baseRingPrice > 0 ? "あり" : "なし"}
               disabled={isNone}
               onChange={handleBaseRingToggle}
-              className={`w-full border rounded px-1 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 ${isNone ? 'bg-gray-50 text-gray-400 border-gray-100' : 'bg-white'}`}
+              className={`w-full border rounded px-1 py-1.5 text-sm focus:ring-1 focus:ring-blue-500 ${isNone ? 'bg-gray-50 text-gray-400 border-gray-100' : 'bg-white'}`}
             >
               <option value="なし">なし</option>
               <option value="あり">あり (¥{storage.baseRingPrice.toLocaleString() || '-'})</option>
@@ -416,7 +416,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
               value={storage.mirror}
               disabled={isMirrorDisabled}
               onChange={(e) => updateStorage({ mirror: e.target.value, mirrorPrice: e.target.value === 'あり' ? 10400 : 0 })}
-              className={`w-full border rounded px-1 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 ${isMirrorDisabled ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' : 'bg-white'}`}
+              className={`w-full border rounded px-1 py-1.5 text-sm focus:ring-1 focus:ring-blue-500 ${isMirrorDisabled ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' : 'bg-white'}`}
             >
               <option value="なし">なし</option>
               {!isMirrorDisabled && <option value="あり">あり (+¥10,400)</option>}
@@ -445,16 +445,16 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
                   const count = Math.max(0, parseInt(e.target.value) || 0);
                   updateStorage({ fillerCount: count, fillerPrice: 2000 });
                 }}
-                className={`w-[40%] border rounded px-1 py-1.5 text-xs text-center focus:ring-1 focus:ring-blue-500 ${isNone ? 'bg-gray-50 text-gray-400 border-gray-100' : 'bg-white'}`}
+                className={`w-[40%] border rounded px-1 py-1.5 text-sm text-center focus:ring-1 focus:ring-blue-500 ${isNone ? 'bg-gray-50 text-gray-400 border-gray-100' : 'bg-white'}`}
               />
-              <span className={`text-[10px] ${isNone ? 'text-gray-300' : 'text-gray-400'} whitespace-nowrap`}>個</span>
+              <span className={`text-sm ${isNone ? 'text-gray-300' : 'text-gray-400'} whitespace-nowrap`}>個</span>
             </div>
           </div>
         </div>
       </div>
 
       <div className="mt-4 flex justify-between items-center border-t border-gray-100 pt-3">
-        <div className="text-[10px] text-gray-400">
+        <div className="text-sm text-gray-900 font-bold">
           {!isNone && (
             <div className="flex gap-4">
               <span>本体: ¥{storage.basePrice.toLocaleString()}</span>

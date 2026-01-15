@@ -24,6 +24,12 @@ const App: React.FC = () => {
   const [isHandleModalOpen, setIsHandleModalOpen] = useState(false);
   const [isColorModalOpen, setIsColorModalOpen] = useState(false);
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
+  const [isOrderFlowModalOpen, setIsOrderFlowModalOpen] = useState(false);
+  const [isMailModalOpen, setIsMailModalOpen] = useState(false);
+  
+  // 各セクションごとの吹き出し表示状態
+  const [isStorageGuideOpen, setIsStorageGuideOpen] = useState(true);
+  const [isBaseboardGuideOpen, setIsBaseboardGuideOpen] = useState(true);
   
   const [floorPlan, setFloorPlan] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,17 +57,20 @@ const App: React.FC = () => {
       siteName: '',
       contactName: '',
       phone: '',
-      deliveryDate: '',
+      deliveryDate1: '',
+      deliveryDate2: '',
+      delivery1Selection: { baseboard: false, storage: false },
+      delivery2Selection: { baseboard: false, storage: false },
       ceilingPB: '12.5',
     },
     doors: [],
     storage: {
-      type: 'E02',
-      size: 'W800(E02)/2枚',
+      type: 'NONE',
+      size: 'なし',
       color: COLORS[0],
-      basePrice: 23700,
-      baseRing: 'W800用',
-      baseRingPrice: 2300,
+      basePrice: 0,
+      baseRing: 'なし',
+      baseRingPrice: 0,
       filler: 'なし',
       fillerPrice: 0,
       fillerCount: 0,
@@ -107,6 +116,10 @@ const App: React.FC = () => {
         handleColor: resolveHandleName(initialSettings.defaultHandleColor, defaultType),
         specialNotes: '',
         price: initialPrice,
+        isUndercut: false,
+        undercutHeight: 120,
+        isFrameExtended: false,
+        frameExtensionHeight: 130,
       }]
     }));
     setIsModalOpen(false);
@@ -134,6 +147,10 @@ const App: React.FC = () => {
         handleColor: resolveHandleName(initialSettings.defaultHandleColor, defaultType),
         specialNotes: '',
         price: initialPrice,
+        isUndercut: false,
+        undercutHeight: 120,
+        isFrameExtended: false,
+        frameExtensionHeight: 130,
       }]
     }));
   };
@@ -158,6 +175,26 @@ const App: React.FC = () => {
     });
   };
 
+  const handleDeliveryItemChange = (dateNum: 1 | 2, item: 'baseboard' | 'storage', checked: boolean) => {
+    setOrder(prev => {
+      const newInfo = { ...prev.customerInfo };
+      if (dateNum === 1) {
+        newInfo.delivery1Selection = { ...newInfo.delivery1Selection, [item]: checked };
+        if (checked) {
+          // 排他制御: 1を選択したら2は解除
+          newInfo.delivery2Selection = { ...newInfo.delivery2Selection, [item]: false };
+        }
+      } else {
+        newInfo.delivery2Selection = { ...newInfo.delivery2Selection, [item]: checked };
+        if (checked) {
+          // 排他制御: 2を選択したら1は解除
+          newInfo.delivery1Selection = { ...newInfo.delivery1Selection, [item]: false };
+        }
+      }
+      return { ...prev, customerInfo: newInfo };
+    });
+  };
+
   const totals = useMemo(() => {
     const doorSubtotal = order.doors.reduce((sum, d) => sum + d.price, 0);
     const storageSubtotal = order.storage.type === 'NONE' ? 0 : order.storage.basePrice + order.storage.baseRingPrice + (order.storage.fillerPrice * order.storage.fillerCount) + order.storage.mirrorPrice;
@@ -168,18 +205,42 @@ const App: React.FC = () => {
     return { doorSubtotal, storageSubtotal, baseboardSubtotal, subtotal, tax, total };
   }, [order]);
 
+  // 商品の有無判定
+  const hasStorage = useMemo(() => order.storage.type !== 'NONE', [order.storage.type]);
+  const hasBaseboard = useMemo(() => order.baseboards.reduce((sum, b) => sum + b.quantity, 0) > 0, [order.baseboards]);
+
+  // 納品日が未選択かどうかの判定
+  const isStorageDateSelected = order.customerInfo.delivery1Selection.storage || order.customerInfo.delivery2Selection.storage;
+  const isBaseboardDateSelected = order.customerInfo.delivery1Selection.baseboard || order.customerInfo.delivery2Selection.baseboard;
+
+  // 吹き出しを表示するかどうか
+  const showStorageBubble = hasStorage && !isStorageDateSelected && isStorageGuideOpen;
+  const showBaseboardBubble = hasBaseboard && !isBaseboardDateSelected && isBaseboardGuideOpen;
+
   const handleOpenEstimate = () => {
     const errors: string[] = [];
     const warnings: string[] = [];
-    const fields = [
+    const basicFields = [
       { key: 'company', label: '会社名' },
       { key: 'siteName', label: '現場名' },
       { key: 'contactName', label: 'ご担当者名' },
       { key: 'address', label: '納品先住所' },
-      { key: 'deliveryDate', label: '納品希望日' },
     ];
-    fields.forEach(f => { if (!order.customerInfo[f.key as keyof typeof order.customerInfo]) errors.push(`${f.label}が入力されていません。`); });
+    basicFields.forEach(f => { if (!order.customerInfo[f.key as keyof typeof order.customerInfo]) errors.push(`${f.label}が入力されていません。`); });
+
+    // 納品希望日のチェック
+    if (!order.customerInfo.deliveryDate1 && !order.customerInfo.deliveryDate2) {
+      errors.push('納品希望日が入力されていません。');
+    }
     
+    // 商品選択時の納品日選択チェック
+    if (hasBaseboard && !order.customerInfo.delivery1Selection.baseboard && !order.customerInfo.delivery2Selection.baseboard) {
+      errors.push('巾木の納品希望日（①または②）が選択されていません。');
+    }
+    if (hasStorage && !order.customerInfo.delivery1Selection.storage && !order.customerInfo.delivery2Selection.storage) {
+      errors.push('玄関収納の納品希望日（①または②）が選択されていません。');
+    }
+
     // 送料チェック
     if (order.shipping === 0) {
       errors.push('送料が計算できません。納品先住所を確認してください。');
@@ -203,23 +264,159 @@ const App: React.FC = () => {
       setIsValidationModalOpen(true);
       return;
     }
-    if (window.confirm('送信しますか？')) {
-      alert('送信完了しました。');
-      setIsEstimateModalOpen(false);
-      setFloorPlan(null);
-    }
+    setIsMailModalOpen(true);
+  };
+
+  const handleLaunchMail = () => {
+    const subject = "注文書送付依頼書";
+    const body = `柏木工株式会社
+担当：滝下 様
+
+お世話になっております。
+以下の案件について、注文書の作成をお願いいたします。
+
+■お客様情報
+会社名：${order.customerInfo.company}
+担当者名：${order.customerInfo.contactName}
+現場名：${order.customerInfo.siteName}
+
+※添付ファイルとして「見積書PDF」と「平面図」を必ず添付して送信してください。`;
+    
+    const mailtoUrl = `mailto:takishita@kashiwa-f.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoUrl;
+    setIsMailModalOpen(false);
   };
 
   const handlePrintPdf = () => { window.print(); };
 
   return (
     <div className="min-h-screen bg-slate-100 font-['Noto_Sans_JP']">
-      {/* Integrated Estimate & Order Flow Modal */}
+      
+      {/* Mail Launch Modal */}
+      {isMailModalOpen && (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsMailModalOpen(false)}>
+          <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 00-2 2z" /></svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-800 leading-snug">
+                見積りと平面図を送信するための<br/>メールアプリを起動させます。
+              </h3>
+              <p className="text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg w-full text-left">
+                ※メーラーが起動した後、必ず手動で「見積書PDF」と「平面図」を添付してください。
+              </p>
+              <div className="flex gap-3 w-full mt-2">
+                <button 
+                  onClick={() => setIsMailModalOpen(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-bold transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button 
+                  onClick={handleLaunchMail}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-blue-200"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Flow Modal */}
+      {isOrderFlowModalOpen && (
+        <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto no-print animate-in fade-in duration-300 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full p-10 relative animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+             <button onClick={() => setIsOrderFlowModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 rounded-full p-2 hover:bg-gray-100 transition-colors">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+             </button>
+             
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <div className="lg:col-span-1 space-y-6">
+                  <h3 className="text-3xl font-bold text-gray-800 border-b-2 border-gray-100 pb-4">ご注文フロー確認</h3>
+                  
+                  <div className="bg-white rounded-2xl border-2 border-blue-100 overflow-hidden shadow-sm">
+                    <h5 className="text-blue-800 font-bold p-5 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                      商品に関するお問い合わせ
+                    </h5>
+                    <div className="p-6 space-y-4">
+                      <div>
+                        <p className="text-xs text-gray-500 font-bold mb-1">担当者</p>
+                        <p className="text-xl font-black text-gray-800">柏木工株式会社　滝下</p>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                          <span className="text-gray-500 font-['Inter'] text-xs font-bold">TEL</span>
+                          <span className="font-mono font-bold text-lg text-gray-800">090-3307-6294</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                          <span className="text-gray-500 font-['Inter'] text-xs font-bold">Email</span>
+                          <span className="font-mono text-blue-600 font-bold break-all text-sm">takishita@kashiwa-f.com</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-orange-50 p-6 rounded-2xl border-2 border-orange-100 text-orange-900 text-sm leading-relaxed">
+                    <p className="font-bold mb-2 flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                      ご注意
+                    </p>
+                    <p>正式発注後の変更・キャンセルは原則お受けできません。仕様や寸法は十分にご確認ください。</p>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-2">
+                  <div className="bg-gray-900 p-8 rounded-3xl shadow-xl text-white h-full">
+                    <h5 className="text-indigo-400 font-bold mb-8 text-xl border-b border-gray-800 pb-4 flex items-center gap-3">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                      ご注文から納品までの流れ
+                    </h5>
+                    <div className="space-y-0 relative">
+                      <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-gray-700"></div>
+                      {[
+                        { step: 1, title: "見積書の入力", desc: "アプリ上で仕様を入力し、見積書PDFを作成・保存します。", color: "bg-indigo-500", ring: "ring-indigo-900" },
+                        { step: 2, title: "注文書送付依頼を送る", desc: "「注文書送付依頼」ボタンからメールを起動し、見積書PDFと平面図を添付して送信します。", color: "bg-indigo-500", ring: "ring-indigo-900" },
+                        { step: 3, title: "見積り確認・図面確認（柏木工側）", desc: "お送りいただいた内容を確認し、詳細図面を作成します。", color: "bg-gray-600", ring: "ring-gray-800" },
+                        { step: 4, title: "正式な注文書を送付いたします", desc: "柏木工より、図面と正式な注文書をお客様へ送付します。", color: "bg-gray-600", ring: "ring-gray-800" },
+                        { step: 5, title: "注文書返信により正式発注", desc: "内容をご確認の上、注文書にご捺印いただきご返信ください。この時点で発注確定となります。", color: "bg-orange-500", ring: "ring-orange-900" },
+                        { step: 6, title: "製作開始", desc: "製作期間（中2週間〜）のカウントを開始します。", color: "bg-blue-600", ring: "ring-blue-900" },
+                        { step: 7, title: "1次納品（枠・巾木）", desc: "現場の進捗に合わせ、枠類を先行納品します。", color: "bg-emerald-500", ring: "ring-emerald-900" },
+                        { step: 8, title: "2次納品（ドア本体）", desc: "ドア本体を順次納品し、完了となります。", color: "bg-emerald-500", ring: "ring-emerald-900" },
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex gap-6 relative z-10 pb-8 last:pb-0 group">
+                          <div className={`${item.color} ${item.ring} ring-4 w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-black shadow-lg text-sm z-10 transition-transform group-hover:scale-110`}>
+                            {item.step}
+                          </div>
+                          <div className="flex flex-col pt-1.5 pb-2">
+                            <p className="text-lg font-bold leading-none mb-2">{item.title}</p>
+                            <p className="text-sm text-gray-400 font-medium leading-relaxed">{item.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+             </div>
+             
+             <div className="flex justify-center mt-8">
+               <button onClick={() => setIsOrderFlowModalOpen(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-12 py-4 rounded-xl font-bold transition-colors text-lg shadow-sm">
+                 閉じる
+               </button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Estimate Modal */}
       {isEstimateModalOpen && (
         <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto no-print animate-in fade-in duration-300">
           <div className="min-h-screen py-6 px-4 flex flex-col items-center">
             {/* Action Bar (Top) */}
-            <div className="max-w-[1400px] w-full flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-xl border border-gray-200 gap-4 no-print">
+            <div className="max-w-[1000px] w-full flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-xl border border-gray-200 gap-4 no-print">
               <button onClick={() => setIsEstimateModalOpen(false)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold group">
                 <div className="bg-gray-100 p-2 rounded-full group-hover:bg-gray-200 transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -233,7 +430,7 @@ const App: React.FC = () => {
                 </button>
                 <button onClick={handleSendEstimate} className={`bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95 ${!floorPlan ? 'opacity-50 cursor-not-allowed' : ''}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 00-2 2z" /></svg>
-                  見積・平面図を送付
+                  注文書送付依頼（見積り・平面図を送付）
                 </button>
                 <button onClick={handlePrintPdf} className="bg-gray-800 hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
@@ -242,8 +439,8 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex flex-col xl:flex-row gap-8 items-start w-full max-w-[1400px]">
-              {/* Document Column (Center/Left) - A4 Sized Container */}
+            <div className="flex justify-center w-full max-w-[1000px]">
+              {/* Document Column (Center) - A4 Sized Container */}
               <div className="flex-grow w-full flex justify-center">
                 <div className="bg-white p-[15mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:shadow-none print:w-full print:max-w-none print:p-0 print:m-0 box-border">
                   <div className="flex justify-between items-start mb-12">
@@ -255,13 +452,30 @@ const App: React.FC = () => {
                           <p className="text-lg font-bold underline underline-offset-4 ml-4">{order.customerInfo.contactName} 様</p>
                         )}
                         <p className="text-sm mt-2">現場名：{order.customerInfo.siteName}</p>
-                        <p className="text-sm">納品希望日：{order.customerInfo.deliveryDate}</p>
+                        <div className="mt-2 text-sm leading-relaxed">
+                          <p className="flex items-center gap-2">
+                            <span className="font-bold">納品希望日①</span> 
+                            <span>{order.customerInfo.deliveryDate1 || '未指定'}</span>
+                            <span className="text-xs text-gray-600">（ドア枠
+                              {order.customerInfo.delivery1Selection.baseboard ? '・巾木' : ''}
+                              {order.customerInfo.delivery1Selection.storage ? '・玄関収納' : ''}
+                              ）</span>
+                          </p>
+                          <p className="flex items-center gap-2">
+                            <span className="font-bold">納品希望日②</span> 
+                            <span>{order.customerInfo.deliveryDate2 || '未指定'}</span>
+                            <span className="text-xs text-gray-600">（ドア本体
+                              {order.customerInfo.delivery2Selection.baseboard ? '・巾木' : ''}
+                              {order.customerInfo.delivery2Selection.storage ? '・玄関収納' : ''}
+                              ）</span>
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-gray-500 mb-2 font-['Inter']">発行日：{new Date().toLocaleDateString('ja-JP')}</p>
                       <p className="font-bold text-lg">柏木工株式会社</p>
-                      <p className="text-sm">担当：滝下まで 宛</p>
+                      <p className="text-sm">担当：滝下</p>
                       <p className="text-sm mt-2 font-['Inter']">TEL: 090-3307-6294</p>
                     </div>
                   </div>
@@ -295,7 +509,16 @@ const App: React.FC = () => {
                                      <span>種類: {door.type}</span>
                                      <span>デザイン: {door.design}</span>
                                      <span>サイズ: {door.width==='特寸'?`W${door.customWidth}`:door.width} × {door.height==='特寸'?`H${door.customHeight}`:door.height}</span>
-                                     <span>枠: {door.frameType}</span>
+                                     <span className="col-span-2">
+                                       枠: {door.frameType}
+                                       {(door.isUndercut || door.isFrameExtended) && (
+                                         <span className="text-red-600 font-bold ml-2">
+                                           ※ {door.isUndercut ? `アンダーカット${door.undercutHeight}mm` : ''}
+                                           {door.isUndercut && door.isFrameExtended ? '・' : ''}
+                                           {door.isFrameExtended ? `枠伸長${door.frameExtensionHeight}mm` : ''}
+                                         </span>
+                                       )}
+                                     </span>
                                      <span>吊元: {door.hangingSide}</span>
                                      <span>ハンドル: {door.handleColor}</span>
                                      <span className="col-span-2">カラー: {door.doorColor} (枠:{door.frameColor})</span>
@@ -409,50 +632,11 @@ const App: React.FC = () => {
                       重要：納期に関するご案内
                     </h5>
                     <p className="text-xs text-orange-700 leading-relaxed font-medium">
-                      正式発注（注文書のご返信）をいただいてから製作を開始いたします。製作には最低<span className="font-bold underline">「中2週間以上」</span>の期間を要します。<br/>
-                      1次納品（枠類・巾木）は最短2週間後、その後2次納品（ドア本体）を順次行います。
+                      こちらの見積り書を送っていただいた後に弊社で内容を確認させていただき、正式な注文書をお送りいたします。<br/>
+                      正式な注文書のご返信をいただいてから製作を開始いたします。<br/>
+                      製作には最低<span className="font-bold underline">「中2週間以上」</span>の期間を要します。<br/>
+                      1次納品（枠類）は最短2週間後、その後2次納品（ドア本体）を順次行います。
                     </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sidebar Info (Right) - Hidden on Print */}
-              <div className="w-full xl:w-[320px] shrink-0 space-y-6 no-print">
-                <div className="bg-white p-6 rounded-2xl shadow-xl border border-blue-100">
-                  <h5 className="text-blue-800 font-bold mb-4 flex items-center gap-2 border-b pb-2">
-                    商品に関するお問い合わせ
-                  </h5>
-                  <div className="space-y-3">
-                    <p className="text-lg font-black text-gray-800">柏木工株式会社　滝下まで</p>
-                    <div className="text-sm space-y-2">
-                      <p className="flex justify-between items-center bg-gray-50 p-2 rounded-lg font-medium"><span className="text-gray-500 font-['Inter'] text-xs">TEL</span><span className="font-mono font-bold">090-3307-6294</span></p>
-                      <p className="flex justify-between items-center bg-gray-50 p-2 rounded-lg font-medium"><span className="text-gray-500 font-['Inter'] text-xs">Email</span><span className="font-mono text-blue-600 break-all text-sm">takishita@kashiwa-f.com</span></p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-900 p-8 rounded-2xl shadow-xl text-white">
-                  <h5 className="text-indigo-400 font-bold mb-8 text-lg border-b border-gray-800 pb-2">ご注文の流れ</h5>
-                  <div className="space-y-8 relative">
-                    <div className="absolute left-3 top-3 bottom-3 w-0.5 bg-gray-700"></div>
-                    {[
-                      { step: 1, title: "見積依頼・平面図送付", desc: "入力内容と平面図を柏木工へ送信します。", color: "bg-indigo-500" },
-                      { step: 2, title: "内容確認・図面作成", desc: "柏木工にて内容を確認し、詳細図面と正式見積を送付します。", color: "bg-indigo-500" },
-                      { step: 3, title: "正式発注", desc: "内容確認後、注文書をご返信ください。", color: "bg-orange-500" },
-                      { step: 4, title: "製作開始", desc: "製作期間（中2週間〜）のカウントを開始します。", color: "bg-blue-500" },
-                      { step: 5, title: "1次納品（枠・巾木）", desc: "現場の進捗に合わせ、枠類を先行納品します。", color: "bg-blue-500" },
-                      { step: 6, title: "2次納品（ドア本体）", desc: "ドア本体を順次納品し、完了となります。", color: "bg-emerald-500" },
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex gap-4 relative z-10">
-                        <div className={`${item.color} w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-black shadow-lg`}>
-                          {item.step}
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm font-bold leading-tight">{item.title}</p>
-                          <p className="text-[10px] text-gray-400 font-medium leading-relaxed">{item.desc}</p>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -461,6 +645,8 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* ... (Validation Modal, Info Modals kept as is) ... */}
+      
       {/* Validation Modal */}
       {isValidationModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsValidationModalOpen(false)}>
@@ -506,8 +692,8 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Info Modals */}
+      
+      {/* ... Info Modals ... */}
       {isHandleModalOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHandleModalOpen(false)}>
           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-lg w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
@@ -583,63 +769,128 @@ const App: React.FC = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden animate-in zoom-in">
-            <div className="bg-gray-900 p-6 text-white font-bold text-2xl flex items-center gap-3">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full overflow-hidden animate-in zoom-in flex flex-col max-h-[90vh]">
+            <div className="bg-gray-900 px-6 py-4 text-white font-bold text-xl flex items-center gap-3 shrink-0">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
               初期設定【柏木工 オリジナルドア】
             </div>
-            <div className="p-8 grid grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 ml-1">会社名</label>
-                  <input type="text" className="w-full border rounded-lg p-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="株式会社 〇〇" value={initialSettings.company} onChange={e => setInitialSettings(p => ({...p, company: e.target.value}))} />
+            
+            <div className="p-6 overflow-y-auto custom-scrollbar">
+              <div className="flex flex-col lg:flex-row gap-6">
+                
+                {/* 左カラム：基本設定 */}
+                <div className="flex-1 lg:max-w-[40%] flex flex-col">
+                  <h3 className="font-bold text-gray-800 text-lg mb-4 border-b-2 border-blue-500 pb-1 inline-block">基本設定の入力</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                       <div className="grid grid-cols-1 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-500 ml-1">会社名</label>
+                          <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="株式会社 〇〇" value={initialSettings.company} onChange={e => setInitialSettings(p => ({...p, company: e.target.value}))} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-500 ml-1">現場名</label>
+                          <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="〇〇様邸" value={initialSettings.siteName} onChange={e => setInitialSettings(p => ({...p, siteName: e.target.value}))} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-bold text-gray-500 ml-1">担当者名</label>
+                          <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="山田 太郎" value={initialSettings.contactName} onChange={e => setInitialSettings(p => ({...p, contactName: e.target.value}))} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border-t border-gray-100 pt-3 space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 ml-1">標準高さ</label>
+                        <select className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white" value={initialSettings.defaultHeight} onChange={e => setInitialSettings(p => ({...p, defaultHeight: e.target.value}))}><option value="H2000">H2000</option><option value="H2200">H2200</option><option value="H2400">H2400</option></select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 ml-1">扉標準カラー</label>
+                        <select className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white" value={initialSettings.defaultDoorColor} onChange={e => setInitialSettings(p => ({...p, defaultDoorColor: e.target.value}))}>{COLORS.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-500 ml-1">標準ハンドル</label>
+                        <select className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white" value={initialSettings.defaultHandleColor} onChange={e => setInitialSettings(p => ({...p, defaultHandleColor: e.target.value}))}>{SIMPLE_HANDLE_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 ml-1">現場名</label>
-                  <input type="text" className="w-full border rounded-lg p-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="〇〇様邸" value={initialSettings.siteName} onChange={e => setInitialSettings(p => ({...p, siteName: e.target.value}))} />
+
+                {/* 右カラム：確認事項 */}
+                <div className="flex-1 lg:border-l lg:pl-6 lg:border-gray-200">
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm h-full">
+                    <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-3 text-base border-b border-orange-200 pb-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                      発注書確認事項
+                    </h3>
+                    <div className="space-y-3">
+                      <ul className="list-disc list-inside space-y-1 text-xs text-gray-800 font-medium ml-1">
+                        <li><span className="font-bold text-orange-700">納品希望日</span>：玄関収納、巾木の納品日が枠(①)か本体(②)か要確認。</li>
+                        <li><span className="font-bold text-orange-700">天井PB厚</span>：下地材サイズに影響するため確認してください。</li>
+                        <li><span className="font-bold text-orange-700">特寸入力</span>：リストの高さ/幅の「特寸」を選択して入力。</li>
+                      </ul>
+
+                      <div className="bg-white p-3 rounded-lg border border-orange-100">
+                        <p className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-2">
+                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          枠オプション設定について
+                        </p>
+                        <p className="text-[10px] text-gray-600 mb-3 leading-relaxed ml-1">
+                          ドア下開口（アンダーカット）や枠伸長は、リスト内「枠仕様」欄の設定ボタンから。
+                        </p>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="text-center group">
+                            <div className="overflow-hidden rounded border border-gray-200 shadow-sm mb-1 bg-gray-100 h-28 flex items-center justify-center">
+                              <img src="http://25663cc9bda9549d.main.jp/aistudio/door/kaikou.jpg" alt="ドア下開口" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                            </div>
+                            <p className="text-[10px] font-bold text-gray-600">ドア下開口</p>
+                          </div>
+                          <div className="text-center group">
+                            <div className="overflow-hidden rounded border border-gray-200 shadow-sm mb-1 bg-gray-100 h-28 flex items-center justify-center">
+                              <img src="http://25663cc9bda9549d.main.jp/aistudio/door/wakuencho.jpg" alt="枠伸長" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                            </div>
+                            <p className="text-[10px] font-bold text-gray-600">枠伸長</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 ml-1">担当者名</label>
-                  <input type="text" className="w-full border rounded-lg p-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="山田 太郎" value={initialSettings.contactName} onChange={e => setInitialSettings(p => ({...p, contactName: e.target.value}))} />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 ml-1">標準高さ</label>
-                  <select className="w-full border rounded-lg p-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white" value={initialSettings.defaultHeight} onChange={e => setInitialSettings(p => ({...p, defaultHeight: e.target.value}))}><option value="H2000">H2000</option><option value="H2200">H2200</option><option value="H2400">H2400</option></select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 ml-1">扉標準カラー</label>
-                  <select className="w-full border rounded-lg p-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white" value={initialSettings.defaultDoorColor} onChange={e => setInitialSettings(p => ({...p, defaultDoorColor: e.target.value}))}>{COLORS.map(c => <option key={c} value={c}>{c}</option>)}</select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-gray-500 ml-1">標準ハンドル</label>
-                  <select className="w-full border rounded-lg p-3 font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white" value={initialSettings.defaultHandleColor} onChange={e => setInitialSettings(p => ({...p, defaultHandleColor: e.target.value}))}>{SIMPLE_HANDLE_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}</select>
-                </div>
+
               </div>
             </div>
-            <div className="p-6 bg-gray-50 flex justify-end border-t"><button onClick={handleStart} className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95">開始する</button></div>
+            
+            <div className="p-4 bg-gray-50 flex justify-end border-t shrink-0">
+              <button onClick={handleStart} className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center gap-2">
+                <span>入力を開始する</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+      <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-8 border-b-2 border-gray-900 pb-4">
           <div>
             <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">柏木工 オリジナルドア 発注書</h1>
             <p className="text-lg text-gray-500 mt-1 font-['Inter']">Ordering System v1.0</p>
           </div>
-          <button 
-            onClick={handleOpenEstimate} 
-            className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-xl active:scale-95 border border-blue-400/30"
-          >
-            <div className="bg-white/20 p-1.5 rounded-lg">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-            </div>
-            <div className="text-left leading-tight">
-              <span className="text-lg font-bold">見積作成・注文フロー確認</span>
-            </div>
-          </button>
+          <div className="flex gap-4">
+            <button 
+              onClick={() => setIsOrderFlowModalOpen(true)}
+              className="bg-white text-blue-700 border-2 border-blue-600 hover:bg-blue-50 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+              注文フロー確認
+            </button>
+            <button 
+              onClick={handleOpenEstimate} 
+              className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              見積書作成
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6 mb-8 bg-gray-50 p-6 rounded-2xl border">
@@ -672,9 +923,57 @@ const App: React.FC = () => {
               )}
             </div>
           </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">納品希望日</label>
-            <input type="date" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none font-['Inter']" value={order.customerInfo.deliveryDate} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, deliveryDate: e.target.value}}))} />
+          <div className="space-y-1 col-span-1 relative">
+             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">納品希望日</label>
+             <div className="space-y-2">
+                {/* Date 1 */}
+                <div className="flex flex-col gap-1 p-2 border rounded-lg bg-white shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded whitespace-nowrap">① ドア枠</span>
+                    <input type="date" value={order.customerInfo.deliveryDate1} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, deliveryDate1: e.target.value}}))} className="w-full border rounded px-2 py-1 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none font-['Inter'] text-sm" />
+                  </div>
+                  {(hasBaseboard || hasStorage) && (
+                    <div className="flex items-center gap-4 ml-1 pl-2 border-l-2 border-blue-100">
+                      {hasBaseboard && (
+                        <label className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors">
+                          <input type="checkbox" checked={order.customerInfo.delivery1Selection.baseboard} onChange={e => handleDeliveryItemChange(1, 'baseboard', e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500" />
+                          <span className="font-bold text-gray-600">巾木</span>
+                        </label>
+                      )}
+                      {hasStorage && (
+                        <label className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors">
+                          <input type="checkbox" checked={order.customerInfo.delivery1Selection.storage} onChange={e => handleDeliveryItemChange(1, 'storage', e.target.checked)} className="rounded text-blue-600 focus:ring-blue-500" />
+                          <span className="font-bold text-gray-600">玄関収納</span>
+                        </label>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Date 2 */}
+                <div className="flex flex-col gap-1 p-2 border rounded-lg bg-white shadow-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-white bg-green-600 px-2 py-0.5 rounded whitespace-nowrap">② ドア本体</span>
+                    <input type="date" value={order.customerInfo.deliveryDate2} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, deliveryDate2: e.target.value}}))} className="w-full border rounded px-2 py-1 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none font-['Inter'] text-sm" />
+                  </div>
+                  {(hasBaseboard || hasStorage) && (
+                    <div className="flex items-center gap-4 ml-1 pl-2 border-l-2 border-green-100">
+                      {hasBaseboard && (
+                        <label className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors">
+                          <input type="checkbox" checked={order.customerInfo.delivery2Selection.baseboard} onChange={e => handleDeliveryItemChange(2, 'baseboard', e.target.checked)} className="rounded text-green-600 focus:ring-green-500" />
+                          <span className="font-bold text-gray-600">巾木</span>
+                        </label>
+                      )}
+                      {hasStorage && (
+                        <label className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors">
+                          <input type="checkbox" checked={order.customerInfo.delivery2Selection.storage} onChange={e => handleDeliveryItemChange(2, 'storage', e.target.checked)} className="rounded text-green-600 focus:ring-green-500" />
+                          <span className="font-bold text-gray-600">玄関収納</span>
+                        </label>
+                      )}
+                    </div>
+                  )}
+                </div>
+             </div>
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">天井PB厚 (mm)</label>
@@ -683,7 +982,7 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-
+        
         {/* Internal Doors Section Header */}
         <div className="flex justify-between items-center mb-4 border-l-4 border-blue-500 pl-3 mt-10">
           <h3 className="text-xl font-bold text-gray-800">内部建具</h3>
@@ -757,10 +1056,30 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <EntranceStorageSection storage={order.storage} updateStorage={u => setOrder(p => ({...p, storage: {...p.storage, ...u}}))} siteName={order.customerInfo.siteName} />
+        <div className="relative">
+          {showStorageBubble && (
+            <div className="absolute top-0 left-28 z-20 bg-red-600 text-white p-3 rounded-lg shadow-lg text-xs font-bold animate-bounce">
+              <div className="flex justify-between items-start gap-2">
+                <span className="leading-tight">どちらかの納品希望日の<br/>どちらかを選択してください</span>
+                <button onClick={() => setIsStorageGuideOpen(false)} className="text-white hover:text-red-200 ml-2 text-lg leading-none">×</button>
+              </div>
+              <div className="absolute -bottom-2 left-4 w-4 h-4 bg-red-600 rotate-45"></div>
+            </div>
+          )}
+          <EntranceStorageSection storage={order.storage} updateStorage={u => setOrder(p => ({...p, storage: {...p.storage, ...u}}))} siteName={order.customerInfo.siteName} />
+        </div>
 
         <div className="grid grid-cols-2 gap-8 items-start mt-10">
-          <div className="border p-6 rounded-2xl bg-white shadow-sm border-emerald-100 flex flex-col h-full">
+          <div className="border p-6 rounded-2xl bg-white shadow-sm border-emerald-100 flex flex-col h-full relative">
+            {showBaseboardBubble && (
+              <div className="absolute top-4 right-10 z-20 bg-red-600 text-white p-3 rounded-lg shadow-lg text-xs font-bold animate-bounce">
+                <div className="flex justify-between items-start gap-2">
+                  <span className="leading-tight">どちらかの納品希望日の<br/>どちらかを選択してください</span>
+                  <button onClick={() => setIsBaseboardGuideOpen(false)} className="text-white hover:text-red-200 ml-2 text-lg leading-none">×</button>
+                </div>
+                <div className="absolute -bottom-2 left-1/2 w-4 h-4 bg-red-600 rotate-45"></div>
+              </div>
+            )}
             <div className="flex-grow">
               <h3 className="text-xl font-bold border-l-4 border-emerald-600 pl-3 mb-6 text-gray-800">
                 巾木・造作材
@@ -790,21 +1109,39 @@ const App: React.FC = () => {
                         ) : null}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{b.color}</span>
+                        {i === 0 ? (
+                          <select
+                            value={b.color}
+                            onChange={(e) => {
+                              const newColor = e.target.value;
+                              setOrder(prev => ({
+                                ...prev,
+                                baseboards: prev.baseboards.map(board => ({ ...board, color: newColor }))
+                              }));
+                            }}
+                            className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer max-w-[180px]"
+                          >
+                            {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        ) : (
+                          <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200 cursor-not-allowed" title="スリム巾木の色と連動します">
+                            {b.color}
+                          </span>
+                        )}
                         {b.product.includes('3960') && b.quantity > 0 && (
-                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                          <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
                             換算: {(b.quantity * 3.96).toFixed(2)}m
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
-                      <span className="text-xs font-medium text-gray-500 whitespace-nowrap">単価 ¥{b.unitPrice.toLocaleString()}</span>
+                      <span className="text-sm font-medium text-gray-500 whitespace-nowrap">単価 ¥{b.unitPrice.toLocaleString()}</span>
                       <div className="flex items-center gap-1">
                         <input type="number" min="0" className="w-16 border rounded-lg text-center h-9 font-bold focus:ring-1 focus:ring-emerald-500 outline-none" value={b.quantity} onChange={e => { const nb = [...order.baseboards]; nb[i].quantity = Math.max(0, parseInt(e.target.value)||0); setOrder(p=>({...p, baseboards:nb})); }} />
                         <span className="text-xs font-bold text-gray-400">{b.unit}</span>
                       </div>
-                      <span className="text-sm font-bold text-blue-600 font-mono whitespace-nowrap min-w-[80px] text-right">小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
+                      <span className="text-base font-bold text-blue-600 font-mono whitespace-nowrap min-w-[80px] text-right">小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
                     </div>
                   </div>
                 ))}
@@ -820,21 +1157,21 @@ const App: React.FC = () => {
             
             <div className="w-full space-y-3 mb-8">
                 <div className="flex justify-between items-center border-b border-gray-700 pb-3">
-                    <span className="text-gray-400 font-bold text-sm">送料</span>
+                    <span className="text-gray-400 font-bold text-base">送料</span>
                     <span className="text-xl font-bold font-['Inter']">¥{order.shipping.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-gray-400 font-bold text-sm">小計 (税抜)</span>
+                    <span className="text-gray-400 font-bold text-base">小計 (税抜)</span>
                     <span className="text-xl font-bold font-['Inter']">¥{totals.subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-gray-400 font-bold text-sm">消費税 (10%)</span>
+                    <span className="text-gray-400 font-bold text-base">消費税 (10%)</span>
                     <span className="text-xl font-bold font-['Inter']">¥{totals.tax.toLocaleString()}</span>
                 </div>
             </div>
 
             <div className="flex justify-between items-end mt-4 pt-4 border-t border-gray-800">
-                <p className="text-gray-500 font-bold uppercase tracking-widest text-sm font-['Inter'] mb-2">合計金額（税込）</p>
+                <p className="text-gray-500 font-bold uppercase tracking-widest text-base font-['Inter'] mb-2">合計金額（税込）</p>
                 <p className="text-4xl xl:text-5xl font-black font-['Inter'] tracking-tighter leading-none">¥{totals.total.toLocaleString()}</p>
             </div>
           </div>

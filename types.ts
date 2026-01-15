@@ -52,6 +52,11 @@ export interface DoorItem {
   handleColor: string;
   specialNotes: string;
   price: number;
+  // Frame Options
+  isUndercut?: boolean;
+  undercutHeight?: number;
+  isFrameExtended?: boolean;
+  frameExtensionHeight?: number;
 }
 
 export interface EntranceStorage {
@@ -83,7 +88,16 @@ export interface OrderState {
     siteName: string;
     contactName: string;
     phone: string;
-    deliveryDate: string;
+    deliveryDate1: string;
+    deliveryDate2: string;
+    delivery1Selection: {
+      baseboard: boolean;
+      storage: boolean;
+    };
+    delivery2Selection: {
+      baseboard: boolean;
+      storage: boolean;
+    };
     ceilingPB: string;
   };
   doors: DoorItem[];
