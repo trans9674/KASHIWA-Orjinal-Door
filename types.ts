@@ -104,4 +104,5 @@ export interface OrderState {
   storage: EntranceStorage;
   baseboards: BaseboardItem[];
   shipping: number;
+  memo: string;
 }

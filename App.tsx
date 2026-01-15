@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [isHabakiModalOpen, setIsHabakiModalOpen] = useState(false);
   const [isCornerHabakiModalOpen, setIsCornerHabakiModalOpen] = useState(false);
   const [isHandleModalOpen, setIsHandleModalOpen] = useState(false);
+  const [isHardwareModalOpen, setIsHardwareModalOpen] = useState(false);
   const [isColorModalOpen, setIsColorModalOpen] = useState(false);
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
   const [isOrderFlowModalOpen, setIsOrderFlowModalOpen] = useState(false);
@@ -82,6 +83,7 @@ const App: React.FC = () => {
       { product: 'スリムコーナー巾木', color: COLORS[0], unitPrice: 500, quantity: 0, unit: '個' },
     ],
     shipping: 0,
+    memo: '',
   });
 
   const resolveHandleName = (simpleName: string, doorType: string) => {
@@ -226,6 +228,7 @@ const App: React.FC = () => {
       { key: 'contactName', label: 'ご担当者名' },
       { key: 'address', label: '納品先住所' },
     ];
+    // @ts-ignore
     basicFields.forEach(f => { if (!order.customerInfo[f.key as keyof typeof order.customerInfo]) errors.push(`${f.label}が入力されていません。`); });
 
     // 納品希望日のチェック
@@ -279,6 +282,9 @@ const App: React.FC = () => {
 会社名：${order.customerInfo.company}
 担当者名：${order.customerInfo.contactName}
 現場名：${order.customerInfo.siteName}
+
+■備考
+${order.memo}
 
 ※添付ファイルとして「見積書PDF」と「平面図」を必ず添付して送信してください。`;
     
@@ -433,7 +439,7 @@ const App: React.FC = () => {
                   注文書送付依頼（見積り・平面図を送付）
                 </button>
                 <button onClick={handlePrintPdf} className="bg-gray-800 hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                   PDF保存
                 </button>
               </div>
@@ -452,6 +458,7 @@ const App: React.FC = () => {
                           <p className="text-lg font-bold underline underline-offset-4 ml-4">{order.customerInfo.contactName} 様</p>
                         )}
                         <p className="text-sm mt-2">現場名：{order.customerInfo.siteName}</p>
+                        <p className="text-sm mt-1 font-bold text-gray-700">天井PB厚：{order.customerInfo.ceilingPB}mm</p>
                         <div className="mt-2 text-sm leading-relaxed">
                           <p className="flex items-center gap-2">
                             <span className="font-bold">納品希望日①</span> 
@@ -626,6 +633,16 @@ const App: React.FC = () => {
                     </table>
                   </div>
 
+                  <div className="mb-8 border-t-2 border-gray-200 pt-4 print:break-inside-avoid">
+                    <h4 className="font-bold text-sm text-gray-700 mb-2 border-b pb-1">備考 / メモ</h4>
+                    <textarea
+                      className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 outline-none text-sm print:border print:border-gray-400 print:text-gray-900 bg-white"
+                      placeholder="特記事項やご要望があればご記入ください。"
+                      value={order.memo}
+                      onChange={(e) => setOrder(prev => ({ ...prev, memo: e.target.value }))}
+                    />
+                  </div>
+
                   <div className="bg-orange-50 p-6 rounded-xl border border-orange-200 mt-auto">
                     <h5 className="font-bold text-orange-800 mb-2 flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -645,8 +662,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* ... (Validation Modal, Info Modals kept as is) ... */}
-      
       {/* Validation Modal */}
       {isValidationModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsValidationModalOpen(false)}>
@@ -694,6 +709,21 @@ const App: React.FC = () => {
       )}
       
       {/* ... Info Modals ... */}
+      {/* Hardware Modal (New) */}
+      {isHardwareModalOpen && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHardwareModalOpen(false)}>
+          <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-12 right-0 text-white p-2" onClick={() => setIsHardwareModalOpen(false)}>
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div className="bg-gray-50 p-4 border-b rounded-t-lg">
+              <h4 className="text-center font-bold text-gray-800">ハンドル・ハードウェア一覧</h4>
+            </div>
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/hardware.JPG" alt="ハードウェア一覧" className="w-full h-auto rounded-b-lg" />
+          </div>
+        </div>
+      )}
+
       {isHandleModalOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHandleModalOpen(false)}>
           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-lg w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
@@ -1024,7 +1054,18 @@ const App: React.FC = () => {
                   </div>
                 </th>
                 <th className="w-40">枠カラー</th>
-                <th className="w-48">ハンドル</th>
+                <th className="w-48">
+                  <div className="flex items-center justify-center gap-1">
+                    <span>ハンドル</span>
+                    <button
+                      onClick={() => setIsHardwareModalOpen(true)}
+                      className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm"
+                      title="ハンドル・ハードウェア一覧を表示"
+                    >
+                      i
+                    </button>
+                  </div>
+                </th>
                 <th className="w-28">価格 (円)</th>
                 <th className="w-32">操作</th>
               </tr>
