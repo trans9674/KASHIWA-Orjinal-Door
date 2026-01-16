@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { DoorItem, OrderState, DoorType, EntranceStorage, BaseboardItem } from './types';
 import { DoorRow } from './components/DoorRow';
 import { EntranceStorageSection } from './components/EntranceStorageSection';
@@ -31,9 +31,6 @@ const App: React.FC = () => {
   // 各セクションごとの吹き出し表示状態
   const [isStorageGuideOpen, setIsStorageGuideOpen] = useState(true);
   const [isBaseboardGuideOpen, setIsBaseboardGuideOpen] = useState(true);
-  
-  const [floorPlan, setFloorPlan] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isValidationModalOpen, setIsValidationModalOpen] = useState(false);
   const [validationData, setValidationData] = useState<{
@@ -262,11 +259,6 @@ const App: React.FC = () => {
   };
 
   const handleSendEstimate = () => {
-    if (!floorPlan) {
-      setValidationData({ errors: ['平面図の添付が必須です。'], warnings: [] });
-      setIsValidationModalOpen(true);
-      return;
-    }
     setIsMailModalOpen(true);
   };
 
@@ -419,8 +411,8 @@ ${order.memo}
 
       {/* Estimate Modal */}
       {isEstimateModalOpen && (
-        <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto no-print animate-in fade-in duration-300">
-          <div className="min-h-screen py-6 px-4 flex flex-col items-center">
+        <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300 print:absolute print:inset-0 print:bg-white print:h-auto print:w-full print:z-[200] print:overflow-visible">
+          <div className="min-h-screen py-6 px-4 flex flex-col items-center print:block print:h-auto print:p-0">
             {/* Action Bar (Top) */}
             <div className="max-w-[1000px] w-full flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-xl border border-gray-200 gap-4 no-print">
               <button onClick={() => setIsEstimateModalOpen(false)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold group">
@@ -430,36 +422,36 @@ ${order.memo}
                 戻って修正
               </button>
               <div className="flex flex-wrap justify-center items-center gap-3">
-                <input type="file" ref={fileInputRef} onChange={(e) => e.target.files && setFloorPlan(e.target.files[0])} className="hidden" accept=".pdf,image/*" />
-                <button onClick={() => fileInputRef.current?.click()} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all border-2 ${floorPlan ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm' : 'bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100'}`}>
-                  {floorPlan ? `平面図：${floorPlan.name}` : "平面図を添付 (必須)"}
-                </button>
-                <button onClick={handleSendEstimate} className={`bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95 ${!floorPlan ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <button onClick={handleSendEstimate} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 00-2 2z" /></svg>
-                  注文書送付依頼（見積り・平面図を送付）
+                  注文書送付依頼
                 </button>
                 <button onClick={handlePrintPdf} className="bg-gray-800 hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                   PDF保存
                 </button>
               </div>
             </div>
 
-            <div className="flex justify-center w-full max-w-[1000px]">
+            <div className="flex justify-center w-full max-w-[1000px] print:block print:w-full print:max-w-none">
               {/* Document Column (Center) - A4 Sized Container */}
-              <div className="flex-grow w-full flex justify-center">
-                <div className="bg-white p-[15mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:shadow-none print:w-full print:max-w-none print:p-0 print:m-0 box-border">
-                  <div className="flex justify-between items-start mb-12">
-                    <div>
+              <div className="flex-grow w-full flex justify-center print:block">
+                <div className="bg-white p-[10mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:shadow-none print:w-full print:max-w-none print:p-0 print:m-0 box-border">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex-1 mr-4">
                       <h2 className="text-4xl font-bold border-b-4 border-gray-800 pb-2 mb-4 font-['Inter'] tracking-tight">御見積書</h2>
-                      <div className="space-y-1">
-                        <p className="text-xl font-bold underline underline-offset-4">{order.customerInfo.company} 御中</p>
-                        {order.customerInfo.contactName && (
-                          <p className="text-lg font-bold underline underline-offset-4 ml-4">{order.customerInfo.contactName} 様</p>
-                        )}
-                        <p className="text-sm mt-2">現場名：{order.customerInfo.siteName}</p>
-                        <p className="text-sm mt-1 font-bold text-gray-700">天井PB厚：{order.customerInfo.ceilingPB}mm</p>
-                        <div className="mt-2 text-sm leading-relaxed">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-baseline gap-4">
+                            <p className="text-xl font-bold underline underline-offset-4">{order.customerInfo.company} 御中</p>
+                            {order.customerInfo.contactName && (
+                              <p className="text-lg font-bold underline underline-offset-4">{order.customerInfo.contactName} 様</p>
+                            )}
+                        </div>
+                        <div className="flex flex-wrap gap-6 text-sm">
+                            <p>現場名：{order.customerInfo.siteName}</p>
+                            <p className="font-bold text-gray-700">天井PB厚：{order.customerInfo.ceilingPB}mm</p>
+                        </div>
+                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm leading-tight">
                           <p className="flex items-center gap-2">
                             <span className="font-bold">納品希望日①</span> 
                             <span>{order.customerInfo.deliveryDate1 || '未指定'}</span>
@@ -479,7 +471,7 @@ ${order.memo}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right whitespace-nowrap">
                       <p className="text-sm text-gray-500 mb-2 font-['Inter']">発行日：{new Date().toLocaleDateString('ja-JP')}</p>
                       <p className="font-bold text-lg">柏木工株式会社</p>
                       <p className="text-sm">担当：滝下</p>
@@ -487,21 +479,21 @@ ${order.memo}
                     </div>
                   </div>
 
-                  <div className="bg-gray-100 p-6 rounded-xl mb-10 flex justify-between items-baseline">
-                    <span className="text-xl font-bold">御見積合計（税込）</span>
+                  <div className="bg-gray-100 p-4 rounded-xl mb-6 flex justify-between items-baseline">
+                    <span className="text-lg font-bold">御見積合計（税込）</span>
                     <span className="text-xl font-black font-['Inter']">¥{totals.total.toLocaleString()}</span>
                   </div>
 
-                  <div className="mb-10 flex-grow">
-                    <h4 className="font-bold border-b border-gray-300 pb-1 mb-4 text-gray-700 uppercase tracking-widest text-sm">内訳明細</h4>
+                  <div className="mb-4 flex-grow">
+                    <h4 className="font-bold border-b border-gray-300 pb-1 mb-2 text-gray-700 uppercase tracking-widest text-xs">内訳明細</h4>
                     <table className="w-full text-xs border-collapse">
                       <thead>
                         <tr className="border-b-2 border-gray-800">
-                          <th className="py-2 text-left w-10">No.</th>
+                          <th className="py-2 text-left w-8">No.</th>
                           <th className="py-2 text-left">品名・仕様</th>
-                          <th className="py-2 text-center w-16">数量</th>
-                          <th className="py-2 text-right w-20">単価</th>
-                          <th className="py-2 text-right w-24">金額</th>
+                          <th className="py-2 text-center w-14">数量</th>
+                          <th className="py-2 text-right w-16">単価</th>
+                          <th className="py-2 text-right w-20">金額</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -509,32 +501,31 @@ ${order.memo}
                         {order.doors.map((door, idx) => (
                           <React.Fragment key={door.id}>
                             <tr className="border-b border-gray-200">
-                                <td className="py-3 align-top font-medium text-gray-500">WD{idx+1}</td>
-                                <td className="py-3 align-top">
+                                <td className="py-1.5 align-top font-medium text-gray-500">WD{idx+1}</td>
+                                <td className="py-1.5 align-top">
                                   <div className="font-bold text-sm">内部建具 {door.roomName}</div>
-                                  <div className="text-[10px] text-gray-500 mt-1 grid grid-cols-2 gap-x-4 gap-y-0.5 leading-tight">
+                                  <div className="text-[10px] text-gray-600 mt-0.5 flex flex-wrap gap-x-3 gap-y-0 leading-tight">
                                      <span>種類: {door.type}</span>
                                      <span>デザイン: {door.design}</span>
                                      <span>サイズ: {door.width==='特寸'?`W${door.customWidth}`:door.width} × {door.height==='特寸'?`H${door.customHeight}`:door.height}</span>
-                                     <span className="col-span-2">
-                                       枠: {door.frameType}
+                                     <span>吊元: {door.hangingSide}</span>
+                                     <span>ハンドル: {door.handleColor}</span>
+                                     <span>枠: {door.frameType}
                                        {(door.isUndercut || door.isFrameExtended) && (
-                                         <span className="text-red-600 font-bold ml-2">
-                                           ※ {door.isUndercut ? `アンダーカット${door.undercutHeight}mm` : ''}
-                                           {door.isUndercut && door.isFrameExtended ? '・' : ''}
-                                           {door.isFrameExtended ? `枠伸長${door.frameExtensionHeight}mm` : ''}
+                                         <span className="text-red-600 font-bold ml-1">
+                                           ※{door.isUndercut ? `UC${door.undercutHeight}mm` : ''}
+                                           {door.isUndercut && door.isFrameExtended ? '/' : ''}
+                                           {door.isFrameExtended ? `枠伸${door.frameExtensionHeight}mm` : ''}
                                          </span>
                                        )}
                                      </span>
-                                     <span>吊元: {door.hangingSide}</span>
-                                     <span>ハンドル: {door.handleColor}</span>
-                                     <span className="col-span-2">カラー: {door.doorColor} (枠:{door.frameColor})</span>
-                                     {door.specialNotes && <span className="col-span-2 text-red-500">特記: {door.specialNotes}</span>}
+                                     <span>色: {door.doorColor} (枠:{door.frameColor})</span>
+                                     {door.specialNotes && <span className="text-red-500 font-bold">特記: {door.specialNotes}</span>}
                                   </div>
                                 </td>
-                                <td className="py-3 align-top text-center">1式</td>
-                                <td className="py-3 align-top text-right font-mono">¥{door.price.toLocaleString()}</td>
-                                <td className="py-3 align-top text-right font-bold font-mono">¥{door.price.toLocaleString()}</td>
+                                <td className="py-1.5 align-top text-center">1式</td>
+                                <td className="py-1.5 align-top text-right font-mono text-sm">¥{door.price.toLocaleString()}</td>
+                                <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{door.price.toLocaleString()}</td>
                             </tr>
                           </React.Fragment>
                         ))}
@@ -543,45 +534,45 @@ ${order.memo}
                         {order.storage.type !== 'NONE' && (
                           <>
                             <tr className="border-b border-gray-200">
-                               <td className="py-3 align-top font-medium text-gray-500">GS</td>
-                               <td className="py-3 align-top">
+                               <td className="py-1.5 align-top font-medium text-gray-500">GS</td>
+                               <td className="py-1.5 align-top">
                                   <div className="font-bold text-sm">玄関収納 本体</div>
-                                  <div className="text-[10px] text-gray-500 mt-1">
+                                  <div className="text-[10px] text-gray-500 mt-0.5">
                                      {order.storage.type} / {order.storage.size} / {order.storage.color}
                                   </div>
                                </td>
-                               <td className="py-3 align-top text-center">1式</td>
-                               <td className="py-3 align-top text-right font-mono">¥{order.storage.basePrice.toLocaleString()}</td>
-                               <td className="py-3 align-top text-right font-bold font-mono">¥{order.storage.basePrice.toLocaleString()}</td>
+                               <td className="py-1.5 align-top text-center">1式</td>
+                               <td className="py-1.5 align-top text-right font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
+                               <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
                             </tr>
                             {/* Base Ring */}
                             {order.storage.baseRingPrice > 0 && (
                                <tr className="border-b border-gray-200">
-                                 <td className="py-2 align-top"></td>
-                                 <td className="py-2 align-top text-gray-600 pl-4 text-[11px]">└ 台輪あり ({order.storage.baseRing})</td>
-                                 <td className="py-2 align-top text-center">1式</td>
-                                 <td className="py-2 align-top text-right font-mono">¥{order.storage.baseRingPrice.toLocaleString()}</td>
-                                 <td className="py-2 align-top text-right font-bold font-mono">¥{order.storage.baseRingPrice.toLocaleString()}</td>
+                                 <td className="py-1 align-top"></td>
+                                 <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ 台輪あり ({order.storage.baseRing})</td>
+                                 <td className="py-1 align-top text-center">1式</td>
+                                 <td className="py-1 align-top text-right font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
+                                 <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
                                </tr>
                             )}
                             {/* Mirror */}
                             {order.storage.mirrorPrice > 0 && (
                                <tr className="border-b border-gray-200">
-                                 <td className="py-2 align-top"></td>
-                                 <td className="py-2 align-top text-gray-600 pl-4 text-[11px]">└ ミラーあり ({order.storage.mirror})</td>
-                                 <td className="py-2 align-top text-center">1式</td>
-                                 <td className="py-2 align-top text-right font-mono">¥{order.storage.mirrorPrice.toLocaleString()}</td>
-                                 <td className="py-2 align-top text-right font-bold font-mono">¥{order.storage.mirrorPrice.toLocaleString()}</td>
+                                 <td className="py-1 align-top"></td>
+                                 <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ ミラーあり ({order.storage.mirror})</td>
+                                 <td className="py-1 align-top text-center">1式</td>
+                                 <td className="py-1 align-top text-right font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
+                                 <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
                                </tr>
                             )}
                             {/* Filler */}
                             {order.storage.fillerCount > 0 && (
                                <tr className="border-b border-gray-200">
-                                 <td className="py-2 align-top"></td>
-                                 <td className="py-2 align-top text-gray-600 pl-4 text-[11px]">└ フィラー</td>
-                                 <td className="py-2 align-top text-center">{order.storage.fillerCount}個</td>
-                                 <td className="py-2 align-top text-right font-mono">¥{order.storage.fillerPrice.toLocaleString()}</td>
-                                 <td className="py-2 align-top text-right font-bold font-mono">¥{(order.storage.fillerPrice * order.storage.fillerCount).toLocaleString()}</td>
+                                 <td className="py-1 align-top"></td>
+                                 <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ フィラー</td>
+                                 <td className="py-1 align-top text-center">{order.storage.fillerCount}個</td>
+                                 <td className="py-1 align-top text-right font-mono text-sm">¥{order.storage.fillerPrice.toLocaleString()}</td>
+                                 <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{(order.storage.fillerPrice * order.storage.fillerCount).toLocaleString()}</td>
                                </tr>
                             )}
                           </>
@@ -592,14 +583,14 @@ ${order.memo}
                            if (item.quantity === 0) return null;
                            return (
                               <tr key={idx} className="border-b border-gray-200">
-                                 <td className="py-3 align-top font-medium text-gray-500">{idx===0 ? 'Z1' : 'Z2'}</td>
-                                 <td className="py-3 align-top">
+                                 <td className="py-1.5 align-top font-medium text-gray-500">{idx===0 ? 'Z1' : 'Z2'}</td>
+                                 <td className="py-1.5 align-top">
                                     <div className="font-bold text-sm">{item.product}</div>
-                                    <div className="text-[10px] text-gray-500 mt-1">{item.color}</div>
+                                    <div className="text-[10px] text-gray-500 mt-0.5">{item.color}</div>
                                  </td>
-                                 <td className="py-3 align-top text-center">{item.quantity}{item.unit}</td>
-                                 <td className="py-3 align-top text-right font-mono">¥{item.unitPrice.toLocaleString()}</td>
-                                 <td className="py-3 align-top text-right font-bold font-mono">¥{(item.unitPrice * item.quantity).toLocaleString()}</td>
+                                 <td className="py-1.5 align-top text-center">{item.quantity}{item.unit}</td>
+                                 <td className="py-1.5 align-top text-right font-mono text-sm">¥{item.unitPrice.toLocaleString()}</td>
+                                 <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{(item.unitPrice * item.quantity).toLocaleString()}</td>
                               </tr>
                            );
                         })}
@@ -607,53 +598,37 @@ ${order.memo}
                         {/* Shipping */}
                         {order.shipping > 0 && (
                             <tr className="border-b border-gray-200">
-                               <td className="py-3 align-top font-medium text-gray-500">他</td>
-                               <td className="py-3 align-top">
+                               <td className="py-1.5 align-top font-medium text-gray-500">他</td>
+                               <td className="py-1.5 align-top">
                                  <div className="font-bold text-sm">運賃（配送費）</div>
-                                 <div className="text-[10px] text-gray-500 mt-1">納品先: {order.customerInfo.address}</div>
+                                 <div className="text-[10px] text-gray-500 mt-0.5">納品先: {order.customerInfo.address}</div>
                                </td>
-                               <td className="py-3 align-top text-center">1式</td>
-                               <td className="py-3 align-top text-right font-mono">¥{order.shipping.toLocaleString()}</td>
-                               <td className="py-3 align-top text-right font-bold font-mono">¥{order.shipping.toLocaleString()}</td>
+                               <td className="py-1.5 align-top text-center">1式</td>
+                               <td className="py-1.5 align-top text-right font-mono text-sm">¥{order.shipping.toLocaleString()}</td>
+                               <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{order.shipping.toLocaleString()}</td>
                             </tr>
                         )}
                         
                         {/* Totals Section in Table */}
                          <tr className="bg-gray-50 font-bold border-t-2 border-gray-400">
-                            <td colSpan={3} className="py-2"></td>
-                            <td className="py-3 px-2 text-right">小計</td>
-                            <td className="py-3 px-2 text-right font-mono text-lg">¥{totals.subtotal.toLocaleString()}</td>
-                          </tr>
-                          <tr className="text-gray-500 italic">
-                            <td colSpan={3} className="py-2"></td>
-                            <td className="py-2 px-2 text-right text-xs">消費税（10%）</td>
-                            <td className="py-2 px-2 text-right text-xs font-mono">¥{totals.tax.toLocaleString()}</td>
+                            <td colSpan={2}></td>
+                            <td colSpan={2} className="py-2 px-2 text-right text-sm">
+                              小計 <span className="text-xs font-normal text-gray-500 ml-1">(内消費税 ¥{totals.tax.toLocaleString()})</span>
+                            </td>
+                            <td className="py-2 px-2 text-right font-mono text-base">¥{totals.total.toLocaleString()}</td>
                           </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  <div className="mb-8 border-t-2 border-gray-200 pt-4 print:break-inside-avoid">
-                    <h4 className="font-bold text-sm text-gray-700 mb-2 border-b pb-1">備考 / メモ</h4>
+                  <div className="border-t-2 border-gray-200 pt-2 print:break-inside-avoid">
+                    <h4 className="font-bold text-xs text-gray-700 mb-1">備考 / メモ</h4>
                     <textarea
-                      className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 outline-none text-sm print:border print:border-gray-400 print:text-gray-900 bg-white"
+                      className="w-full h-24 p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 outline-none text-xs print:border print:border-gray-400 print:text-gray-900 bg-white"
                       placeholder="特記事項やご要望があればご記入ください。"
                       value={order.memo}
                       onChange={(e) => setOrder(prev => ({ ...prev, memo: e.target.value }))}
                     />
-                  </div>
-
-                  <div className="bg-orange-50 p-6 rounded-xl border border-orange-200 mt-auto">
-                    <h5 className="font-bold text-orange-800 mb-2 flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      重要：納期に関するご案内
-                    </h5>
-                    <p className="text-xs text-orange-700 leading-relaxed font-medium">
-                      こちらの見積り書を送っていただいた後に弊社で内容を確認させていただき、正式な注文書をお送りいたします。<br/>
-                      正式な注文書のご返信をいただいてから製作を開始いたします。<br/>
-                      製作には最低<span className="font-bold underline">「中2週間以上」</span>の期間を要します。<br/>
-                      1次納品（枠類）は最短2週間後、その後2次納品（ドア本体）を順次行います。
-                    </p>
                   </div>
                 </div>
               </div>
@@ -846,8 +821,8 @@ ${order.memo}
                 </div>
 
                 {/* 右カラム：確認事項 */}
-                <div className="flex-1 lg:border-l lg:pl-6 lg:border-gray-200">
-                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm h-full">
+                <div className="flex-1 lg:border-l lg:pl-6 lg:border-gray-200 flex flex-col">
+                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm mb-4">
                     <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-3 text-base border-b border-orange-200 pb-2">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                       発注書確認事項
@@ -864,8 +839,12 @@ ${order.memo}
                           <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           枠オプション設定について
                         </p>
-                        <p className="text-[10px] text-gray-600 mb-3 leading-relaxed ml-1">
-                          ドア下開口（アンダーカット）や枠伸長は、リスト内「枠仕様」欄の設定ボタンから。
+                        <p className="text-[10px] text-gray-600 mb-3 leading-relaxed ml-1 flex flex-wrap items-center gap-1">
+                          ドア下開口（アンダーカット）や枠伸長は、リスト内「枠仕様」欄の設定ボタン
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-500">
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          </span>
+                          から。
                         </p>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="text-center group">
@@ -881,6 +860,40 @@ ${order.memo}
                             <p className="text-[10px] font-bold text-gray-600">枠伸長</p>
                           </div>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 注文フロー (コンパクト) */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm mt-auto">
+                    <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 text-sm border-b border-slate-200 pb-2">
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                      ご注文〜納品の流れ
+                    </h3>
+                    <div className="relative pt-2 px-1">
+                      {/* Connecting Line */}
+                      <div className="absolute top-[11px] left-4 right-4 h-0.5 bg-slate-300 -z-0"></div>
+                      
+                      <div className="flex justify-between items-start relative z-10">
+                        {[
+                          { label: "見積・依頼", sub: "お客様", color: "bg-indigo-500" },
+                          { label: "図面確認", sub: "柏木工", color: "bg-gray-500" },
+                          { label: "正式発注", sub: "お客様", color: "bg-orange-500", active: true },
+                          { label: "製作", sub: "中2週〜", color: "bg-blue-600" },
+                          { label: "納品", sub: "1次・2次", color: "bg-emerald-500" },
+                        ].map((step, idx) => (
+                          <div key={idx} className="flex flex-col items-center gap-1 group w-14">
+                            <div className={`w-6 h-6 rounded-full ${step.color} text-white text-[10px] font-bold flex items-center justify-center shadow-sm ring-4 ring-slate-50 group-hover:scale-110 transition-transform`}>
+                              {idx + 1}
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className={`text-[10px] font-bold ${step.active ? 'text-orange-600' : 'text-slate-700'} leading-tight whitespace-nowrap`}>
+                                {step.label}
+                              </span>
+                              <span className="text-[9px] text-slate-400 leading-none scale-90 whitespace-nowrap">{step.sub}</span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
