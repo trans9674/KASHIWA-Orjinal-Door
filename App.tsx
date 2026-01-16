@@ -610,13 +610,21 @@ ${order.memo}
                         )}
                         
                         {/* Totals Section in Table */}
-                         <tr className="bg-gray-50 font-bold border-t-2 border-gray-400">
-                            <td colSpan={2}></td>
-                            <td colSpan={2} className="py-2 px-2 text-right text-sm">
-                              小計 <span className="text-xs font-normal text-gray-500 ml-1">(内消費税 ¥{totals.tax.toLocaleString()})</span>
-                            </td>
-                            <td className="py-2 px-2 text-right font-mono text-base">¥{totals.total.toLocaleString()}</td>
-                          </tr>
+                        <tr className="border-t-2 border-gray-400">
+                          <td colSpan={2}></td>
+                          <td colSpan={2} className="py-1 px-2 text-right text-sm text-gray-600">小計 (税抜)</td>
+                          <td className="py-1 px-2 text-right font-mono text-sm">¥{totals.subtotal.toLocaleString()}</td>
+                        </tr>
+                        <tr>
+                          <td colSpan={2}></td>
+                          <td colSpan={2} className="py-1 px-2 text-right text-sm text-gray-600">消費税 (10%)</td>
+                          <td className="py-1 px-2 text-right font-mono text-sm">¥{totals.tax.toLocaleString()}</td>
+                        </tr>
+                        <tr className="bg-gray-50 font-bold border-t border-gray-200">
+                          <td colSpan={2}></td>
+                          <td colSpan={2} className="py-2 px-2 text-right text-sm">合計 (税込)</td>
+                          <td className="py-2 px-2 text-right font-mono text-base">¥{totals.total.toLocaleString()}</td>
+                        </tr>
                       </tbody>
                     </table>
                   </div>
@@ -825,7 +833,7 @@ ${order.memo}
                   <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm mb-4">
                     <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-3 text-base border-b border-orange-200 pb-2">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                      発注書確認事項
+                      見積書のご入力について
                     </h3>
                     <div className="space-y-3">
                       <ul className="list-disc list-inside space-y-1 text-xs text-gray-800 font-medium ml-1">
