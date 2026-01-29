@@ -413,7 +413,7 @@ ${order.memo}
                         { step: 1, title: "見積書の入力", desc: "アプリ上で仕様を入力し、見積書PDFを作成・保存します。", color: "bg-indigo-500", ring: "ring-indigo-900" },
                         { step: 2, title: "注文書送付依頼を送る", desc: "「注文書送付依頼」ボタンからメールを起動し、見積書PDFと平面図を添付して送信します。", color: "bg-indigo-500", ring: "ring-indigo-900" },
                         { step: 3, title: "見積り確認・図面確認（柏木工側）", desc: "お送りいただいた内容を確認し、詳細図面を作成します。", color: "bg-gray-600", ring: "ring-gray-800" },
-                        { step: 4, title: "正式な注文書を送付いたします", desc: "柏木工より、図面と正式な注文書をお客様へ送付します。", color: "bg-gray-600", ring: "ring-gray-800" },
+                        { step: 4, title: "正式な注文書を送付いたします", desc: "柏木工より, 図面と正式な注文書をお客様へ送付します。", color: "bg-gray-600", ring: "ring-gray-800" },
                         { step: 5, title: "注文書返信により正式発注", desc: "内容をご確認の上、注文書にご捺印いただきご返信ください。この時点で発注確定となります。", color: "bg-orange-500", ring: "ring-orange-900" },
                         { step: 6, title: "製作開始", desc: "製作期間（中2週間〜）のカウントを開始します。", color: "bg-blue-600", ring: "ring-blue-900" },
                         { step: 7, title: "1次納品（枠・巾木）", desc: "現場の進捗に合わせ、枠類を先行納品します。", color: "bg-emerald-500", ring: "ring-emerald-900" },
@@ -484,7 +484,7 @@ ${order.memo}
                         <div className="flex flex-wrap gap-6 text-sm">
                             <p>現場名：{order.customerInfo.siteName}</p>
                             <p>連絡先：{order.customerInfo.phone}</p>
-                            <p className="font-bold text-gray-700">天井PB厚：{order.customerInfo.ceilingPB}mm</p>
+                            <p className={`font-bold ${order.customerInfo.ceilingPB === '15.0' ? 'text-red-600' : 'text-gray-700'}`}>天井PB厚：{order.customerInfo.ceilingPB}mm</p>
                         </div>
                         <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm leading-tight">
                           <p className="flex items-center gap-2">
@@ -533,37 +533,48 @@ ${order.memo}
                       </thead>
                       <tbody>
                         {/* Internal Doors Details */}
-                        {order.doors.map((door, idx) => (
-                          <React.Fragment key={door.id}>
-                            <tr className="border-b border-gray-200">
-                                <td className="py-1.5 align-top font-medium text-gray-500">WD{idx+1}</td>
-                                <td className="py-1.5 align-top">
-                                  <div className="font-bold text-sm">内部建具 {door.roomName}</div>
-                                  <div className="text-[10px] text-gray-600 mt-0.5 flex flex-wrap gap-x-3 gap-y-0 leading-tight">
-                                     <span>種類: {door.type}</span>
-                                     <span>デザイン: {door.design}</span>
-                                     <span>サイズ: {door.width==='特寸'?`W${door.customWidth}`:door.width} × {door.height==='特寸'?`H${door.customHeight}`:door.height}</span>
-                                     <span>吊元: {door.hangingSide}</span>
-                                     <span>ハンドル: {door.handleColor}</span>
-                                     <span>枠: {door.frameType}
-                                       {(door.isUndercut || door.isFrameExtended) && (
-                                         <span className="text-red-600 font-bold ml-1">
-                                           ※{door.isUndercut ? `UC${door.undercutHeight}mm` : ''}
-                                           {door.isUndercut && door.isFrameExtended ? '/' : ''}
-                                           {door.isFrameExtended ? `土間${door.frameExtensionHeight}mm` : ''}
-                                         </span>
-                                       )}
-                                     </span>
-                                     <span>色: {door.doorColor} (枠:{door.frameColor})</span>
-                                     {door.specialNotes && <span className="text-red-500 font-bold">特記: {door.specialNotes}</span>}
-                                  </div>
-                                </td>
-                                <td className="py-1.5 align-top text-center">1式</td>
-                                <td className="py-1.5 align-top text-left font-mono text-sm">¥{door.price.toLocaleString()}</td>
-                                <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{door.price.toLocaleString()}</td>
-                            </tr>
-                          </React.Fragment>
-                        ))}
+                        {order.doors.map((door, idx) => {
+                          const isDesignRed = door.design !== 'フラット';
+                          const isSizeRed = door.width === '特寸' || door.height === '特寸';
+                          const isDoorColorRed = door.doorColor !== initialSettings.defaultDoorColor;
+                          const isFrameColorRed = door.frameColor !== initialSettings.defaultDoorColor;
+                          const isFrameOptionRed = door.isUndercut || door.isFrameExtended;
+
+                          return (
+                            <React.Fragment key={door.id}>
+                              <tr className="border-b border-gray-200">
+                                  <td className="py-1.5 align-top font-medium text-gray-500">WD{idx+1}</td>
+                                  <td className="py-1.5 align-top">
+                                    <div className="font-bold text-sm">内部建具 {door.roomName}</div>
+                                    <div className="text-[10px] text-gray-600 mt-0.5 flex flex-wrap gap-x-3 gap-y-0 leading-tight">
+                                       <span>種類: {door.type}</span>
+                                       <span className={isDesignRed ? 'text-red-600 font-bold' : ''}>デザイン: {door.design}</span>
+                                       <span className={isSizeRed ? 'text-red-600 font-bold' : ''}>サイズ: {door.width==='特寸'?`W${door.customWidth}㎜特寸`:door.width} × {door.height==='特寸'?`H${door.customHeight}㎜特寸`:door.height}</span>
+                                       <span>吊元: {door.hangingSide}</span>
+                                       <span className={door.handleColor !== "J型取手" && !door.handleColor.includes(initialSettings.defaultHandleColor) ? 'text-red-600 font-bold' : ''}>ハンドル: {door.handleColor}</span>
+                                       <span className={isFrameOptionRed ? 'text-red-600 font-bold' : ''}>枠: {door.frameType}
+                                         {(door.isUndercut || door.isFrameExtended) && (
+                                           <span className="text-red-600 font-bold ml-1">
+                                             ※{door.isUndercut ? `UC${door.undercutHeight}mm` : ''}
+                                             {door.isUndercut && door.isFrameExtended ? '/' : ''}
+                                             {door.isFrameExtended ? `土間${door.frameExtensionHeight}mm` : ''}
+                                           </span>
+                                         )}
+                                       </span>
+                                       <span>
+                                         <span className={isDoorColorRed ? 'text-red-600 font-bold' : ''}>色: {door.doorColor}</span>
+                                         <span className={isFrameColorRed ? 'text-red-600 font-bold ml-1' : 'ml-1'}>(枠:{door.frameColor})</span>
+                                       </span>
+                                       {door.specialNotes && <span className="text-red-500 font-bold">特記: {door.specialNotes}</span>}
+                                    </div>
+                                  </td>
+                                  <td className="py-1.5 align-top text-center">1式</td>
+                                  <td className="py-1.5 align-top text-left font-mono text-sm">¥{door.price.toLocaleString()}</td>
+                                  <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{door.price.toLocaleString()}</td>
+                              </tr>
+                            </React.Fragment>
+                          );
+                        })}
 
                         {/* Storage Details */}
                         {order.storage.type !== 'NONE' && (
@@ -1082,7 +1093,7 @@ ${order.memo}
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">天井PB厚</label>
             <div className="flex flex-col gap-1">
               <select 
-                className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" 
+                className={`w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 outline-none ${order.customerInfo.ceilingPB === '15.0' ? 'border-red-300 text-red-600 focus:ring-red-500' : 'focus:ring-blue-500'}`} 
                 value={order.customerInfo.ceilingPB} 
                 onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, ceilingPB: e.target.value}}))}
               >

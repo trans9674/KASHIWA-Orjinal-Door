@@ -133,6 +133,17 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     updateDoor(door.id, updates);
   };
 
+  const isDesignHighlighted = door.design !== "フラット";
+  const isWidthHighlighted = door.width === "特寸";
+  const isHeightHighlighted = door.height === "特寸" || door.height !== initialSettings.defaultHeight;
+  const isFrameHighlighted = door.isUndercut || door.isFrameExtended;
+  const isDoorColorHighlighted = door.doorColor !== initialSettings.defaultDoorColor;
+  const isFrameColorHighlighted = door.frameColor !== initialSettings.defaultDoorColor;
+  const isHandleColorHighlighted = door.handleColor !== "J型取手" && !door.handleColor.includes(initialSettings.defaultHandleColor);
+
+  const getHighlightStyle = (isHighlighted: boolean) => isHighlighted ? 'color: #ef4444; font-weight: bold;' : '';
+  const getTailwindHighlight = (isHighlighted: boolean) => isHighlighted ? 'text-red-600 font-bold bg-red-50 border-red-200' : '';
+
   const handleOpenDetails = () => {
     const originalPdfUrl = getDoorDetailPdfUrl(door);
     const cleanUrl = originalPdfUrl.replace(/^https?:\/\//, '');
@@ -140,12 +151,12 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     const wdText = `WD-${index + 1}`;
     
     const widthHtml = door.width === '特寸' 
-      ? `<span style="color: red;">${door.customWidth}㎜特寸</span>` 
+      ? `<span style="color: #ef4444; font-weight: bold;">${door.customWidth}㎜特寸</span>` 
       : `${door.width}`;
       
     const heightHtml = door.height === '特寸' 
-      ? `<span style="color: red;">${door.customHeight}㎜特寸</span>` 
-      : `${door.height.replace('H', '')}`;
+      ? `<span style="color: #ef4444; font-weight: bold;">${door.customHeight}㎜特寸</span>` 
+      : `<span style="${getHighlightStyle(door.height !== initialSettings.defaultHeight)}">${door.height.replace('H', '')}</span>`;
 
     const frameOptionText = [];
     if (door.isUndercut) frameOptionText.push(`アンダーカット${door.undercutHeight}㎜`);
@@ -156,7 +167,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     }
     
     const frameOptionHtml = frameOptionText.length > 0
-      ? `<span style="color: red; margin-left: 0.5em; font-weight: bold;">(${frameOptionText.join(' / ')})</span>`
+      ? `<span style="color: #ef4444; margin-left: 0.5em; font-weight: bold;">(${frameOptionText.join(' / ')})</span>`
       : '';
 
     const printWindow = window.open('', '_blank');
@@ -288,15 +299,15 @@ export const DoorRow: React.FC<DoorRowProps> = ({
                 <div class="details-item"><span class="details-label">物件名</span><span class="details-value">${siteName || ''}</span></div>
                 <div class="details-item"><span class="details-label">部屋名</span><span class="details-value">${door.roomName || ''}</span></div>
                 <div class="details-item"><span class="details-label">種類</span><span class="details-value">${door.type}</span></div>
-                <div class="details-item"><span class="details-label">デザイン</span><span class="details-value">${door.design}</span></div>
+                <div class="details-item"><span class="details-label">デザイン</span><span class="details-value" style="${getHighlightStyle(isDesignHighlighted)}">${door.design}</span></div>
                 <div class="details-item"><span class="details-label">サイズ</span><span class="details-value">${widthHtml}×${heightHtml}</span></div>
               </div>
               <div class="details-row">
-                <div class="details-item"><span class="details-label">枠仕様</span><span class="details-value">${door.frameType}${frameOptionHtml}</span></div>
+                <div class="details-item"><span class="details-label">枠仕様</span><span class="details-value" style="${getHighlightStyle(isFrameHighlighted)}">${door.frameType}${frameOptionHtml}</span></div>
                 <div class="details-item"><span class="details-label">吊元</span><span class="details-value">${door.hangingSide}</span></div>
-                <div class="details-item"><span class="details-label">扉色</span><span class="details-value">${door.doorColor}</span></div>
-                <div class="details-item"><span class="details-label">枠色</span><span class="details-value">${door.frameColor}</span></div>
-                <div class="details-item"><span class="details-label">ハンドル</span><span class="details-value">${door.handleColor}</span></div>
+                <div class="details-item"><span class="details-label">扉色</span><span class="details-value" style="${getHighlightStyle(isDoorColorHighlighted)}">${door.doorColor}</span></div>
+                <div class="details-item"><span class="details-label">枠色</span><span class="details-value" style="${getHighlightStyle(isFrameColorHighlighted)}">${door.frameColor}</span></div>
+                <div class="details-item"><span class="details-label">ハンドル</span><span class="details-value" style="${getHighlightStyle(isHandleColorHighlighted)}">${door.handleColor}</span></div>
               </div>
             </div>
           </div>
@@ -307,15 +318,6 @@ export const DoorRow: React.FC<DoorRowProps> = ({
 
     printWindow.document.write(htmlContent);
     printWindow.document.close();
-  };
-
-  const getAlertStyle = (current: string, initial: string, field?: string) => {
-    if (field === 'handleColor') {
-      if (current === 'J型取手') return '';
-      if (current.includes(initial)) return '';
-      return 'text-red-600 font-bold border-red-300 bg-red-50';
-    }
-    return current !== initial ? 'text-red-600 font-bold border-red-300 bg-red-50' : '';
   };
 
   return (
@@ -336,18 +338,18 @@ export const DoorRow: React.FC<DoorRowProps> = ({
         </select>
       </td>
       <td className="p-1">
-        <select name="design" value={door.design} onChange={handleChange} className="w-full border rounded px-1 py-1 h-8">
+        <select name="design" value={door.design} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getTailwindHighlight(isDesignHighlighted)}`}>
           {spec.designs.map(d => <option key={d} value={d}>{d}</option>)}
         </select>
       </td>
       <td className="p-1">
         <div className="flex flex-col gap-1 min-w-[70px]">
-          <select name="width" value={door.width} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${door.width === '特寸' ? 'text-green-600 font-bold border-green-300 bg-green-50' : ''}`}>
+          <select name="width" value={door.width} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getTailwindHighlight(isWidthHighlighted)}`}>
             {availableWidths.map(w => <option key={w} value={w}>{w === '特寸' ? '特寸' : `${w}mm`}</option>)}
           </select>
           {door.width === '特寸' && (
-            <div className="flex items-center gap-1 text-green-600 font-bold">
-              <input type="number" name="customWidth" value={door.customWidth} onChange={handleChange} className="w-full border border-green-200 rounded px-1 h-6 bg-white" />
+            <div className="flex items-center gap-1 text-red-600 font-bold">
+              <input type="number" name="customWidth" value={door.customWidth} onChange={handleChange} className="w-full border border-red-200 rounded px-1 h-6 bg-white" />
               <span className="text-[10px]">㎜</span>
             </div>
           )}
@@ -355,12 +357,12 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       </td>
       <td className="p-1">
         <div className="flex flex-col gap-1 min-w-[70px]">
-          <select name="height" value={door.height} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${door.height === '特寸' ? 'text-green-600 font-bold border-green-300 bg-green-50' : getAlertStyle(door.height, initialSettings.defaultHeight)}`}>
+          <select name="height" value={door.height} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getTailwindHighlight(isHeightHighlighted)}`}>
             {availableHeights.map(h => <option key={h} value={h}>{h === '特寸' ? '特寸' : h}</option>)}
           </select>
           {door.height === '特寸' && (
-            <div className="flex items-center gap-1 text-green-600 font-bold">
-              <input type="number" name="customHeight" value={door.customHeight} max="2400" onChange={handleChange} className="w-full border border-green-200 rounded px-1 h-6 bg-white" />
+            <div className="flex items-center gap-1 text-red-600 font-bold">
+              <input type="number" name="customHeight" value={door.customHeight} max="2400" onChange={handleChange} className="w-full border border-red-200 rounded px-1 h-6 bg-white" />
               <span className="text-[10px]">㎜</span>
             </div>
           )}
@@ -368,13 +370,13 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       </td>
       <td className="p-1 relative">
         <div className="flex items-center gap-1">
-           <input type="text" name="frameType" value={door.frameType} readOnly className="w-full border rounded px-1 py-1 bg-gray-100 text-gray-600 font-medium h-8 outline-none text-[10px]" />
+           <input type="text" name="frameType" value={door.frameType} readOnly className={`w-full border rounded px-1 py-1 bg-gray-100 text-gray-600 font-medium h-8 outline-none text-[10px] ${getTailwindHighlight(isFrameHighlighted)}`} />
            <button 
              onClick={(e) => {
                e.preventDefault();
                setIsFrameOptionOpen(!isFrameOptionOpen);
              }}
-             className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors shadow-sm ${door.isUndercut || door.isFrameExtended ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+             className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors shadow-sm ${isFrameHighlighted ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
              title="枠オプション設定"
            >
              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -549,12 +551,12 @@ export const DoorRow: React.FC<DoorRowProps> = ({
         </select>
       </td>
       <td className="p-1">
-        <select name="doorColor" value={door.doorColor} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getAlertStyle(door.doorColor, initialSettings.defaultDoorColor)}`}>
+        <select name="doorColor" value={door.doorColor} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getTailwindHighlight(isDoorColorHighlighted)}`}>
           {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </td>
       <td className="p-1">
-        <select name="frameColor" value={door.frameColor} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getAlertStyle(door.frameColor, initialSettings.defaultDoorColor)}`}>
+        <select name="frameColor" value={door.frameColor} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getTailwindHighlight(isFrameColorHighlighted)}`}>
           {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
       </td>
@@ -565,7 +567,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
             value={door.handleColor}
             onChange={handleChange}
             disabled={isFoldingOrStorage}
-            className={`w-full border rounded px-1 py-1 h-8 ${getAlertStyle(door.handleColor, initialSettings.defaultHandleColor, 'handleColor')} ${isFoldingOrStorage ? 'bg-gray-50' : ''}`}
+            className={`w-full border rounded px-1 py-1 h-8 ${getTailwindHighlight(isHandleColorHighlighted)} ${isFoldingOrStorage ? 'bg-gray-50' : ''}`}
           >
             {getAvailableHandleColors().map(c => <option key={c} value={c}>{c}</option>)}
           </select>
