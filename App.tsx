@@ -3,9 +3,11 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { DoorItem, OrderState, DoorType, EntranceStorage, BaseboardItem } from './types';
 import { DoorRow } from './components/DoorRow';
 import { EntranceStorageSection } from './components/EntranceStorageSection';
-import { COLORS, HANDLE_COLORS, SHIPPING_FEE_MAP, PRICE_LIST, DOOR_SPEC_MASTER, getFrameType, HINGED_HANDLES, SLIDING_HANDLES } from './constants';
+import { BusinessDatePicker } from './components/BusinessDatePicker';
+import { COLORS, HANDLE_COLORS, SHIPPING_FEE_MAP, PRICE_LIST, DOOR_SPEC_MASTER, getFrameType, HINGED_HANDLES, SLIDING_HANDLES, DOOR_POINTS, getStoragePoints, getBaseboardPoints } from './constants';
 
 const SIMPLE_HANDLE_OPTIONS = ["セラミックホワイト", "マットブラック", "サテンニッケル"];
+const PB_OPTIONS = ["9.5", "12.5", "15.0"];
 
 // 安全なID生成関数（crypto.randomUUIDが未対応の環境へのフォールバック付き）
 const generateId = () => {
@@ -42,6 +44,7 @@ const App: React.FC = () => {
     company: '',
     siteName: '',
     contactName: '',
+    phone: '',
     defaultHeight: 'H2200',
     defaultDoorColor: COLORS[0],
     defaultHandleColor: SIMPLE_HANDLE_OPTIONS[0],
@@ -98,7 +101,13 @@ const App: React.FC = () => {
 
     setOrder(prev => ({
       ...prev,
-      customerInfo: { ...prev.customerInfo, company: initialSettings.company, siteName: initialSettings.siteName, contactName: initialSettings.contactName },
+      customerInfo: { 
+        ...prev.customerInfo, 
+        company: initialSettings.company, 
+        siteName: initialSettings.siteName, 
+        contactName: initialSettings.contactName,
+        phone: initialSettings.phone
+      },
       storage: { ...prev.storage, color: initialSettings.defaultDoorColor },
       baseboards: prev.baseboards.map(b => ({ ...b, color: initialSettings.defaultBaseboardColor })),
       doors: [{
@@ -195,13 +204,37 @@ const App: React.FC = () => {
   };
 
   const totals = useMemo(() => {
+    // 点数計算
+    const doorPoints = order.doors.reduce((sum, d) => sum + (DOOR_POINTS[d.type] || 0), 0);
+    const storagePoints = getStoragePoints(order.storage.type);
+    const totalBaseboardQty = order.baseboards.reduce((sum, b) => b.unit === '本' ? sum + b.quantity : sum, 0);
+    const baseboardPoints = getBaseboardPoints(totalBaseboardQty);
+    
+    const totalPoints = doorPoints + storagePoints + baseboardPoints;
+    
+    // 送料計算 (10点未満なら減額)
+    const baseShipping = order.shipping;
+    const finalShipping = totalPoints >= 10 ? baseShipping : Math.floor(baseShipping * (totalPoints / 10));
+
     const doorSubtotal = order.doors.reduce((sum, d) => sum + d.price, 0);
     const storageSubtotal = order.storage.type === 'NONE' ? 0 : order.storage.basePrice + order.storage.baseRingPrice + (order.storage.fillerPrice * order.storage.fillerCount) + order.storage.mirrorPrice;
     const baseboardSubtotal = order.baseboards.reduce((sum, b) => sum + (b.unitPrice * b.quantity), 0);
-    const subtotal = doorSubtotal + storageSubtotal + baseboardSubtotal + order.shipping;
+    
+    const subtotal = doorSubtotal + storageSubtotal + baseboardSubtotal + finalShipping;
     const tax = Math.floor(subtotal * 0.1);
     const total = subtotal + tax;
-    return { doorSubtotal, storageSubtotal, baseboardSubtotal, subtotal, tax, total };
+    
+    return { 
+      doorSubtotal, 
+      storageSubtotal, 
+      baseboardSubtotal, 
+      subtotal, 
+      tax, 
+      total, 
+      totalPoints, 
+      finalShipping,
+      isShippingDiscounted: totalPoints > 0 && totalPoints < 10
+    };
   }, [order]);
 
   // 商品の有無判定
@@ -274,6 +307,7 @@ const App: React.FC = () => {
 会社名：${order.customerInfo.company}
 担当者名：${order.customerInfo.contactName}
 現場名：${order.customerInfo.siteName}
+連絡先：${order.customerInfo.phone}
 
 ■備考
 ${order.memo}
@@ -449,6 +483,7 @@ ${order.memo}
                         </div>
                         <div className="flex flex-wrap gap-6 text-sm">
                             <p>現場名：{order.customerInfo.siteName}</p>
+                            <p>連絡先：{order.customerInfo.phone}</p>
                             <p className="font-bold text-gray-700">天井PB厚：{order.customerInfo.ceilingPB}mm</p>
                         </div>
                         <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm leading-tight">
@@ -492,7 +527,7 @@ ${order.memo}
                           <th className="py-2 text-left w-8">No.</th>
                           <th className="py-2 text-left">品名・仕様</th>
                           <th className="py-2 text-center w-14">数量</th>
-                          <th className="py-2 text-right w-16">単価</th>
+                          <th className="py-2 text-left w-16">単価</th>
                           <th className="py-2 text-right w-20">金額</th>
                         </tr>
                       </thead>
@@ -515,7 +550,7 @@ ${order.memo}
                                          <span className="text-red-600 font-bold ml-1">
                                            ※{door.isUndercut ? `UC${door.undercutHeight}mm` : ''}
                                            {door.isUndercut && door.isFrameExtended ? '/' : ''}
-                                           {door.isFrameExtended ? `枠伸${door.frameExtensionHeight}mm` : ''}
+                                           {door.isFrameExtended ? `土間${door.frameExtensionHeight}mm` : ''}
                                          </span>
                                        )}
                                      </span>
@@ -524,7 +559,7 @@ ${order.memo}
                                   </div>
                                 </td>
                                 <td className="py-1.5 align-top text-center">1式</td>
-                                <td className="py-1.5 align-top text-right font-mono text-sm">¥{door.price.toLocaleString()}</td>
+                                <td className="py-1.5 align-top text-left font-mono text-sm">¥{door.price.toLocaleString()}</td>
                                 <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{door.price.toLocaleString()}</td>
                             </tr>
                           </React.Fragment>
@@ -542,7 +577,7 @@ ${order.memo}
                                   </div>
                                </td>
                                <td className="py-1.5 align-top text-center">1式</td>
-                               <td className="py-1.5 align-top text-right font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
+                               <td className="py-1.5 align-top text-left font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
                                <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
                             </tr>
                             {/* Base Ring */}
@@ -551,7 +586,7 @@ ${order.memo}
                                  <td className="py-1 align-top"></td>
                                  <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ 台輪あり ({order.storage.baseRing})</td>
                                  <td className="py-1 align-top text-center">1式</td>
-                                 <td className="py-1 align-top text-right font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
+                                 <td className="py-1 align-top text-left font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
                                  <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
                                </tr>
                             )}
@@ -561,7 +596,7 @@ ${order.memo}
                                  <td className="py-1 align-top"></td>
                                  <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ ミラーあり ({order.storage.mirror})</td>
                                  <td className="py-1 align-top text-center">1式</td>
-                                 <td className="py-1 align-top text-right font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
+                                 <td className="py-1 align-top text-left font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
                                  <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
                                </tr>
                             )}
@@ -571,7 +606,7 @@ ${order.memo}
                                  <td className="py-1 align-top"></td>
                                  <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ フィラー</td>
                                  <td className="py-1 align-top text-center">{order.storage.fillerCount}個</td>
-                                 <td className="py-1 align-top text-right font-mono text-sm">¥{order.storage.fillerPrice.toLocaleString()}</td>
+                                 <td className="py-1 align-top text-left font-mono text-sm">¥{order.storage.fillerPrice.toLocaleString()}</td>
                                  <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{(order.storage.fillerPrice * order.storage.fillerCount).toLocaleString()}</td>
                                </tr>
                             )}
@@ -589,7 +624,7 @@ ${order.memo}
                                     <div className="text-[10px] text-gray-500 mt-0.5">{item.color}</div>
                                  </td>
                                  <td className="py-1.5 align-top text-center">{item.quantity}{item.unit}</td>
-                                 <td className="py-1.5 align-top text-right font-mono text-sm">¥{item.unitPrice.toLocaleString()}</td>
+                                 <td className="py-1.5 align-top text-left font-mono text-sm">¥{item.unitPrice.toLocaleString()}</td>
                                  <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{(item.unitPrice * item.quantity).toLocaleString()}</td>
                               </tr>
                            );
@@ -600,12 +635,15 @@ ${order.memo}
                             <tr className="border-b border-gray-200">
                                <td className="py-1.5 align-top font-medium text-gray-500">他</td>
                                <td className="py-1.5 align-top">
-                                 <div className="font-bold text-sm">運賃（配送費）</div>
-                                 <div className="text-[10px] text-gray-500 mt-0.5">納品先: {order.customerInfo.address}</div>
+                                 <div className="font-bold text-sm">運搬諸経費（点数計算: {totals.totalPoints}点）</div>
+                                 <div className="text-[10px] text-gray-500 mt-0.5">
+                                   納品先: {order.customerInfo.address}
+                                   {totals.isShippingDiscounted && ` (送料算定点数: ${totals.totalPoints}/10)`}
+                                 </div>
                                </td>
                                <td className="py-1.5 align-top text-center">1式</td>
-                               <td className="py-1.5 align-top text-right font-mono text-sm">¥{order.shipping.toLocaleString()}</td>
-                               <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{order.shipping.toLocaleString()}</td>
+                               <td className="py-1.5 align-top text-left font-mono text-sm">¥{totals.finalShipping.toLocaleString()}</td>
+                               <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{totals.finalShipping.toLocaleString()}</td>
                             </tr>
                         )}
                         
@@ -805,9 +843,15 @@ ${order.memo}
                           <label className="text-xs font-bold text-gray-500 ml-1">現場名</label>
                           <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="〇〇様邸" value={initialSettings.siteName} onChange={e => setInitialSettings(p => ({...p, siteName: e.target.value}))} />
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold text-gray-500 ml-1">担当者名</label>
-                          <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="山田 太郎" value={initialSettings.contactName} onChange={e => setInitialSettings(p => ({...p, contactName: e.target.value}))} />
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 ml-1">担当者名</label>
+                            <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="山田 太郎" value={initialSettings.contactName} onChange={e => setInitialSettings(p => ({...p, contactName: e.target.value}))} />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-bold text-gray-500 ml-1">連絡先(電話番号)</label>
+                            <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="090-0000-0000" value={initialSettings.phone} onChange={e => setInitialSettings(p => ({...p, phone: e.target.value}))} />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -944,7 +988,7 @@ ${order.memo}
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6 mb-8 bg-gray-50 p-6 rounded-2xl border">
+        <div className="grid grid-cols-4 gap-6 mb-8 bg-gray-50 p-6 rounded-2xl border">
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">会社名</label>
             <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="会社名" value={order.customerInfo.company} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, company: e.target.value}}))} />
@@ -958,6 +1002,10 @@ ${order.memo}
             <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="担当者名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, contactName: e.target.value}}))} />
           </div>
           <div className="space-y-1">
+            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">連絡先(電話番号)</label>
+            <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="電話番号" value={order.customerInfo.phone} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, phone: e.target.value}}))} />
+          </div>
+          <div className="space-y-1 col-span-2">
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">納品先住所（都道府県から入力してください）</label>
             <div className="relative">
               <input 
@@ -979,10 +1027,12 @@ ${order.memo}
              <div className="space-y-2">
                 {/* Date 1 */}
                 <div className="flex flex-col gap-1 p-2 border rounded-lg bg-white shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-white bg-blue-600 px-2 py-0.5 rounded whitespace-nowrap">① ドア枠</span>
-                    <input type="date" value={order.customerInfo.deliveryDate1} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, deliveryDate1: e.target.value}}))} className="w-full border rounded px-2 py-1 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none font-['Inter'] text-sm" />
-                  </div>
+                  <BusinessDatePicker 
+                    value={order.customerInfo.deliveryDate1} 
+                    onChange={date => setOrder(p => ({...p, customerInfo: {...p.customerInfo, deliveryDate1: date}}))}
+                    label="① ドア枠"
+                    colorClass="bg-blue-600"
+                  />
                   {(hasBaseboard || hasStorage) && (
                     <div className="flex items-center gap-4 ml-1 pl-2 border-l-2 border-blue-100">
                       {hasBaseboard && (
@@ -1003,10 +1053,12 @@ ${order.memo}
 
                 {/* Date 2 */}
                 <div className="flex flex-col gap-1 p-2 border rounded-lg bg-white shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-white bg-green-600 px-2 py-0.5 rounded whitespace-nowrap">② ドア本体</span>
-                    <input type="date" value={order.customerInfo.deliveryDate2} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, deliveryDate2: e.target.value}}))} className="w-full border rounded px-2 py-1 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none font-['Inter'] text-sm" />
-                  </div>
+                  <BusinessDatePicker 
+                    value={order.customerInfo.deliveryDate2} 
+                    onChange={date => setOrder(p => ({...p, customerInfo: {...p.customerInfo, deliveryDate2: date}}))}
+                    label="② ドア本体"
+                    colorClass="bg-green-600"
+                  />
                   {(hasBaseboard || hasStorage) && (
                     <div className="flex items-center gap-4 ml-1 pl-2 border-l-2 border-green-100">
                       {hasBaseboard && (
@@ -1027,9 +1079,22 @@ ${order.memo}
              </div>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">天井PB厚 (mm)</label>
-            <div className="flex items-center gap-2">
-              <input type="number" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none font-['Inter']" value={order.customerInfo.ceilingPB} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, ceilingPB: e.target.value}}))} />
+            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">天井PB厚</label>
+            <div className="flex flex-col gap-1">
+              <select 
+                className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" 
+                value={order.customerInfo.ceilingPB} 
+                onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, ceilingPB: e.target.value}}))}
+              >
+                {PB_OPTIONS.map(opt => (
+                  <option key={opt} value={opt}>{opt}㎜</option>
+                ))}
+              </select>
+              {order.customerInfo.ceilingPB === '15.0' && (
+                <p className="text-[10px] font-bold text-red-600 bg-red-50 p-1 rounded text-center">
+                  別途ご相談ください。
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -1219,8 +1284,17 @@ ${order.memo}
             
             <div className="w-full space-y-3 mb-8">
                 <div className="flex justify-between items-center border-b border-gray-700 pb-3">
-                    <span className="text-gray-400 font-bold text-base">送料</span>
-                    <span className="text-xl font-bold font-['Inter']">¥{order.shipping.toLocaleString()}</span>
+                    <span className="text-gray-400 font-bold text-base">配送点数</span>
+                    <span className="text-xl font-bold font-['Inter']">{totals.totalPoints} 点</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-gray-700 pb-3">
+                    <div className="flex flex-col">
+                      <span className="text-gray-400 font-bold text-base">運搬諸経費</span>
+                      {totals.isShippingDiscounted && (
+                        <span className="text-[10px] text-orange-400 font-bold leading-tight">送料算定点数 ({totals.totalPoints}/10)</span>
+                      )}
+                    </div>
+                    <span className="text-xl font-bold font-['Inter']">¥{totals.finalShipping.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="text-gray-400 font-bold text-base">小計 (税抜)</span>

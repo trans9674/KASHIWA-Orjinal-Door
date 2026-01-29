@@ -1,7 +1,45 @@
 
 import { DoorType, UsageLocation, PriceRecord, DoorItem } from './types';
 
-// デザイン名変換マップ（価格表の表記 -> システムの選択肢）
+// アイテムごとの配送点数定義
+export const DOOR_POINTS: Record<string, number> = {
+  [DoorType.Hinged]: 1,
+  [DoorType.Sliding]: 1,
+  [DoorType.Pocket]: 1,
+  [DoorType.Outset]: 1,
+  [DoorType.OutsetIncorner]: 1,
+  [DoorType.Folding2]: 1,
+  [DoorType.StorageDouble]: 1,
+  [DoorType.StorageSingle]: 1,
+  [DoorType.Sliding2]: 2,
+  [DoorType.DoubleSliding2]: 2,
+  [DoorType.Folding4W12]: 2,
+  [DoorType.Folding4W16]: 2,
+  [DoorType.Sliding3]: 3,
+  [DoorType.DoubleSliding3]: 3,
+  [DoorType.Folding6]: 3,
+  [DoorType.DoubleSliding4]: 4,
+  [DoorType.Folding8]: 4,
+};
+
+// 玄関収納の配送点数
+export const getStoragePoints = (typeId: string): number => {
+  if (typeId === "NONE") return 0;
+  if (typeId === "E02") return 1; // 一の字 W800
+  if (["E03R", "E03L", "E04", "E05R", "E05L", "E22", "I20"].includes(typeId)) return 2; // 一の字W1200-2000, 二の字W800, トールW800
+  return 4; // その他 (二の字W1200-, トールW1200-, コの字, L型)
+};
+
+// 巾木の配送点数
+export const getBaseboardPoints = (quantity: number): number => {
+  if (quantity <= 0) return 0;
+  if (quantity <= 20) return 1;
+  if (quantity <= 40) return 2;
+  if (quantity <= 60) return 3;
+  return 4;
+};
+
+// 建具仕様マスタ
 export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: string[], hangingSides: string[] }> = {
   [DoorType.Hinged]: {
     designs: ["フラット", "フラット 表示錠", "フラット 表示錠 遮音仕様", "ガラス戸(透明強化ガラス5mm)"],
@@ -10,7 +48,7 @@ export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: strin
   },
   [DoorType.Sliding]: {
     designs: ["フラット", "フラット 表示錠", "ガラス戸(透明強化ガラス5mm)"],
-    widths: ["1450", "1645"],
+    widths: ["1645", "1450", "1200"],
     hangingSides: ["右戸袋(R)", "左戸袋(L)"]
   },
   [DoorType.Sliding2]: {
@@ -25,7 +63,7 @@ export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: strin
   },
   [DoorType.Pocket]: {
     designs: ["フラット", "フラット 表示錠", "ガラス戸(透明強化ガラス5mm)"],
-    widths: ["735", "1450", "1645"],
+    widths: ["1645", "1450", "735"],
     hangingSides: ["右戸袋(R)", "左戸袋(L)"]
   },
   [DoorType.Outset]: {

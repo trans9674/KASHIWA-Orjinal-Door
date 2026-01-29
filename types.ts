@@ -56,7 +56,8 @@ export interface DoorItem {
   isUndercut?: boolean;
   undercutHeight?: number;
   isFrameExtended?: boolean;
-  frameExtensionHeight?: number;
+  domaExtensionType?: 'none' | 'frame' | 'door';
+  frameExtensionHeight?: number; // 枠伸長/建具伸長の数値用
 }
 
 export interface EntranceStorage {

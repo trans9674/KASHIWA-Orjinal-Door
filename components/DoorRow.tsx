@@ -75,6 +75,9 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       updates = { [name]: checked };
+      if (name === 'isFrameExtended' && checked && !door.domaExtensionType) {
+        updates.domaExtensionType = 'none';
+      }
     } else {
        updates = { [name]: value };
     }
@@ -136,7 +139,6 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     const bgImageUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=jpg&w=2400`;
     const wdText = `WD-${index + 1}`;
     
-    // 特寸の場合の表示用HTML生成
     const widthHtml = door.width === '特寸' 
       ? `<span style="color: red;">${door.customWidth}㎜特寸</span>` 
       : `${door.width}`;
@@ -145,12 +147,14 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       ? `<span style="color: red;">${door.customHeight}㎜特寸</span>` 
       : `${door.height.replace('H', '')}`;
 
-    // 枠オプション情報の生成
     const frameOptionText = [];
     if (door.isUndercut) frameOptionText.push(`アンダーカット${door.undercutHeight}㎜`);
-    if (door.isFrameExtended) frameOptionText.push(`枠伸長${door.frameExtensionHeight}㎜`);
+    if (door.isFrameExtended) {
+      if (door.domaExtensionType === 'none') frameOptionText.push('土間納まり(伸長なし)');
+      else if (door.domaExtensionType === 'frame') frameOptionText.push(`土間納まり(枠伸長${door.frameExtensionHeight}㎜)`);
+      else if (door.domaExtensionType === 'door') frameOptionText.push(`土間納まり(建具伸長${door.frameExtensionHeight}㎜)`);
+    }
     
-    // 赤文字で枠仕様の横に追記
     const frameOptionHtml = frameOptionText.length > 0
       ? `<span style="color: red; margin-left: 0.5em; font-weight: bold;">(${frameOptionText.join(' / ')})</span>`
       : '';
@@ -307,11 +311,8 @@ export const DoorRow: React.FC<DoorRowProps> = ({
 
   const getAlertStyle = (current: string, initial: string, field?: string) => {
     if (field === 'handleColor') {
-      // J型取手は常に許容
       if (current === 'J型取手') return '';
-      // 現在のハンドル名が初期設定の色名（セラミックホワイト等）を含んでいればOK
       if (current.includes(initial)) return '';
-      // それ以外はアラート
       return 'text-red-600 font-bold border-red-300 bg-red-50';
     }
     return current !== initial ? 'text-red-600 font-bold border-red-300 bg-red-50' : '';
@@ -380,77 +381,163 @@ export const DoorRow: React.FC<DoorRowProps> = ({
            </button>
         </div>
         
-        {/* Frame Options Modal (Fixed Position) */}
         {isFrameOptionOpen && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-left" onClick={() => setIsFrameOptionOpen(false)}>
-            <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-lg w-full animate-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
-               <div className="flex justify-between items-center mb-4 border-b pb-2">
-                  <span className="font-bold text-gray-800 text-lg">枠オプション設定</span>
+            <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-4xl w-full animate-in zoom-in duration-200 overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+               <div className="flex justify-between items-center mb-6 border-b pb-4">
+                  <div>
+                    <span className="font-bold text-gray-800 text-xl">枠オプション設定</span>
+                    <span className="text-gray-400 text-sm ml-4">WD{index + 1} / {door.type}</span>
+                  </div>
                   <button onClick={() => setIsFrameOptionOpen(false)} className="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100 transition-colors">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                </div>
                
-               <div className="flex flex-col sm:flex-row gap-6">
-                 {/* 左側: アンダーカット */}
-                 <div className="flex-1 flex flex-col gap-3 border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0 sm:pr-4">
-                    <div className="overflow-hidden rounded border border-gray-200 shadow-sm mb-1 bg-gray-100 h-28 flex items-center justify-center">
-                       <img src="http://25663cc9bda9549d.main.jp/aistudio/door/kaikou.jpg" alt="ドア下開口" className="max-h-full w-auto object-contain mix-blend-multiply" />
+               <div className="space-y-10">
+                 {/* アンダーカット設定 */}
+                 <section className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                    <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+                      <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                      ドア下開口（アンダーカット）
+                    </h4>
+                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+                       <div className="w-full md:w-64 shrink-0 overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-white h-40 flex items-center justify-center">
+                          <img src="http://25663cc9bda9549d.main.jp/aistudio/door/kaikou.jpg" alt="ドア下開口" className="max-h-full w-auto object-contain mix-blend-multiply" />
+                       </div>
+                       <div className="flex-1 space-y-4">
+                          <label className="flex items-center gap-3 cursor-pointer bg-white p-4 rounded-xl hover:bg-gray-50 transition-colors border-2 border-transparent has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/30">
+                            <input 
+                              type="checkbox" 
+                              name="isUndercut" 
+                              checked={door.isUndercut || false} 
+                              onChange={handleChange}
+                              className="rounded text-blue-600 focus:ring-blue-500 w-6 h-6" 
+                            />
+                            <div className="flex flex-col">
+                              <span className="text-gray-800 font-bold text-sm">ドアを床から浮かせ、通気性を確保する</span>
+                              <span className="text-gray-400 text-[10px]">アンダーカット仕様になります</span>
+                            </div>
+                          </label>
+                          <div className={`flex items-center gap-3 pl-2 transition-all ${door.isUndercut ? 'opacity-100' : 'opacity-30 pointer-events-none translate-x-2'}`}>
+                            <span className="text-gray-600 text-xs font-bold whitespace-nowrap">床との隙間寸法</span>
+                            <div className="flex items-center gap-2">
+                               <input 
+                                type="number" 
+                                name="undercutHeight" 
+                                value={door.undercutHeight} 
+                                onChange={handleChange}
+                                className="border-2 border-gray-200 rounded-lg px-3 py-2 w-28 text-right font-mono text-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                              />
+                              <span className="text-gray-500 font-bold">mm</span>
+                            </div>
+                          </div>
+                       </div>
                     </div>
-                    <label className="flex items-center gap-3 cursor-pointer bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                      <input 
-                        type="checkbox" 
-                        name="isUndercut" 
-                        checked={door.isUndercut || false} 
-                        onChange={handleChange}
-                        className="rounded text-blue-600 focus:ring-blue-500 w-5 h-5" 
-                      />
-                      <span className="text-gray-700 font-bold text-sm">ドアを床から浮かせる</span>
-                    </label>
-                    <div className={`flex items-center gap-2 pl-2 transition-opacity ${door.isUndercut ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                      <span className="text-gray-500 text-xs font-bold">床との隙間</span>
-                      <input 
-                        type="number" 
-                        name="undercutHeight" 
-                        value={door.undercutHeight} 
-                        onChange={handleChange}
-                        className="border rounded px-2 py-1 w-24 text-right font-mono text-base focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                      <span className="text-gray-500 text-sm">mm</span>
-                    </div>
-                 </div>
+                 </section>
 
-                 {/* 右側: 枠伸長 */}
-                 <div className="flex-1 flex flex-col gap-3">
-                    <div className="overflow-hidden rounded border border-gray-200 shadow-sm mb-1 bg-gray-100 h-28 flex items-center justify-center">
-                       <img src="http://25663cc9bda9549d.main.jp/aistudio/door/wakuencho.jpg" alt="枠伸長" className="max-h-full w-auto object-contain mix-blend-multiply" />
+                 {/* 土間納まり設定 */}
+                 <section className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                        <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
+                        土間納まり設定
+                      </h4>
+                      <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-full border border-gray-200 text-[11px] font-bold text-gray-600">
+                         <input type="checkbox" name="isFrameExtended" checked={door.isFrameExtended || false} onChange={handleChange} className="rounded text-orange-600" />
+                         この建具を土間納まりにする
+                      </label>
                     </div>
-                    <label className="flex items-center gap-3 cursor-pointer bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors">
-                      <input 
-                        type="checkbox" 
-                        name="isFrameExtended" 
-                        checked={door.isFrameExtended || false} 
-                        onChange={handleChange}
-                        className="rounded text-blue-600 focus:ring-blue-500 w-5 h-5" 
-                      />
-                      <span className="text-gray-700 font-bold text-sm">ドア枠を下に伸長</span>
-                    </label>
-                    <div className={`flex items-center gap-2 pl-2 transition-opacity ${door.isFrameExtended ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
-                      <span className="text-gray-500 text-xs font-bold">伸長寸法</span>
-                      <input 
-                        type="number" 
-                        name="frameExtensionHeight" 
-                        value={door.frameExtensionHeight} 
-                        onChange={handleChange}
-                        className="border rounded px-2 py-1 w-24 text-right font-mono text-base focus:ring-2 focus:ring-blue-500 outline-none"
-                      />
-                      <span className="text-gray-500 text-sm">mm</span>
+
+                    <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all ${door.isFrameExtended ? 'opacity-100 scale-100' : 'opacity-30 pointer-events-none scale-[0.98]'}`}>
+                      {/* Option: None */}
+                      <div 
+                        onClick={() => door.isFrameExtended && updateDoor(door.id, { domaExtensionType: 'none' })}
+                        className={`group relative flex flex-col bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${door.domaExtensionType === 'none' ? 'border-orange-500 shadow-lg ring-4 ring-orange-50' : 'border-gray-100 hover:border-orange-200'}`}
+                      >
+                        <div className="h-40 bg-gray-50 flex items-center justify-center p-4 border-b">
+                           <img src="http://25663cc9bda9549d.main.jp/aistudio/door/expand.jpg" alt="伸長なし" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />
+                        </div>
+                        <div className="p-4 text-center">
+                           <p className="font-bold text-gray-800 text-sm">伸長なし</p>
+                           <p className="text-[10px] text-gray-400 mt-1 leading-tight">標準サイズの枠・建具で<br/>そのまま納めます</p>
+                           <div className={`mt-3 mx-auto w-5 h-5 rounded-full border-2 flex items-center justify-center ${door.domaExtensionType === 'none' ? 'border-orange-500 bg-orange-500' : 'border-gray-200'}`}>
+                             {door.domaExtensionType === 'none' && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
+                           </div>
+                        </div>
+                      </div>
+
+                      {/* Option: Frame Extension */}
+                      <div 
+                        onClick={() => door.isFrameExtended && updateDoor(door.id, { domaExtensionType: 'frame' })}
+                        className={`group relative flex flex-col bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${door.domaExtensionType === 'frame' ? 'border-orange-500 shadow-lg ring-4 ring-orange-50' : 'border-gray-100 hover:border-orange-200'}`}
+                      >
+                        <div className="h-40 bg-gray-50 flex items-center justify-center p-4 border-b">
+                           <img src="http://25663cc9bda9549d.main.jp/aistudio/door/expandwaku.jpg" alt="枠伸長" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />
+                        </div>
+                        <div className="p-4 text-center">
+                           <p className="font-bold text-gray-800 text-sm">枠伸長</p>
+                           <p className="text-[10px] text-gray-400 mt-1 leading-tight">縦枠のみを下方へ伸ばし<br/>土間への埋込等に対応します</p>
+                           <div className="mt-3 flex items-center justify-center gap-2">
+                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${door.domaExtensionType === 'frame' ? 'border-orange-500 bg-orange-500' : 'border-gray-200'}`}>
+                               {door.domaExtensionType === 'frame' && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
+                             </div>
+                           </div>
+                           {door.domaExtensionType === 'frame' && (
+                             <div className="mt-3 pt-3 border-t flex items-center justify-center gap-1 animate-in slide-in-from-top-1">
+                               <input 
+                                 type="number" 
+                                 name="frameExtensionHeight" 
+                                 value={door.frameExtensionHeight} 
+                                 onClick={(e) => e.stopPropagation()}
+                                 onChange={handleChange} 
+                                 placeholder="伸長寸"
+                                 className="border-2 border-orange-200 rounded px-2 py-1 w-20 text-right font-mono font-bold text-orange-600 focus:border-orange-500 focus:ring-0 outline-none" 
+                               />
+                               <span className="text-[10px] font-bold text-gray-500">㎜</span>
+                             </div>
+                           )}
+                        </div>
+                      </div>
+
+                      {/* Option: Door Extension */}
+                      <div 
+                        onClick={() => door.isFrameExtended && updateDoor(door.id, { domaExtensionType: 'door' })}
+                        className={`group relative flex flex-col bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${door.domaExtensionType === 'door' ? 'border-orange-500 shadow-lg ring-4 ring-orange-50' : 'border-gray-100 hover:border-orange-200'}`}
+                      >
+                        <div className="h-40 bg-gray-50 flex items-center justify-center p-4 border-b">
+                           <img src="http://25663cc9bda9549d.main.jp/aistudio/door/expanddoor.JPG" alt="建具伸長" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform" />
+                        </div>
+                        <div className="p-4 text-center">
+                           <p className="font-bold text-gray-800 text-sm">建具伸長</p>
+                           <p className="text-[10px] text-gray-400 mt-1 leading-tight">縦枠はそのままで、<br/>扉本体だけを下方へ伸ばします</p>
+                           <div className="mt-3 flex items-center justify-center gap-2">
+                             <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${door.domaExtensionType === 'door' ? 'border-orange-500 bg-orange-500' : 'border-gray-200'}`}>
+                               {door.domaExtensionType === 'door' && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>}
+                             </div>
+                           </div>
+                           {door.domaExtensionType === 'door' && (
+                             <div className="mt-3 pt-3 border-t flex items-center justify-center gap-1 animate-in slide-in-from-top-1">
+                               <input 
+                                 type="number" 
+                                 name="frameExtensionHeight" 
+                                 value={door.frameExtensionHeight} 
+                                 onClick={(e) => e.stopPropagation()}
+                                 onChange={handleChange} 
+                                 placeholder="伸長寸"
+                                 className="border-2 border-orange-200 rounded px-2 py-1 w-20 text-right font-mono font-bold text-orange-600 focus:border-orange-500 focus:ring-0 outline-none" 
+                               />
+                               <span className="text-[10px] font-bold text-gray-500">㎜</span>
+                             </div>
+                           )}
+                        </div>
+                      </div>
                     </div>
-                 </div>
+                 </section>
                </div>
 
-               <div className="mt-6 flex justify-end">
-                  <button onClick={() => setIsFrameOptionOpen(false)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm">決定</button>
+               <div className="mt-10 flex justify-end">
+                  <button onClick={() => setIsFrameOptionOpen(false)} className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-3.5 rounded-xl text-base font-bold transition-all shadow-xl active:scale-95">設定を保存する</button>
                </div>
             </div>
           </div>
@@ -513,7 +600,6 @@ export const DoorRow: React.FC<DoorRowProps> = ({
           </button>
         </div>
 
-        {/* 特寸注意モーダル */}
         {isCustomSizeInfoOpen && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-left" onClick={() => setIsCustomSizeInfoOpen(false)}>
             <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full animate-in zoom-in cursor-default" onClick={(e) => e.stopPropagation()}>
