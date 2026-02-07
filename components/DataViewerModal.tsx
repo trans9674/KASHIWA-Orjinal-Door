@@ -58,7 +58,6 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
   // Sorting State
   const [sortConfig, setSortConfig] = useState<{ key: keyof PriceRecord; direction: 'asc' | 'desc' } | null>({ key: 'type', direction: 'asc' });
-  const [storageSortConfig, setStorageSortConfig] = useState<{ key: keyof StorageTypeRecord; direction: 'asc' | 'desc' } | null>({ key: 'category', direction: 'asc' });
 
   // Editing State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -155,12 +154,6 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     setSortConfig({ key, direction });
   };
 
-  const handleStorageSort = (key: keyof StorageTypeRecord) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (storageSortConfig && storageSortConfig.key === key && storageSortConfig.direction === 'asc') direction = 'desc';
-    setStorageSortConfig({ key, direction });
-  };
-
   const typeOrder = useMemo(() => {
     const order: Record<string, number> = {};
     let index = 0;
@@ -197,23 +190,10 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
   const sortedStorageList = useMemo(() => {
     let items = storageTypes.filter(s => s.id !== 'NONE');
-    if (!storageSortConfig) return items;
-
-    items.sort((a, b) => {
-      const valA = a[storageSortConfig.key];
-      const valB = b[storageSortConfig.key];
-      
-      let comparison = 0;
-      if (typeof valA === 'string' && typeof valB === 'string') {
-        comparison = valA.localeCompare(valB, 'ja');
-      } else if (typeof valA === 'number' && typeof valB === 'number') {
-        comparison = valA - valB;
-      }
-
-      return storageSortConfig.direction === 'asc' ? comparison : comparison * -1;
-    });
+    // デフォルトでカテゴリー順に
+    items.sort((a, b) => a.category.localeCompare(b.category, 'ja'));
     return items;
-  }, [storageTypes, storageSortConfig]);
+  }, [storageTypes]);
 
   const handleStartEdit = (record: PriceRecord) => { setEditingId(record.id!); setEditValues({ ...record }); };
   const handleCancelEdit = () => { setEditingId(null); setEditValues({}); };
@@ -440,11 +420,11 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                 <table className="w-full text-xs text-left border-collapse">
                   <thead className="bg-gray-100 text-gray-700 font-bold sticky top-0 shadow-sm z-10">
                     <tr>
-                      <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleStorageSort('id')}>ID<span className="text-gray-400 ml-1">{storageSortConfig?.key === 'id' ? (storageSortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
-                      <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleStorageSort('category')}>カテゴリー<span className="text-gray-400 ml-1">{storageSortConfig?.key === 'category' ? (storageSortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
-                      <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleStorageSort('name')}>名称<span className="text-gray-400 ml-1">{storageSortConfig?.key === 'name' ? (storageSortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
-                      <th className="p-2 border-b text-right cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleStorageSort('width')}>幅(mm)<span className="text-gray-400 ml-1">{storageSortConfig?.key === 'width' ? (storageSortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
-                      <th className="p-2 border-b text-right bg-blue-50 cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleStorageSort('price')}>本体価格<span className="text-gray-400 ml-1">{storageSortConfig?.key === 'price' ? (storageSortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
+                      <th className="p-2 border-b">ID</th>
+                      <th className="p-2 border-b">カテゴリー</th>
+                      <th className="p-2 border-b">名称</th>
+                      <th className="p-2 border-b text-right">幅(mm)</th>
+                      <th className="p-2 border-b text-right bg-blue-50">本体価格</th>
                       <th className="p-2 border-b w-32">画像</th>
                       <th className="p-2 border-b text-center w-24">操作</th>
                     </tr>

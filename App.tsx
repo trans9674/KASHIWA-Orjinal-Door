@@ -405,8 +405,8 @@ const App: React.FC = () => {
       const isPdf = finalUrl.toLowerCase().endsWith('.pdf');
       const wdText = `WD-${index + 1}`;
       
-      const widthHtml = door.width === '特寸' ? `${door.customWidth}㎜特寸` : `${door.width}`;
-      const heightHtml = door.height === '特寸' ? `${door.customHeight}㎜特寸` : `${door.height.replace('H', '')}`;
+      const widthHtml = door.width === '特寸' ? `<span style="color: #ef4444; font-weight: bold;">${door.customWidth}㎜特寸</span>` : `${door.width}`;
+      const heightHtml = door.height === '特寸' ? `<span style="color: #ef4444; font-weight: bold;">${door.customHeight}㎜特寸</span>` : `${door.height.replace('H', '')}`;
 
       const frameOptionText = [];
       if (door.isUndercut) frameOptionText.push(`UC${door.undercutHeight}㎜`);
@@ -415,7 +415,9 @@ const App: React.FC = () => {
         else if (door.domaExtensionType === 'frame') frameOptionText.push(`土間(枠+${door.frameExtensionHeight})`);
         else if (door.domaExtensionType === 'door') frameOptionText.push(`土間(扉+${door.frameExtensionHeight})`);
       }
-      const frameOptionHtml = frameOptionText.length > 0 ? ` (${frameOptionText.join('/')})` : '';
+      const frameOptionHtml = frameOptionText.length > 0 
+        ? `<span style="color: #ef4444; font-weight: bold; margin-left: 0.5em;">(${frameOptionText.join('/')})</span>` 
+        : '';
 
       pagesHtml += `
         <div class="page-container">
@@ -1290,7 +1292,7 @@ ${order.memo}
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">担当者名</label>
-            <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="担当者名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, contactName: e.target.value}}))} />
+            <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="担当者名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, contactName: e.target.value}))} />
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">連絡先(電話番号)</label>
@@ -1587,36 +1589,36 @@ ${order.memo}
               <div className="text-3xl font-bold text-blue-700 font-['Inter']">¥{totals.baseboardSubtotal.toLocaleString()}</div>
             </div>
           </div>
-          <div className="bg-gray-900 text-white p-10 rounded-3xl shadow-2xl flex flex-col justify-between relative overflow-hidden group">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-2xl transition-all group-hover:bg-blue-500/20"></div>
+          <div className="bg-white text-gray-900 p-10 rounded-3xl shadow-2xl flex flex-col justify-between relative overflow-hidden group border border-gray-200">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-2xl transition-all group-hover:bg-blue-500/10"></div>
             
             <div className="w-full space-y-3 mb-8">
-                <div className="flex justify-between items-center border-b border-gray-700 pb-3">
-                    <span className="text-gray-400 font-bold text-base">配送点数</span>
-                    <span className="text-xl font-bold font-['Inter']">{totals.totalPoints} 点</span>
+                <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                    <span className="text-gray-500 font-bold text-base">配送点数</span>
+                    <span className="text-xl font-bold font-['Inter'] text-gray-800">{totals.totalPoints} 点</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-gray-700 pb-3">
+                <div className="flex justify-between items-center border-b border-gray-100 pb-3">
                     <div className="flex flex-col">
-                      <span className="text-gray-400 font-bold text-base">運搬諸経費</span>
+                      <span className="text-gray-500 font-bold text-base">運搬諸経費</span>
                       {totals.isShippingDiscounted && (
-                        <span className="text-[10px] text-orange-400 font-bold leading-tight">送料算定点数 ({totals.totalPoints}/10)</span>
+                        <span className="text-[10px] text-orange-500 font-bold leading-tight">送料算定点数 ({totals.totalPoints}/10)</span>
                       )}
                     </div>
-                    <span className="text-xl font-bold font-['Inter']">¥{totals.finalShipping.toLocaleString()}</span>
+                    <span className="text-xl font-bold font-['Inter'] text-gray-800">¥{totals.finalShipping.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-gray-400 font-bold text-base">小計 (税抜)</span>
-                    <span className="text-xl font-bold font-['Inter']">¥{totals.subtotal.toLocaleString()}</span>
+                    <span className="text-gray-500 font-bold text-base">小計 (税抜)</span>
+                    <span className="text-xl font-bold font-['Inter'] text-gray-800">¥{totals.subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-gray-400 font-bold text-base">消費税 (10%)</span>
-                    <span className="text-xl font-bold font-['Inter']">¥{totals.tax.toLocaleString()}</span>
+                    <span className="text-gray-500 font-bold text-base">消費税 (10%)</span>
+                    <span className="text-xl font-bold font-['Inter'] text-gray-800">¥{totals.tax.toLocaleString()}</span>
                 </div>
             </div>
 
-            <div className="flex justify-between items-end mt-4 pt-4 border-t border-gray-800">
-                <p className="text-gray-500 font-bold uppercase tracking-widest text-base font-['Inter'] mb-2">合計金額（税込）</p>
-                <p className="text-4xl xl:text-5xl font-black font-['Inter'] tracking-tighter leading-none">¥{totals.total.toLocaleString()}</p>
+            <div className="flex justify-between items-end mt-4 pt-4 border-t border-gray-200">
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-base font-['Inter'] mb-2">合計金額（税込）</p>
+                <p className="text-4xl xl:text-5xl font-black font-['Inter'] tracking-tighter leading-none text-blue-700">¥{totals.total.toLocaleString()}</p>
             </div>
           </div>
         </div>
