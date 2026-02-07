@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { getDoorDetailPdfUrl, DOOR_GROUPS, STORAGE_CATEGORIES } from '../constants';
 import { DoorItem, PriceRecord, StorageTypeRecord, ShippingFeeRecord, UsageLocation, DoorType } from '../types';
 import { supabase } from '../supabase';
@@ -27,6 +27,13 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
   const [isAdding, setIsAdding] = useState(false);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+
+  // Sorting State
+  const [sortConfig, setSortConfig] = useState<{ key: keyof PriceRecord; direction: 'asc' | 'desc' } | null>(null);
+
+  // Editing State
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<Partial<PriceRecord>>({});
 
   // New Door State
   const [newDoor, setNewDoor] = useState<Partial<PriceRecord>>({
@@ -159,6 +166,75 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       } catch(e: any) {
           alert('削除に失敗しました: ' + e.message);
       }
+  };
+
+  // Sorting Logic
+  const handleSort = (key: keyof PriceRecord) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedPriceList = useMemo(() => {
+    let items = [...priceList];
+    if (sortConfig) {
+      items.sort((a, b) => {
+        // @ts-ignore
+        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+        // @ts-ignore
+        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return items;
+  }, [priceList, sortConfig]);
+
+  // Editing Logic
+  const handleStartEdit = (record: PriceRecord) => {
+    setEditingId(record.id!);
+    setEditValues({ ...record });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditValues({});
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingId) return;
+    try {
+      const { error } = await supabase.from('internal_doors').update({
+        frame_price: editValues.framePrice,
+        door_price: editValues.doorPrice,
+        set_price: editValues.setPrice,
+        // 必要であれば他のフィールドも更新対象にする
+      }).eq('id', editingId);
+
+      if (error) throw error;
+
+      setPriceList(prev => prev.map(p => p.id === editingId ? { ...p, ...editValues } as PriceRecord : p));
+      setEditingId(null);
+      setEditValues({});
+      alert('更新しました');
+    } catch (e: any) {
+      console.error(e);
+      alert('更新に失敗しました: ' + e.message);
+    }
+  };
+
+  const handleDeleteRecord = async (id: string) => {
+    if (!confirm('このデータを削除してもよろしいですか？\n※この操作は取り消せません。')) return;
+    try {
+      const { error } = await supabase.from('internal_doors').delete().eq('id', id);
+      if (error) throw error;
+      setPriceList(prev => prev.filter(p => p.id !== id));
+      alert('削除しました');
+    } catch (e: any) {
+      console.error(e);
+      alert('削除に失敗しました: ' + e.message);
+    }
   };
 
   const handleAddDoor = async () => {
@@ -416,82 +492,174 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                 <table className="w-full text-sm text-left border-collapse">
                   <thead className="bg-gray-100 text-gray-700 font-bold sticky top-0 shadow-sm z-10">
                     <tr>
-                      <th className="p-3 border-b">種別</th>
+                      <th className="p-3 border-b cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('type')}>
+                        <div className="flex items-center gap-1">
+                          種別
+                          <span className="text-gray-400 group-hover:text-gray-600">
+                             {sortConfig?.key === 'type' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
+                          </span>
+                        </div>
+                      </th>
                       <th className="p-3 border-b">デザイン</th>
                       <th className="p-3 border-b text-center">高さ</th>
                       <th className="p-3 border-b text-right">枠価格</th>
                       <th className="p-3 border-b text-right">扉価格</th>
                       <th className="p-3 border-b text-right bg-blue-50">セット価格</th>
-                      <th className="p-3 border-b font-mono">画像/PDF</th>
+                      <th className="p-3 border-b font-mono w-40">画像/PDF</th>
+                      <th className="p-3 border-b text-center w-24">操作</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {priceList.map((row, index) => (
-                      <tr key={index} className="hover:bg-gray-50 transition-colors">
-                        <td className="p-3 font-medium text-gray-800">{row.type}</td>
-                        <td className="p-3">{row.design}</td>
-                        <td className="p-3 text-center font-mono">{row.height}</td>
-                        <td className="p-3 text-right font-mono text-gray-500">¥{row.framePrice.toLocaleString()}</td>
-                        <td className="p-3 text-right font-mono text-gray-500">¥{row.doorPrice.toLocaleString()}</td>
-                        <td className="p-3 text-right font-mono font-bold text-blue-600 bg-blue-50/30">¥{row.setPrice.toLocaleString()}</td>
-                        <td className="p-3 font-mono text-xs text-gray-500 align-middle">
-                          <div className="flex flex-col gap-2">
-                             {uploadingId === row.id ? (
-                               <div className="flex items-center gap-2 text-blue-600 font-bold">
-                                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
-                                 Up...
-                               </div>
-                             ) : (
-                               <>
-                                {row.imageUrl ? (
-                                  <div className="flex items-center justify-between bg-blue-50 p-1.5 rounded border border-blue-100 w-full max-w-[140px]">
-                                    <a href={row.imageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate flex-1" title={row.imageUrl}>
-                                      {row.imageUrl.split('/').pop()}
-                                    </a>
-                                    {row.id && (
-                                      <button 
-                                        onClick={() => handleDeleteImage(row.id!)}
-                                        className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded p-0.5 transition-colors ml-1"
-                                        title="画像を解除"
-                                      >
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                                      </button>
-                                    )}
+                    {sortedPriceList.map((row, index) => {
+                      const isEditing = editingId === row.id;
+                      
+                      return (
+                        <tr key={row.id || index} className={`transition-colors ${isEditing ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
+                          <td className="p-3 font-medium text-gray-800">
+                            {row.type}
+                          </td>
+                          <td className="p-3">
+                             {row.design}
+                          </td>
+                          <td className="p-3 text-center font-mono">
+                             {row.height}
+                          </td>
+                          {/* Price Columns with Edit capability */}
+                          <td className="p-3 text-right font-mono text-gray-500">
+                            {isEditing ? (
+                              <input 
+                                type="number" 
+                                className="w-20 text-right border rounded px-1 py-0.5"
+                                value={editValues.framePrice}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value) || 0;
+                                  setEditValues(prev => ({...prev, framePrice: val, setPrice: val + (prev.doorPrice || 0) }));
+                                }}
+                              />
+                            ) : `¥${row.framePrice.toLocaleString()}`}
+                          </td>
+                          <td className="p-3 text-right font-mono text-gray-500">
+                             {isEditing ? (
+                              <input 
+                                type="number" 
+                                className="w-20 text-right border rounded px-1 py-0.5"
+                                value={editValues.doorPrice}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value) || 0;
+                                  setEditValues(prev => ({...prev, doorPrice: val, setPrice: (prev.framePrice || 0) + val }));
+                                }}
+                              />
+                            ) : `¥${row.doorPrice.toLocaleString()}`}
+                          </td>
+                          <td className={`p-3 text-right font-mono font-bold ${isEditing ? 'text-orange-600' : 'text-blue-600 bg-blue-50/30'}`}>
+                             {isEditing ? (
+                              <input 
+                                type="number" 
+                                className="w-20 text-right border rounded px-1 py-0.5 font-bold"
+                                value={editValues.setPrice}
+                                onChange={(e) => {
+                                  setEditValues(prev => ({...prev, setPrice: parseInt(e.target.value) || 0 }));
+                                }}
+                              />
+                            ) : `¥${row.setPrice.toLocaleString()}`}
+                          </td>
+                          
+                          <td className="p-3 font-mono text-xs text-gray-500 align-middle">
+                            {!isEditing && (
+                              <div className="flex flex-col gap-2">
+                                {uploadingId === row.id ? (
+                                  <div className="flex items-center gap-2 text-blue-600 font-bold">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                                    Up...
                                   </div>
                                 ) : (
-                                  <span className="text-gray-400 text-[10px] flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                    {getFileName(row)} (自動)
-                                  </span>
-                                )}
-
-                                {row.id && (
-                                  <div 
-                                    className="border border-dashed border-gray-300 rounded px-2 py-2 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all relative group bg-gray-50/50"
-                                    onDrop={(e) => row.id && handleDrop(e, row.id)}
-                                    onDragOver={handleDragOver}
-                                    onClick={() => row.id && fileInputRefs.current[row.id]?.click()}
-                                    title="ファイルをドロップ または クリックしてアップロード"
-                                  >
-                                    <input 
-                                      type="file" 
-                                      className="hidden" 
-                                      ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }}
-                                      onChange={(e) => row.id && handleFileSelect(e, row.id)}
-                                      accept="image/*,application/pdf"
-                                    />
-                                    <div className="text-[10px] text-gray-500 pointer-events-none flex items-center justify-center gap-1">
-                                      <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                                      <span className="group-hover:text-blue-600">登録/上書</span>
+                                  <>
+                                  {row.imageUrl ? (
+                                    <div className="flex items-center justify-between bg-blue-50 p-1.5 rounded border border-blue-100 w-full">
+                                      <a href={row.imageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate flex-1 block w-20" title={row.imageUrl}>
+                                        {row.imageUrl.split('/').pop()}
+                                      </a>
+                                      {row.id && (
+                                        <button 
+                                          onClick={() => handleDeleteImage(row.id!)}
+                                          className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded p-0.5 transition-colors ml-1 shrink-0"
+                                          title="画像を解除"
+                                        >
+                                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                      )}
                                     </div>
-                                  </div>
+                                  ) : (
+                                    <span className="text-gray-400 text-[10px] flex items-center gap-1">
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                      {getFileName(row)} (自動)
+                                    </span>
+                                  )}
+
+                                  {row.id && (
+                                    <div 
+                                      className="border border-dashed border-gray-300 rounded px-2 py-2 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all relative group bg-gray-50/50"
+                                      onDrop={(e) => row.id && handleDrop(e, row.id)}
+                                      onDragOver={handleDragOver}
+                                      onClick={() => row.id && fileInputRefs.current[row.id]?.click()}
+                                      title="ファイルをドロップ または クリックしてアップロード"
+                                    >
+                                      <input 
+                                        type="file" 
+                                        className="hidden" 
+                                        ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }}
+                                        onChange={(e) => row.id && handleFileSelect(e, row.id)}
+                                        accept="image/*,application/pdf"
+                                      />
+                                      <div className="text-[10px] text-gray-500 pointer-events-none flex items-center justify-center gap-1">
+                                        <svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                        <span className="group-hover:text-blue-600">登録/上書</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
                                 )}
-                               </>
-                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              </div>
+                            )}
+                          </td>
+                          
+                          {/* Operation Column */}
+                          <td className="p-3 text-center">
+                            {isEditing ? (
+                              <div className="flex flex-col gap-2">
+                                <button 
+                                  onClick={handleSaveEdit}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded font-bold"
+                                >
+                                  保存
+                                </button>
+                                <button 
+                                  onClick={handleCancelEdit}
+                                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-2 py-1 rounded"
+                                >
+                                  キャンセル
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col gap-2">
+                                <button 
+                                  onClick={() => handleStartEdit(row)}
+                                  className="bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 text-xs px-2 py-1 rounded font-bold transition-colors"
+                                >
+                                  編集
+                                </button>
+                                <button 
+                                  onClick={() => row.id && handleDeleteRecord(row.id)}
+                                  className="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 text-xs px-2 py-1 rounded transition-colors"
+                                >
+                                  削除
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
