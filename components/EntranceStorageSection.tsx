@@ -11,31 +11,28 @@ interface EntranceStorageSectionProps {
 }
 
 export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ storage, updateStorage, siteName, storageTypes }) => {
-  // 現在の選択内容からカテゴリーを特定
   const initialCategory = storageTypes.find(s => s.id === storage.type)?.category || "なし";
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [isFillerInfoOpen, setIsFillerInfoOpen] = useState(false);
   const [isDaiwaInfoOpen, setIsDaiwaInfoOpen] = useState(false);
   const [isMirrorInfoOpen, setIsMirrorInfoOpen] = useState(false);
 
-  // カテゴリーに応じたフィルタリングされたリスト
   const filteredTypes = storageTypes.filter(s => s.category === selectedCategory);
-
-  // ミラー設定が不可のカテゴリー
   const mirrorIncompatibleCategories = ["一の字タイプ", "二の字タイプ"];
 
   const handleOpenDetails = () => {
-    // Determine image URL
-    let bgImageUrl = '';
+    let finalUrl = '';
+    let isPdf = false;
+    
     const record = storageTypes.find(s => s.id === storage.type);
     
     if (record && record.imageUrl) {
-      bgImageUrl = record.imageUrl;
+      finalUrl = record.imageUrl;
     } else {
-      const originalPdfUrl = getStorageDetailPdfUrl(storage.type);
-      const cleanUrl = originalPdfUrl.replace(/^https?:\/\//, '');
-      bgImageUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=jpg&w=2400`;
+      finalUrl = getStorageDetailPdfUrl(storage.type);
     }
+
+    isPdf = finalUrl.toLowerCase().endsWith('.pdf');
     
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -57,74 +54,97 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
             background: #eee;
             -webkit-print-color-adjust: exact; 
             print-color-adjust: exact; 
-            font-family: sans-serif;
+            font-family: 'Noto Sans JP', sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
           }
           .page-container {
             width: 420mm;
             height: 297mm;
             position: relative;
             background-color: white;
-            background-image: url('${bgImageUrl}');
+            margin: 40px auto;
+            overflow: hidden;
+            transform: scale(0.85);
+            transform-origin: top center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          }
+          .background-media {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+          }
+          .background-image {
+            width: 100%;
+            height: 100%;
+            background-image: url('${finalUrl}');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            margin: 0 auto;
+          }
+          .background-pdf {
+            width: 100%;
+            height: 100%;
+            border: none;
           }
           .overlay-header {
             position: absolute;
-            top: 15mm;
-            left: 15mm;
+            top: 10mm;
+            left: 27mm;
             display: flex;
             align-items: stretch;
-            background: transparent;
             z-index: 100;
-            border: none;
+            background: transparent;
+            padding: 2mm 5mm;
           }
           .id-box {
-            padding: 2mm 5mm;
-            font-size: 24pt;
-            font-weight: bold;
+            padding: 1mm 4mm;
+            font-size: 26pt;
+            font-weight: 900;
             color: #ea580c; 
-            border-right: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-width: 35mm;
+            border-right: 2px solid #ea580c;
+            margin-right: 4mm;
           }
           .details-box {
-            padding: 1mm 4mm;
+            padding: 1mm 2mm;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            min-width: 100mm;
-            background: transparent;
+            min-width: 120mm;
           }
           .details-row {
             display: flex;
             align-items: center;
-            gap: 3mm;
-            line-height: 1.4;
+            gap: 6mm;
+            line-height: 1.2;
           }
           .details-item {
             display: flex;
-            gap: 1.5mm;
+            gap: 2mm;
             align-items: baseline;
           }
           .details-label {
-            color: #333;
-            font-size: 7pt;
+            color: #555;
+            font-size: 9pt;
             white-space: nowrap;
           }
           .details-value {
-            font-weight: bold;
-            font-size: 9pt;
+            font-weight: 800;
+            font-size: 11pt;
+            color: #000;
           }
           .no-print-bar {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            background: #333;
+            background: #1f2937;
             color: white;
             padding: 10px 20px;
             display: flex;
@@ -136,24 +156,35 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
             background: #2563eb;
             color: white;
             border: none;
-            padding: 8px 20px;
-            border-radius: 4px;
+            padding: 10px 24px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 14px;
           }
           @media print {
             .no-print-bar { display: none; }
-            body { background: white; }
-            .page-container { margin: 0; box-shadow: none; }
+            body { background: white; overflow: visible; }
+            .page-container { 
+              margin: 0; 
+              transform: none; 
+              box-shadow: none;
+            }
           }
         </style>
       </head>
       <body>
         <div class="no-print-bar">
-          <span>図面プレビュー: ${storage.size} (${siteName || '現場名未設定'})</span>
-          <button class="print-btn" onclick="window.print()">印刷 / PDF保存</button>
+          <span>図面プレビュー: ${storage.size} (${siteName || '現場名未設定'}) - 表示倍率 85%</span>
+          <button class="print-btn" onClick="window.print()">印刷 / PDF保存</button>
         </div>
         <div class="page-container">
+          <div class="background-media">
+             ${isPdf 
+              ? `<iframe src="${finalUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH" class="background-pdf"></iframe>`
+              : `<div class="background-image"></div>`
+            }
+          </div>
           <div class="overlay-header">
             <div class="id-box">GS</div>
             <div class="details-box">
@@ -167,7 +198,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
                   <span class="details-value">${selectedCategory}</span>
                 </div>
               </div>
-              <div class="details-row" style="margin-top: 1px;">
+              <div class="details-row" style="margin-top: 1mm;">
                 <div class="details-item">
                   <span class="details-label">仕様</span>
                   <span class="details-value">${storage.size}</span>
@@ -205,7 +236,6 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
         fillerCount: 0
       });
     } else {
-      // そのカテゴリーの最初のアイテムをデフォルト選択
       const firstInCat = storageTypes.find(s => s.category === newCategory);
       if (firstInCat) {
         const updates: Partial<EntranceStorage> = {
@@ -215,7 +245,6 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
           baseRingPrice: storage.baseRing !== "なし" ? (DAIWA_PRICES[firstInCat.width] || 0) : 0
         };
 
-        // ミラー不可のカテゴリーに変更された場合はミラー設定をリセット
         if (mirrorIncompatibleCategories.includes(newCategory)) {
           updates.mirror = "なし";
           updates.mirrorPrice = 0;
@@ -290,8 +319,6 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 print-break-inside-avoid ${isNone ? 'opacity-70' : ''}`}>
-      {/* ... (Modals omitted for brevity, same as original) ... */}
-       {/* Filler Info Modal */}
       <Modal isOpen={isFillerInfoOpen} onClose={() => setIsFillerInfoOpen(false)} title="フィラー（幕板）について">
         <p className="text-gray-600 leading-relaxed text-sm mb-4">
           「フィラー（幕板）」とは、玄関収納と壁の間に取り付ける隙間を埋めるための板。扉の開閉が完全に行なわれるようにする役割もあります。
@@ -317,12 +344,10 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
         </div>
       </Modal>
 
-      {/* Daiwa Info Modal */}
       <Modal isOpen={isDaiwaInfoOpen} onClose={() => setIsDaiwaInfoOpen(false)} title="台輪について" imageUrl="http://25663cc9bda9549d.main.jp/aistudio/door/daiwa.jpg">
         <p className="text-xs text-gray-500">玄関収納本体を支える下部パーツです。</p>
       </Modal>
 
-      {/* Mirror Info Modal */}
       <Modal isOpen={isMirrorInfoOpen} onClose={() => setIsMirrorInfoOpen(false)} title="ミラーについて" imageUrl="http://25663cc9bda9549d.main.jp/aistudio/door/mirror.JPG">
         <p className="text-xs text-gray-500">扉に設置される全身鏡オプションです。</p>
       </Modal>
@@ -345,7 +370,6 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 text-sm">
-        {/* カテゴリー選択 */}
         <div className="space-y-1 lg:col-span-2">
           <label className="block text-xs font-semibold text-gray-500">カテゴリー</label>
           <select
@@ -357,7 +381,6 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
           </select>
         </div>
 
-        {/* タイプ・サイズ選択 */}
         <div className="space-y-1 lg:col-span-4">
           <label className={`block text-xs font-semibold ${isNone ? 'text-gray-300' : 'text-gray-500'}`}>タイプ / サイズ</label>
           <select
@@ -370,7 +393,6 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
           </select>
         </div>
 
-        {/* カラー */}
         <div className="space-y-1 lg:col-span-2">
           <label className={`block text-xs font-semibold ${isNone ? 'text-gray-300' : 'text-gray-500'}`}>扉カラー</label>
           <select
@@ -383,9 +405,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
           </select>
         </div>
 
-        {/* オプション（台輪・ミラー・フィラー） */}
         <div className="space-y-1 lg:col-span-4 grid grid-cols-7 gap-2">
-          {/* 台輪 */}
           <div className="col-span-2">
             <div className="flex items-center gap-1 mb-1">
               <label className={`block text-xs font-semibold ${isNone ? 'text-gray-300' : 'text-gray-500'}`}>台輪</label>
@@ -408,7 +428,6 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
               <option value="あり">あり (¥{storage.baseRingPrice.toLocaleString() || '-'})</option>
             </select>
           </div>
-          {/* ミラー */}
           <div className="col-span-2">
             <div className="flex items-center gap-1 mb-1">
               <label className={`block text-xs font-semibold ${isMirrorDisabled ? 'text-gray-300' : 'text-gray-500'}`}>ミラー</label>
@@ -431,7 +450,6 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
               {!isMirrorDisabled && <option value="あり">あり (+¥10,400)</option>}
             </select>
           </div>
-          {/* フィラー */}
           <div className="col-span-3">
             <div className="flex items-center gap-1 mb-1">
               <label className={`block text-xs font-semibold ${isNone ? 'text-gray-300' : 'text-gray-500'}`}>フィラー</label>
