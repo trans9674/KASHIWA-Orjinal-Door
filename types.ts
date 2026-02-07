@@ -26,6 +26,7 @@ export enum UsageLocation {
 }
 
 export interface PriceRecord {
+  id?: string;
   type: string;
   location: UsageLocation;
   design: string;
@@ -34,6 +35,7 @@ export interface PriceRecord {
   framePrice: number;
   doorPrice: number;
   setPrice: number;
+  imageUrl?: string; // Supabaseからの画像URL
 }
 
 export interface DoorItem {
@@ -58,6 +60,15 @@ export interface DoorItem {
   isFrameExtended?: boolean;
   domaExtensionType?: 'none' | 'frame' | 'door';
   frameExtensionHeight?: number; // 枠伸長/建具伸長の数値用
+}
+
+export interface StorageTypeRecord {
+  id: string;
+  name: string;
+  category: string;
+  width: number;
+  price: number;
+  imageUrl?: string;
 }
 
 export interface EntranceStorage {

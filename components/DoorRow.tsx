@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { DoorItem, DoorType } from '../types';
-import { DOOR_GROUPS, PRICE_LIST, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, getDoorDetailPdfUrl } from '../constants';
+import { DoorItem, DoorType, PriceRecord } from '../types';
+import { DOOR_GROUPS, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, getDoorDetailPdfUrl } from '../constants';
 
 interface DoorRowProps {
   index: number;
@@ -15,6 +15,7 @@ interface DoorRowProps {
   };
   onShowHandleImage: () => void;
   siteName: string;
+  priceList: PriceRecord[];
 }
 
 export const DoorRow: React.FC<DoorRowProps> = ({ 
@@ -24,7 +25,8 @@ export const DoorRow: React.FC<DoorRowProps> = ({
   removeDoor, 
   initialSettings, 
   onShowHandleImage,
-  siteName
+  siteName,
+  priceList
 }) => {
   const [isCustomSizeInfoOpen, setIsCustomSizeInfoOpen] = useState(false);
   const [isFrameOptionOpen, setIsFrameOptionOpen] = useState(false);
@@ -62,9 +64,9 @@ export const DoorRow: React.FC<DoorRowProps> = ({
         else effectiveHeight = "H2400";
       }
     }
-    const record = PRICE_LIST.find(p => p.type === type && p.design === design && p.height === effectiveHeight);
+    const record = priceList.find(p => p.type === type && p.design === design && p.height === effectiveHeight);
     if (record) return record.setPrice;
-    const fallbackRecord = PRICE_LIST.find(p => p.type === type && p.height === effectiveHeight);
+    const fallbackRecord = priceList.find(p => p.type === type && p.height === effectiveHeight);
     return fallbackRecord ? fallbackRecord.setPrice : 30000;
   };
 
@@ -145,9 +147,36 @@ export const DoorRow: React.FC<DoorRowProps> = ({
   const getTailwindHighlight = (isHighlighted: boolean) => isHighlighted ? 'text-red-600 font-bold bg-red-50 border-red-200' : '';
 
   const handleOpenDetails = () => {
-    const originalPdfUrl = getDoorDetailPdfUrl(door);
-    const cleanUrl = originalPdfUrl.replace(/^https?:\/\//, '');
-    const bgImageUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=jpg&w=2400`;
+    // Determine image URL: Supabase URL if available, else fallback
+    let bgImageUrl = '';
+    const hStr = door.height === '特寸' ? '2400' : door.height.replace('H', ''); // For lookup if needed
+    // Look up current record to see if it has an image
+    // Note: exact height match or logic for '特寸' matching H2400 etc. done in calculatePrice.
+    // Here we try to find the best match for the image.
+    let effectiveHeight = door.height;
+     if (door.height === '特寸' && door.customHeight) {
+       if (isStorage) {
+         if (door.customHeight <= 900) effectiveHeight = "H900";
+         else if (door.customHeight <= 1200) effectiveHeight = "H1200";
+         else if (door.customHeight <= 2000) effectiveHeight = "H2000";
+         else if (door.customHeight <= 2200) effectiveHeight = "H2200";
+         else effectiveHeight = "H2400";
+       } else {
+         if (door.customHeight <= 2000) effectiveHeight = "H2000";
+         else if (door.customHeight <= 2200) effectiveHeight = "H2200";
+         else effectiveHeight = "H2400";
+       }
+     }
+    const record = priceList.find(p => p.type === door.type && p.design === door.design && p.height === effectiveHeight);
+    
+    if (record && record.imageUrl) {
+      bgImageUrl = record.imageUrl;
+    } else {
+      const originalPdfUrl = getDoorDetailPdfUrl(door);
+      const cleanUrl = originalPdfUrl.replace(/^https?:\/\//, '');
+      bgImageUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=jpg&w=2400`;
+    }
+
     const wdText = `WD-${index + 1}`;
     
     const widthHtml = door.width === '特寸' 
@@ -386,6 +415,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
         {isFrameOptionOpen && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 text-left" onClick={() => setIsFrameOptionOpen(false)}>
             <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-4xl w-full animate-in zoom-in duration-200 overflow-y-auto max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+               {/* ... (Existing Modal Content) ... */}
                <div className="flex justify-between items-center mb-6 border-b pb-4">
                   <div>
                     <span className="font-bold text-gray-800 text-xl">枠オプション設定</span>

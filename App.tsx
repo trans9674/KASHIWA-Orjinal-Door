@@ -1,10 +1,12 @@
 
-import React, { useState, useMemo, useCallback } from 'react';
-import { DoorItem, OrderState, DoorType, EntranceStorage, BaseboardItem } from './types';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { DoorItem, OrderState, DoorType, EntranceStorage, BaseboardItem, PriceRecord, StorageTypeRecord } from './types';
 import { DoorRow } from './components/DoorRow';
 import { EntranceStorageSection } from './components/EntranceStorageSection';
 import { BusinessDatePicker } from './components/BusinessDatePicker';
-import { COLORS, HANDLE_COLORS, SHIPPING_FEE_MAP, PRICE_LIST, DOOR_SPEC_MASTER, getFrameType, HINGED_HANDLES, SLIDING_HANDLES, DOOR_POINTS, getStoragePoints, getBaseboardPoints } from './constants';
+import { DataViewerModal } from './components/DataViewerModal';
+import { COLORS, HANDLE_COLORS, DOOR_SPEC_MASTER, getFrameType, HINGED_HANDLES, SLIDING_HANDLES, DOOR_POINTS, getStoragePoints, getBaseboardPoints } from './constants';
+import { supabase } from './supabase';
 
 const SIMPLE_HANDLE_OPTIONS = ["セラミックホワイト", "マットブラック", "サテンニッケル"];
 const PB_OPTIONS = ["9.5", "12.5", "15.0"];
@@ -18,6 +20,11 @@ const generateId = () => {
 };
 
 const App: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [priceList, setPriceList] = useState<PriceRecord[]>([]);
+  const [storageTypes, setStorageTypes] = useState<StorageTypeRecord[]>([]);
+  const [shippingFeeMap, setShippingFeeMap] = useState<Record<string, number>>({});
+
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [isWakuModalOpen, setIsWakuModalOpen] = useState(false);
@@ -29,6 +36,9 @@ const App: React.FC = () => {
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
   const [isOrderFlowModalOpen, setIsOrderFlowModalOpen] = useState(false);
   const [isMailModalOpen, setIsMailModalOpen] = useState(false);
+  const [isEstimateSaved, setIsEstimateSaved] = useState(false);
+  const [isPbModalOpen, setIsPbModalOpen] = useState(false);
+  const [isDataViewerOpen, setIsDataViewerOpen] = useState(false);
   
   // 各セクションごとの吹き出し表示状態
   const [isStorageGuideOpen, setIsStorageGuideOpen] = useState(true);
@@ -86,6 +96,65 @@ const App: React.FC = () => {
     memo: '',
   });
 
+  // Supabase Data Fetching
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch Internal Doors
+        const { data: doorsData, error: doorsError } = await supabase.from('internal_doors').select('*');
+        if (doorsError) throw doorsError;
+        const mappedDoors: PriceRecord[] = (doorsData || []).map(d => ({
+          id: d.id,
+          type: d.type,
+          location: d.location,
+          design: d.design,
+          notes: '',
+          height: d.height,
+          framePrice: d.frame_price,
+          doorPrice: d.door_price,
+          setPrice: d.set_price,
+          imageUrl: d.image_url
+        }));
+        setPriceList(mappedDoors);
+
+        // Fetch Entrance Storage
+        const { data: storageData, error: storageError } = await supabase.from('entrance_storages').select('*');
+        if (storageError) throw storageError;
+        const mappedStorage: StorageTypeRecord[] = (storageData || []).map(s => ({
+          id: s.id,
+          name: s.name,
+          category: s.category,
+          width: s.width,
+          price: s.price,
+          imageUrl: s.image_url
+        }));
+        // Ensure NONE exists
+        if (!mappedStorage.find(s => s.id === 'NONE')) {
+          mappedStorage.unshift({ id: "NONE", name: "なし", category: "なし", width: 0, price: 0 });
+        }
+        setStorageTypes(mappedStorage);
+
+        // Fetch Shipping Fees
+        const { data: shippingData, error: shippingError } = await supabase.from('shipping_fees').select('*');
+        if (shippingError) throw shippingError;
+        const feeMap: Record<string, number> = {};
+        (shippingData || []).forEach(d => {
+          feeMap[d.prefecture] = d.price;
+        });
+        setShippingFeeMap(feeMap);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        alert('データの取得に失敗しました。');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const resolveHandleName = (simpleName: string, doorType: string) => {
     if (doorType.includes("折戸") || doorType.includes("物入")) return "J型取手";
     const isSliding = doorType.includes("引") || doorType.includes("引き");
@@ -97,7 +166,7 @@ const App: React.FC = () => {
     const defaultType = DoorType.Hinged;
     const defaultSpec = DOOR_SPEC_MASTER[defaultType];
     const defaultDesign = defaultSpec.designs[0]; 
-    const initialPrice = PRICE_LIST.find(p => p.type === defaultType && p.height === initialSettings.defaultHeight && p.design === defaultDesign)?.setPrice || 27300;
+    const initialPrice = priceList.find(p => p.type === defaultType && p.height === initialSettings.defaultHeight && p.design === defaultDesign)?.setPrice || 27300;
 
     setOrder(prev => ({
       ...prev,
@@ -137,7 +206,7 @@ const App: React.FC = () => {
     const defaultType = DoorType.Hinged;
     const defaultSpec = DOOR_SPEC_MASTER[defaultType];
     const defaultDesign = defaultSpec.designs[0];
-    const initialPrice = PRICE_LIST.find(p => p.type === defaultType && p.height === initialSettings.defaultHeight && p.design === defaultDesign)?.setPrice || 27300;
+    const initialPrice = priceList.find(p => p.type === defaultType && p.height === initialSettings.defaultHeight && p.design === defaultDesign)?.setPrice || 27300;
     
     setOrder(prev => ({
       ...prev,
@@ -176,7 +245,7 @@ const App: React.FC = () => {
   const handleAddressChange = (address: string) => {
     setOrder(prev => {
       let matchedFee = 0; let longestMatch = -1;
-      Object.entries(SHIPPING_FEE_MAP).forEach(([key, value]) => {
+      Object.entries(shippingFeeMap).forEach(([key, value]) => {
         if (address.includes(key)) { if (key.length > longestMatch) { longestMatch = key.length; matchedFee = value; } }
       });
       return { ...prev, customerInfo: { ...prev.customerInfo, address }, shipping: matchedFee };
@@ -235,7 +304,7 @@ const App: React.FC = () => {
       finalShipping,
       isShippingDiscounted: totalPoints > 0 && totalPoints < 10
     };
-  }, [order]);
+  }, [order, shippingFeeMap]);
 
   // 商品の有無判定
   const hasStorage = useMemo(() => order.storage.type !== 'NONE', [order.storage.type]);
@@ -291,10 +360,6 @@ const App: React.FC = () => {
     setIsEstimateModalOpen(true);
   };
 
-  const handleSendEstimate = () => {
-    setIsMailModalOpen(true);
-  };
-
   const handleLaunchMail = () => {
     const subject = "注文書送付依頼書";
     const body = `柏木工株式会社
@@ -312,46 +377,108 @@ const App: React.FC = () => {
 ■備考
 ${order.memo}
 
-※添付ファイルとして「見積書PDF」と「平面図」を必ず添付して送信してください。`;
+---
+※重要※
+この後、下記3点のファイルを必ず添付して送信してください。
+1. 見積書PDF (先ほどダウンロードしたもの)
+2. 現地案内図
+3. 平面図
+---
+`;
     
     const mailtoUrl = `mailto:takishita@kashiwa-f.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailtoUrl;
     setIsMailModalOpen(false);
   };
 
+  const handleCeilingPbChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setOrder(p => ({ ...p, customerInfo: { ...p.customerInfo, ceilingPB: value } }));
+    if (value === '15.0') {
+      setIsPbModalOpen(true);
+    }
+  };
+
   const handlePrintPdf = () => { window.print(); };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-bold">データを読み込んでいます...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 font-['Noto_Sans_JP']">
       
+      {/* Data Viewer Modal */}
+      {isDataViewerOpen && (
+        <DataViewerModal 
+          onClose={() => setIsDataViewerOpen(false)} 
+          priceList={priceList}
+          storageTypes={storageTypes}
+        />
+      )}
+
       {/* Mail Launch Modal */}
       {isMailModalOpen && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsMailModalOpen(false)}>
-          <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 00-2 2z" /></svg>
-              </div>
-              <h3 className="text-lg font-bold text-gray-800 leading-snug">
-                見積りと平面図を送信するための<br/>メールアプリを起動させます。
+          <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+            {/* ... Mail modal content ... */}
+            <div className="flex justify-between items-center mb-6 border-b pb-4">
+              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                </div>
+                メール送信の準備
               </h3>
-              <p className="text-sm text-red-600 font-bold bg-red-50 p-3 rounded-lg w-full text-left">
-                ※メーラーが起動した後、必ず手動で「見積書PDF」と「平面図」を添付してください。
-              </p>
-              <div className="flex gap-3 w-full mt-2">
-                <button 
-                  onClick={() => setIsMailModalOpen(false)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-xl font-bold transition-colors"
-                >
-                  キャンセル
+               <button onClick={() => setIsMailModalOpen(false)} className="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100 transition-colors">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
-                <button 
-                  onClick={handleLaunchMail}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-blue-200"
-                >
-                  OK
-                </button>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="bg-orange-50 p-4 rounded-xl border-2 border-orange-200">
+                  <p className="font-bold text-orange-800 text-sm">重要：メールを起動する前に、必ず「PDF保存」ボタンから見積書を保存してください。</p>
               </div>
+
+              <div>
+                <h4 className="font-bold text-gray-800 mb-2">添付ファイル準備リスト</h4>
+                <div className="bg-gray-50 p-4 rounded-xl border space-y-3">
+                  <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-100">
+                    <input type="checkbox" checked={isEstimateSaved} onChange={(e) => setIsEstimateSaved(e.target.checked)} className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500" />
+                    <span className={`font-medium ${isEstimateSaved ? 'text-gray-800' : 'text-gray-400'}`}>1. 見積書PDFを保存しました</span>
+                  </label>
+                  <div className="flex items-center gap-3 p-2">
+                     <div className="w-5 h-5 flex items-center justify-center"><svg className="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg></div>
+                     <span className="font-medium text-gray-400">2. 現地案内図</span>
+                  </div>
+                   <div className="flex items-center gap-3 p-2">
+                     <div className="w-5 h-5 flex items-center justify-center"><svg className="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg></div>
+                     <span className="font-medium text-gray-400">3. 平面図</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-6 border-t flex justify-end gap-3">
+              <button 
+                onClick={() => setIsMailModalOpen(false)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold transition-colors"
+              >
+                キャンセル
+              </button>
+              <button 
+                onClick={handleLaunchMail}
+                disabled={!isEstimateSaved}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-blue-200 disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed"
+              >
+                メールアプリを起動
+              </button>
             </div>
           </div>
         </div>
@@ -360,7 +487,8 @@ ${order.memo}
       {/* Order Flow Modal */}
       {isOrderFlowModalOpen && (
         <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto no-print animate-in fade-in duration-300 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full p-10 relative animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+           {/* ... Order Flow Content ... */}
+           <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full p-10 relative animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
              <button onClick={() => setIsOrderFlowModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 rounded-full p-2 hover:bg-gray-100 transition-colors">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
              </button>
@@ -368,8 +496,8 @@ ${order.memo}
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-1 space-y-6">
                   <h3 className="text-3xl font-bold text-gray-800 border-b-2 border-gray-100 pb-4">ご注文フロー確認</h3>
-                  
-                  <div className="bg-white rounded-2xl border-2 border-blue-100 overflow-hidden shadow-sm">
+                  {/* ... Same content ... */}
+                   <div className="bg-white rounded-2xl border-2 border-blue-100 overflow-hidden shadow-sm">
                     <h5 className="text-blue-800 font-bold p-5 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                       商品に関するお問い合わせ
@@ -446,7 +574,8 @@ ${order.memo}
       {/* Estimate Modal */}
       {isEstimateModalOpen && (
         <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300 print:absolute print:inset-0 print:bg-white print:h-auto print:w-full print:z-[200] print:overflow-visible">
-          <div className="min-h-screen py-6 px-4 flex flex-col items-center print:block print:h-auto print:p-0">
+          {/* ... Estimate Content ... */}
+           <div className="min-h-screen py-6 px-4 flex flex-col items-center print:block print:h-auto print:p-0">
             {/* Action Bar (Top) */}
             <div className="max-w-[1000px] w-full flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-xl border border-gray-200 gap-4 no-print">
               <button onClick={() => setIsEstimateModalOpen(false)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold group">
@@ -460,7 +589,7 @@ ${order.memo}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                   PDF保存
                 </button>
-                <button onClick={handleSendEstimate} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                <button onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 00-2 2z" /></svg>
                   注文書送付依頼
                 </button>
@@ -483,7 +612,7 @@ ${order.memo}
                         </div>
                         <div className="flex flex-wrap gap-6 text-sm">
                             <p>現場名：{order.customerInfo.siteName}</p>
-                            <p>連絡先：{order.customerInfo.phone}</p>
+                            <p>連絡先：${order.customerInfo.phone}</p>
                             <p className={`font-bold ${order.customerInfo.ceilingPB === '15.0' ? 'text-red-600' : 'text-gray-700'}`}>天井PB厚：{order.customerInfo.ceilingPB}mm</p>
                         </div>
                         <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm leading-tight">
@@ -591,8 +720,8 @@ ${order.memo}
                                <td className="py-1.5 align-top text-left font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
                                <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
                             </tr>
-                            {/* Base Ring */}
-                            {order.storage.baseRingPrice > 0 && (
+                            {/* ... Base Ring, Mirror, Filler logic same as before ... */}
+                             {order.storage.baseRingPrice > 0 && (
                                <tr className="border-b border-gray-200">
                                  <td className="py-1 align-top"></td>
                                  <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ 台輪あり ({order.storage.baseRing})</td>
@@ -601,7 +730,6 @@ ${order.memo}
                                  <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
                                </tr>
                             )}
-                            {/* Mirror */}
                             {order.storage.mirrorPrice > 0 && (
                                <tr className="border-b border-gray-200">
                                  <td className="py-1 align-top"></td>
@@ -611,7 +739,6 @@ ${order.memo}
                                  <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
                                </tr>
                             )}
-                            {/* Filler */}
                             {order.storage.fillerCount > 0 && (
                                <tr className="border-b border-gray-200">
                                  <td className="py-1 align-top"></td>
@@ -694,9 +821,36 @@ ${order.memo}
         </div>
       )}
 
-      {/* Validation Modal */}
+      {/* Other Modals... (PB, Validation, Hardware, etc) - omitted for brevity if unchanged, but included below for safety */}
+      {isPbModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsPbModalOpen(false)}>
+           {/* ... PB Modal Content ... */}
+           <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-lg w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              天井PB厚 15mmについて
+            </h3>
+            <div className="space-y-4">
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                <p className="text-sm text-orange-900 leading-relaxed">
+                主に準防火地域で3階建ての建物などで、壁と天井の両方に15mmのボードが必要になるケースがあります。この場合、厚みに合わせて天井高をさらに下げる（例えば3mm分など）といった調整が必要になりますので別途ご相談ください。
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button 
+                onClick={() => setIsPbModalOpen(false)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-bold transition-colors shadow-sm"
+              >
+                確認しました
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {isValidationModalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsValidationModalOpen(false)}>
+          {/* ... Validation Modal Content ... */}
           <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
               <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -740,11 +894,9 @@ ${order.memo}
         </div>
       )}
       
-      {/* ... Info Modals ... */}
-      {/* Hardware Modal (New) */}
       {isHardwareModalOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHardwareModalOpen(false)}>
-          <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
             <button className="absolute -top-12 right-0 text-white p-2" onClick={() => setIsHardwareModalOpen(false)}>
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -755,10 +907,9 @@ ${order.memo}
           </div>
         </div>
       )}
-
       {isHandleModalOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHandleModalOpen(false)}>
-          <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-lg w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-lg w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
             <button className="absolute -top-12 right-0 text-white p-2" onClick={() => setIsHandleModalOpen(false)}>
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -770,23 +921,20 @@ ${order.memo}
           </div>
         </div>
       )}
-
       {isInfoModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsInfoModalOpen(false)}>
-          <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
             <img src="http://25663cc9bda9549d.main.jp/aistudio/door/hirakigatte.jpg" alt="吊元説明" className="w-full h-auto rounded-lg" />
           </div>
         </div>
       )}
-
       {isWakuModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsWakuModalOpen(false)}>
-          <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
             <img src="http://25663cc9bda9549d.main.jp/aistudio/door/waku.jpg" alt="枠仕様説明" className="w-full h-auto rounded-lg" />
           </div>
         </div>
       )}
-
       {isHabakiModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHabakiModalOpen(false)}>
           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
@@ -800,10 +948,9 @@ ${order.memo}
           </div>
         </div>
       )}
-
       {isCornerHabakiModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsCornerHabakiModalOpen(false)}>
-          <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
             <button className="absolute -top-10 right-0 text-white p-2" onClick={() => setIsCornerHabakiModalOpen(false)}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -814,7 +961,6 @@ ${order.memo}
           </div>
         </div>
       )}
-
       {isColorModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsColorModalOpen(false)}>
           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
@@ -829,12 +975,22 @@ ${order.memo}
         </div>
       )}
 
+      {/* Main Modal (Initial Settings) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full overflow-hidden animate-in zoom-in flex flex-col max-h-[90vh]">
-            <div className="bg-gray-900 px-6 py-4 text-white font-bold text-xl flex items-center gap-3 shrink-0">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-              初期設定【柏木工 オリジナルドア】
+            <div className="bg-gray-900 px-6 py-4 text-white font-bold text-xl flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                初期設定【柏木工 オリジナルドア】
+              </div>
+              <button 
+                onClick={() => setIsDataViewerOpen(true)}
+                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors shadow-sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                データ確認（価格表・画像URL）
+              </button>
             </div>
             
             <div className="p-6 overflow-y-auto custom-scrollbar">
@@ -885,7 +1041,8 @@ ${order.memo}
 
                 {/* 右カラム：確認事項 */}
                 <div className="flex-1 lg:border-l lg:pl-6 lg:border-gray-200 flex flex-col">
-                  <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm mb-4">
+                  {/* ... Same content as before ... */}
+                   <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm mb-4">
                     <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-3 text-base border-b border-orange-200 pb-2">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                       見積書のご入力について
@@ -898,6 +1055,7 @@ ${order.memo}
                       </ul>
 
                       <div className="bg-white p-3 rounded-lg border border-orange-100">
+                        {/* ... */}
                         <p className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-2">
                           <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           枠オプション設定について
@@ -909,7 +1067,7 @@ ${order.memo}
                           </span>
                           から。
                         </p>
-                        <div className="grid grid-cols-2 gap-4">
+                         <div className="grid grid-cols-2 gap-4">
                           <div className="text-center group">
                             <div className="overflow-hidden rounded border border-gray-200 shadow-sm mb-1 bg-gray-100 h-28 flex items-center justify-center">
                               <img src="http://25663cc9bda9549d.main.jp/aistudio/door/kaikou.jpg" alt="ドア下開口" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
@@ -927,8 +1085,8 @@ ${order.memo}
                     </div>
                   </div>
                   
-                  {/* 注文フロー (コンパクト) */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm mt-auto">
+                  {/* ... Flow Chart ... */}
+                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm mt-auto">
                     <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 text-sm border-b border-slate-200 pb-2">
                       <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                       ご注文〜納品の流れ
@@ -975,6 +1133,7 @@ ${order.memo}
         </div>
       )}
 
+      {/* Main Form Content */}
       <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-8 border-b-2 border-gray-900 pb-4">
           <div>
@@ -999,7 +1158,9 @@ ${order.memo}
           </div>
         </div>
 
+        {/* ... Customer Info Form ... */}
         <div className="grid grid-cols-4 gap-6 mb-8 bg-gray-50 p-6 rounded-2xl border">
+          {/* ... */}
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">会社名</label>
             <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="会社名" value={order.customerInfo.company} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, company: e.target.value}}))} />
@@ -1095,7 +1256,7 @@ ${order.memo}
               <select 
                 className={`w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 outline-none ${order.customerInfo.ceilingPB === '15.0' ? 'border-red-300 text-red-600 focus:ring-red-500' : 'focus:ring-blue-500'}`} 
                 value={order.customerInfo.ceilingPB} 
-                onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, ceilingPB: e.target.value}}))}
+                onChange={handleCeilingPbChange}
               >
                 {PB_OPTIONS.map(opt => (
                   <option key={opt} value={opt}>{opt}㎜</option>
@@ -1178,6 +1339,7 @@ ${order.memo}
                   initialSettings={initialSettings} 
                   onShowHandleImage={() => setIsHandleModalOpen(true)}
                   siteName={order.customerInfo.siteName}
+                  priceList={priceList}
                 />
               ))}
             </tbody>
@@ -1204,9 +1366,15 @@ ${order.memo}
               <div className="absolute -bottom-2 left-4 w-4 h-4 bg-red-600 rotate-45"></div>
             </div>
           )}
-          <EntranceStorageSection storage={order.storage} updateStorage={u => setOrder(p => ({...p, storage: {...p.storage, ...u}}))} siteName={order.customerInfo.siteName} />
+          <EntranceStorageSection 
+            storage={order.storage} 
+            updateStorage={u => setOrder(p => ({...p, storage: {...p.storage, ...u}}))} 
+            siteName={order.customerInfo.siteName} 
+            storageTypes={storageTypes}
+          />
         </div>
 
+        {/* ... Baseboards and Total Section (unchanged logic, just render) ... */}
         <div className="grid grid-cols-2 gap-8 items-start mt-10">
           <div className="border p-6 rounded-2xl bg-white shadow-sm border-emerald-100 flex flex-col h-full relative">
             {showBaseboardBubble && (
@@ -1291,7 +1459,8 @@ ${order.memo}
             </div>
           </div>
           <div className="bg-gray-900 text-white p-10 rounded-3xl shadow-2xl flex flex-col justify-between relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-2xl transition-all group-hover:bg-blue-500/20"></div>
+            {/* ... Total Display ... */}
+             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-2xl transition-all group-hover:bg-blue-500/20"></div>
             
             <div className="w-full space-y-3 mb-8">
                 <div className="flex justify-between items-center border-b border-gray-700 pb-3">

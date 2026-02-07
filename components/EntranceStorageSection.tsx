@@ -1,34 +1,42 @@
 
 import React, { useState, useEffect } from 'react';
-import { EntranceStorage } from '../types';
-import { STORAGE_TYPES, STORAGE_CATEGORIES, COLORS, DAIWA_PRICES, getStorageDetailPdfUrl } from '../constants';
+import { EntranceStorage, StorageTypeRecord } from '../types';
+import { STORAGE_CATEGORIES, COLORS, DAIWA_PRICES, getStorageDetailPdfUrl } from '../constants';
 
 interface EntranceStorageSectionProps {
   storage: EntranceStorage;
   updateStorage: (updates: Partial<EntranceStorage>) => void;
   siteName: string;
+  storageTypes: StorageTypeRecord[];
 }
 
-export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ storage, updateStorage, siteName }) => {
+export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ storage, updateStorage, siteName, storageTypes }) => {
   // 現在の選択内容からカテゴリーを特定
-  const initialCategory = STORAGE_TYPES.find(s => s.id === storage.type)?.category || "なし";
+  const initialCategory = storageTypes.find(s => s.id === storage.type)?.category || "なし";
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [isFillerInfoOpen, setIsFillerInfoOpen] = useState(false);
   const [isDaiwaInfoOpen, setIsDaiwaInfoOpen] = useState(false);
   const [isMirrorInfoOpen, setIsMirrorInfoOpen] = useState(false);
 
   // カテゴリーに応じたフィルタリングされたリスト
-  const filteredTypes = STORAGE_TYPES.filter(s => s.category === selectedCategory);
+  const filteredTypes = storageTypes.filter(s => s.category === selectedCategory);
 
   // ミラー設定が不可のカテゴリー
   const mirrorIncompatibleCategories = ["一の字タイプ", "二の字タイプ"];
 
   const handleOpenDetails = () => {
-    const originalPdfUrl = getStorageDetailPdfUrl(storage.type);
-    const cleanUrl = originalPdfUrl.replace(/^https?:\/\//, '');
-    const bgImageUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=jpg&w=2400`;
-    const storageText = `STORAGE-${selectedCategory.replace('タイプ', '')}`;
-
+    // Determine image URL
+    let bgImageUrl = '';
+    const record = storageTypes.find(s => s.id === storage.type);
+    
+    if (record && record.imageUrl) {
+      bgImageUrl = record.imageUrl;
+    } else {
+      const originalPdfUrl = getStorageDetailPdfUrl(storage.type);
+      const cleanUrl = originalPdfUrl.replace(/^https?:\/\//, '');
+      bgImageUrl = `https://images.weserv.nl/?url=${encodeURIComponent(cleanUrl)}&output=jpg&w=2400`;
+    }
+    
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert('ポップアップがブロックされました。ブラウザの設定を確認してください。');
@@ -74,7 +82,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
           }
           .id-box {
             padding: 2mm 5mm;
-            font-size: 24pt; /* 1サイズ大きく (20pt -> 24pt) */
+            font-size: 24pt;
             font-weight: bold;
             color: #ea580c; 
             border-right: none;
@@ -104,12 +112,12 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
           }
           .details-label {
             color: #333;
-            font-size: 7pt; /* 1サイズ大きく (6pt -> 7pt) */
+            font-size: 7pt;
             white-space: nowrap;
           }
           .details-value {
             font-weight: bold;
-            font-size: 9pt; /* 1サイズ大きく (8pt -> 9pt) */
+            font-size: 9pt;
           }
           .no-print-bar {
             position: fixed;
@@ -198,7 +206,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
       });
     } else {
       // そのカテゴリーの最初のアイテムをデフォルト選択
-      const firstInCat = STORAGE_TYPES.find(s => s.category === newCategory);
+      const firstInCat = storageTypes.find(s => s.category === newCategory);
       if (firstInCat) {
         const updates: Partial<EntranceStorage> = {
           type: firstInCat.id,
@@ -219,7 +227,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
   };
 
   const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = STORAGE_TYPES.find(s => s.id === e.target.value);
+    const selected = storageTypes.find(s => s.id === e.target.value);
     if (selected) {
       updateStorage({
         type: selected.id,
@@ -232,7 +240,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
 
   const handleBaseRingToggle = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const hasBaseRing = e.target.value === "あり";
-    const selected = STORAGE_TYPES.find(s => s.id === storage.type);
+    const selected = storageTypes.find(s => s.id === storage.type);
     const width = selected?.width || 0;
     
     updateStorage({
@@ -282,7 +290,8 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 print-break-inside-avoid ${isNone ? 'opacity-70' : ''}`}>
-      {/* Filler Info Modal */}
+      {/* ... (Modals omitted for brevity, same as original) ... */}
+       {/* Filler Info Modal */}
       <Modal isOpen={isFillerInfoOpen} onClose={() => setIsFillerInfoOpen(false)} title="フィラー（幕板）について">
         <p className="text-gray-600 leading-relaxed text-sm mb-4">
           「フィラー（幕板）」とは、玄関収納と壁の間に取り付ける隙間を埋めるための板。扉の開閉が完全に行なわれるようにする役割もあります。
