@@ -84,25 +84,31 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       const fileName = `door_${recordId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // Upload to Supabase Storage
+      // 1. Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('door-images')
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage Upload Error:', uploadError);
+        throw new Error(`画像の保存に失敗しました (Storage): ${uploadError.message}`);
+      }
 
-      // Get Public URL
+      // 2. Get Public URL
       const { data: { publicUrl } } = supabase.storage
         .from('door-images')
         .getPublicUrl(filePath);
 
-      // Update Database
+      // 3. Update Database
       const { error: dbError } = await supabase
         .from('internal_doors')
         .update({ image_url: publicUrl })
         .eq('id', recordId);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+         console.error('Database Update Error:', dbError);
+         throw new Error(`データベースの更新に失敗しました (DB): ${dbError.message}`);
+      }
 
       // Update Local State
       setPriceList(prev => prev.map(item => 
@@ -110,8 +116,14 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       ));
 
     } catch (error: any) {
-      console.error('Upload error:', error);
-      alert('アップロードに失敗しました: ' + error.message);
+      console.error('Upload Process Error:', error);
+      let msg = error.message || '不明なエラーが発生しました。';
+      if (msg.includes('row-level security policy')) {
+        msg += '\n\n【ヒント】SupabaseのSQL Editorでセキュリティ設定(RLS)のSQLを実行してください。';
+      } else if (msg.includes('column') && msg.includes('does not exist')) {
+        msg += '\n\n【ヒント】データベースに image_url カラムがありません。修正用SQLを実行してください。';
+      }
+      alert('アップロード失敗:\n' + msg);
     } finally {
       setUploadingId(null);
     }

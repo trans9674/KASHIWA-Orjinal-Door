@@ -1,6 +1,5 @@
 
--- Enable RLS
-alter default privileges in schema public grant all on tables to postgres, anon, authenticated, service_role;
+-- --- DATABASE & TABLES SETUP ---
 
 -- 1. Internal Doors Table
 create table if not exists internal_doors (
@@ -12,13 +11,13 @@ create table if not exists internal_doors (
   frame_price integer not null default 0,
   door_price integer not null default 0,
   set_price integer not null default 0,
-  image_url text, -- URL to the image in Storage or external
+  image_url text, 
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
 -- 2. Entrance Storages Table
 create table if not exists entrance_storages (
-  id text primary key, -- e.g. 'E02'
+  id text primary key,
   name text not null,
   category text not null,
   width integer not null default 0,
@@ -35,43 +34,60 @@ create table if not exists shipping_fees (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- Enable RLS on tables
+-- --- COLUMN CHECK & ADDITION (Fix for "missing column" error) ---
+-- 既存のテーブルに image_url カラムがない場合、後から追加するための処理
+do $$
+begin
+  if not exists (select 1 from information_schema.columns where table_name = 'internal_doors' and column_name = 'image_url') then
+    alter table internal_doors add column image_url text;
+  end if;
+  if not exists (select 1 from information_schema.columns where table_name = 'entrance_storages' and column_name = 'image_url') then
+    alter table entrance_storages add column image_url text;
+  end if;
+end $$;
+
+-- --- PERMISSIONS & RLS (Allow Anonymous Access) ---
+
+-- Enable RLS
 alter table internal_doors enable row level security;
 alter table entrance_storages enable row level security;
 alter table shipping_fees enable row level security;
 
--- --- RLS POLICIES (UPDATED: Allow full access for anonymous users) ---
+-- Grant permissions to anon role (Anonymous users)
+grant usage on schema public to anon;
+grant all on all tables in schema public to anon;
+grant all on all sequences in schema public to anon;
 
--- internal_doors
+-- Internal Doors Policies
+drop policy if exists "Allow full access on internal_doors" on internal_doors;
 drop policy if exists "Allow public read access on internal_doors" on internal_doors;
 drop policy if exists "Allow authenticated insert/update on internal_doors" on internal_doors;
-drop policy if exists "Allow full access on internal_doors" on internal_doors;
-
 create policy "Allow full access on internal_doors" on internal_doors for all using (true) with check (true);
 
--- entrance_storages
-drop policy if exists "Allow public read access on entrance_storages" on entrance_storages;
+-- Entrance Storages Policies
 drop policy if exists "Allow full access on entrance_storages" on entrance_storages;
-
+drop policy if exists "Allow public read access on entrance_storages" on entrance_storages;
 create policy "Allow full access on entrance_storages" on entrance_storages for all using (true) with check (true);
 
--- shipping_fees
-drop policy if exists "Allow public read access on shipping_fees" on shipping_fees;
+-- Shipping Fees Policies
 drop policy if exists "Allow full access on shipping_fees" on shipping_fees;
-
+drop policy if exists "Allow public read access on shipping_fees" on shipping_fees;
 create policy "Allow full access on shipping_fees" on shipping_fees for all using (true) with check (true);
 
 
--- --- STORAGE SETUP ---
+-- --- STORAGE SETUP (Fix for "Bucket not found" error) ---
 
--- Create Storage Bucket for Images (if not exists)
+-- Grant usage on storage schema
+grant usage on schema storage to anon;
+grant all on all tables in schema storage to anon;
+
+-- Create Storage Bucket for Images (idempotent)
 insert into storage.buckets (id, name, public) values ('door-images', 'door-images', true)
-on conflict (id) do nothing;
+on conflict (id) do update set public = true;
 
--- Storage Policies
+-- Storage Policies (Allow anyone to upload/read/delete in door-images)
+drop policy if exists "Allow public access on storage" on storage.objects;
 drop policy if exists "Public Access" on storage.objects;
 drop policy if exists "Authenticated Upload" on storage.objects;
-drop policy if exists "Allow public access on storage" on storage.objects;
 
--- Allow public access (read, insert, update, delete) for door-images bucket
 create policy "Allow public access on storage" on storage.objects for all using ( bucket_id = 'door-images' ) with check ( bucket_id = 'door-images' );
