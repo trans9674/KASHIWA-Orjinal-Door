@@ -381,7 +381,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
           </select>
         </div>
 
-        <div className="space-y-1 lg:col-span-4">
+        <div className="space-y-1 lg:col-span-3">
           <label className={`block text-xs font-semibold ${isNone ? 'text-gray-300' : 'text-gray-500'}`}>タイプ / サイズ</label>
           <select
             value={storage.type}
@@ -389,11 +389,25 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
             onChange={handleTypeChange}
             className={`w-full border rounded px-2 py-1.5 focus:ring-1 focus:ring-blue-500 ${isNone ? 'bg-gray-50 text-gray-400 border-gray-100' : 'bg-white font-medium text-gray-800'}`}
           >
-            {isNone ? <option value="NONE">なし</option> : filteredTypes.map(s => <option key={s.id} value={s.id}>{s.name} (¥{s.price.toLocaleString()})</option>)}
+            {isNone ? <option value="NONE">なし</option> : filteredTypes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
 
         <div className="space-y-1 lg:col-span-2">
+           <label className={`block text-xs font-semibold ${isNone ? 'text-gray-300' : 'text-gray-500'}`}>本体価格 (調整可)</label>
+           <div className="relative">
+             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">¥</span>
+             <input 
+               type="number" 
+               value={storage.basePrice} 
+               disabled={isNone}
+               onChange={(e) => updateStorage({ basePrice: parseInt(e.target.value) || 0 })}
+               className={`w-full border rounded pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 font-mono font-bold text-gray-700 ${isNone ? 'bg-gray-50 text-gray-300' : 'bg-white border-blue-100 text-blue-800'}`}
+             />
+           </div>
+        </div>
+
+        <div className="space-y-1 lg:col-span-1">
           <label className={`block text-xs font-semibold ${isNone ? 'text-gray-300' : 'text-gray-500'}`}>扉カラー</label>
           <select
             value={storage.color}

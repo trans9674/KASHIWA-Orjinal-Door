@@ -61,7 +61,10 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
   // Editing State
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<Partial<PriceRecord>>({});
+  const [editValues, setEditValues] = useState<any>({});
+  
+  const [editingStorageId, setEditingStorageId] = useState<string | null>(null);
+  const [editStorageValues, setEditStorageValues] = useState<Partial<StorageTypeRecord>>({});
 
   // New Door State
   const [newDoor, setNewDoor] = useState<Partial<PriceRecord>>({
@@ -99,21 +102,27 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     }
   };
 
-  const handleFileUpload = async (file: File, recordId: string) => {
+  const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false) => {
     try {
       setUploadingId(recordId);
       const fileExt = file.name.split('.').pop();
-      const fileName = `door_${recordId}_${Date.now()}.${fileExt}`;
+      const fileName = `${isStorage ? 'storage' : 'door'}_${recordId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage.from('door-images').upload(filePath, file);
       if (uploadError) throw new Error(`画像の保存に失敗しました: ${uploadError.message}`);
 
       const { data: { publicUrl } } = supabase.storage.from('door-images').getPublicUrl(filePath);
-      const { error: dbError } = await supabase.from('internal_doors').update({ image_url: publicUrl }).eq('id', recordId);
+      
+      const tableName = isStorage ? 'entrance_storages' : 'internal_doors';
+      const { error: dbError } = await supabase.from(tableName).update({ image_url: publicUrl }).eq('id', recordId);
       if (dbError) throw new Error(`データベースの更新に失敗しました: ${dbError.message}`);
 
-      setPriceList(prev => prev.map(item => item.id === recordId ? { ...item, imageUrl: publicUrl } : item));
+      if (isStorage) {
+        setStorageTypes(prev => prev.map(item => item.id === recordId ? { ...item, imageUrl: publicUrl } : item));
+      } else {
+        setPriceList(prev => prev.map(item => item.id === recordId ? { ...item, imageUrl: publicUrl } : item));
+      }
     } catch (error: any) {
       alert('アップロード失敗:\n' + error.message);
     } finally {
@@ -121,24 +130,30 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, recordId: string) => {
-    if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0], recordId);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, recordId: string, isStorage: boolean = false) => {
+    if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0], recordId, isStorage);
     e.target.value = '';
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, recordId: string) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, recordId: string, isStorage: boolean = false) => {
     e.preventDefault(); e.stopPropagation();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], recordId);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], recordId, isStorage);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); };
 
-  const handleDeleteImage = async (recordId: string) => {
+  const handleDeleteImage = async (recordId: string, isStorage: boolean = false) => {
       if(!confirm('登録済みの画像を解除し、デフォルト表示に戻しますか？')) return;
       try {
-          const { error } = await supabase.from('internal_doors').update({ image_url: null }).eq('id', recordId);
+          const tableName = isStorage ? 'entrance_storages' : 'internal_doors';
+          const { error } = await supabase.from(tableName).update({ image_url: null }).eq('id', recordId);
           if (error) throw error;
-          setPriceList(prev => prev.map(p => p.id === recordId ? {...p, imageUrl: undefined} : p));
+          
+          if (isStorage) {
+            setStorageTypes(prev => prev.map(s => s.id === recordId ? {...s, imageUrl: undefined} : s));
+          } else {
+            setPriceList(prev => prev.map(p => p.id === recordId ? {...p, imageUrl: undefined} : p));
+          }
       } catch(e: any) { alert('削除に失敗しました: ' + e.message); }
   };
 
@@ -157,51 +172,34 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
   const sortedPriceList = useMemo(() => {
     let items = [...priceList];
-    
-    // Default multi-level sorting logic
     const multiSort = (a: PriceRecord, b: PriceRecord, primaryKey?: keyof PriceRecord, direction: 'asc' | 'desc' = 'asc') => {
       let comparison = 0;
-
       const compareValues = (key: keyof PriceRecord, valA: any, valB: any) => {
-        if (key === 'type') {
-          return (typeOrder[valA] ?? 9999) - (typeOrder[valB] ?? 9999);
-        }
-        if (typeof valA === 'string' && typeof valB === 'string') {
-          return valA.localeCompare(valB, 'ja');
-        }
-        if (typeof valA === 'number' && typeof valB === 'number') {
-          return valA - valB;
-        }
+        if (key === 'type') return (typeOrder[valA] ?? 9999) - (typeOrder[valB] ?? 9999);
+        if (typeof valA === 'string' && typeof valB === 'string') return valA.localeCompare(valB, 'ja');
+        if (typeof valA === 'number' && typeof valB === 'number') return valA - valB;
         return 0;
       };
-
       if (primaryKey) {
         // @ts-ignore
         comparison = compareValues(primaryKey, a[primaryKey], b[primaryKey]);
         if (direction === 'desc') comparison *= -1;
       }
-
-      // Fallback: Type -> Design -> Height
       if (comparison === 0) {
         const typeComp = compareValues('type', a.type, b.type);
         if (typeComp !== 0) return typeComp;
-        
         const designComp = compareValues('design', a.design, b.design);
         if (designComp !== 0) return designComp;
-        
         return compareValues('height', a.height, b.height);
       }
-
       return comparison;
     };
-
     items.sort((a, b) => multiSort(a, b, sortConfig?.key, sortConfig?.direction));
     return items;
   }, [priceList, sortConfig, typeOrder]);
 
   const handleStartEdit = (record: PriceRecord) => { setEditingId(record.id!); setEditValues({ ...record }); };
   const handleCancelEdit = () => { setEditingId(null); setEditValues({}); };
-
   const handleSaveEdit = async () => {
     if (!editingId) return;
     try {
@@ -214,12 +212,28 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     } catch (e: any) { alert('更新に失敗しました: ' + e.message); }
   };
 
-  const handleDeleteRecord = async (id: string) => {
+  const handleStartStorageEdit = (record: StorageTypeRecord) => { setEditingStorageId(record.id); setEditStorageValues({ ...record }); };
+  const handleCancelStorageEdit = () => { setEditingStorageId(null); setEditStorageValues({}); };
+  const handleSaveStorageEdit = async () => {
+    if (!editingStorageId) return;
+    try {
+      const { error } = await supabase.from('entrance_storages').update({
+        name: editStorageValues.name, category: editStorageValues.category, width: editStorageValues.width, price: editStorageValues.price
+      }).eq('id', editingStorageId);
+      if (error) throw error;
+      setStorageTypes(prev => prev.map(s => s.id === editingStorageId ? { ...s, ...editStorageValues } as StorageTypeRecord : s));
+      setEditingStorageId(null); setEditStorageValues({}); alert('更新しました');
+    } catch (e: any) { alert('更新に失敗しました: ' + e.message); }
+  };
+
+  const handleDeleteRecord = async (id: string, isStorage: boolean = false) => {
     if (!confirm('このデータを削除してもよろしいですか？')) return;
     try {
-      const { error } = await supabase.from('internal_doors').delete().eq('id', id);
+      const tableName = isStorage ? 'entrance_storages' : 'internal_doors';
+      const { error } = await supabase.from(tableName).delete().eq('id', id);
       if (error) throw error;
-      setPriceList(prev => prev.filter(p => p.id !== id));
+      if (isStorage) setStorageTypes(prev => prev.filter(s => s.id !== id));
+      else setPriceList(prev => prev.filter(p => p.id !== id));
       alert('削除しました');
     } catch (e: any) { alert('削除に失敗しました: ' + e.message); }
   };
@@ -269,146 +283,37 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
         style={{ width: `${modalWidth}px`, height: '96vh' }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Resize Handle */}
-        <div 
-          className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400/30 active:bg-blue-600/50 transition-colors z-[400]"
-          onMouseDown={startResizing}
-          title="ドラッグして幅を調整"
-        />
+        <div className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-blue-400/30 active:bg-blue-600/50 transition-colors z-[400]" onMouseDown={startResizing} title="ドラッグして幅を調整" />
 
-        {/* Header */}
         <div className="bg-gray-800 text-white px-4 py-2 flex justify-between items-center shrink-0">
           <h2 className="text-lg font-bold flex items-center gap-2 select-none">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
             登録データ確認・編集
             <span className="text-[10px] font-normal text-gray-400 ml-2">(右端をドラッグで幅調整可能)</span>
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
         </div>
 
-        {/* Tabs */}
         <div className="flex border-b border-gray-200 bg-gray-50 select-none">
-          <button
-            onClick={() => setActiveTab('door')}
-            className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'door' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            内部建具 価格・PDF一覧
-          </button>
-          <button
-            onClick={() => setActiveTab('storage')}
-            className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'storage' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            玄関収納 価格一覧
-          </button>
-          <button
-            onClick={() => setActiveTab('shipping')}
-            className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'shipping' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            送料一覧
-          </button>
+          <button onClick={() => setActiveTab('door')} className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'door' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>内部建具 価格・PDF一覧</button>
+          <button onClick={() => setActiveTab('storage')} className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'storage' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>玄関収納 価格一覧</button>
+          <button onClick={() => setActiveTab('shipping')} className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'shipping' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>送料一覧</button>
         </div>
 
-        {/* Content */}
         <div className="flex-grow overflow-auto p-0 bg-white custom-scrollbar">
           {activeTab === 'door' ? (
             <div className="flex flex-col h-full">
-              {/* Add New Section */}
               <div className="bg-blue-50 p-2 border-b border-blue-100 shrink-0">
                 <details className="group">
-                  <summary className="font-bold text-blue-800 cursor-pointer flex items-center gap-2 list-none text-xs">
-                    <span className="bg-blue-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shadow-sm group-open:rotate-90 transition-transform">
-                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-                    </span>
-                    新しい建具データを追加する
-                  </summary>
+                  <summary className="font-bold text-blue-800 cursor-pointer flex items-center gap-2 list-none text-xs"><span className="bg-blue-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] shadow-sm group-open:rotate-90 transition-transform"><svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg></span>新しい建具データを追加する</summary>
                   <div className="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 items-end animate-in slide-in-from-top-2">
-                    <div className="col-span-1 lg:col-span-2 space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 block">種類</label>
-                      <select 
-                        className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={newDoor.type}
-                        onChange={(e) => setNewDoor(p => ({...p, type: e.target.value}))}
-                      >
-                         {DOOR_GROUPS.map(g => (
-                           <optgroup key={g.label} label={g.label}>
-                             {g.options.map(o => <option key={o} value={o}>{o}</option>)}
-                           </optgroup>
-                         ))}
-                      </select>
-                    </div>
-                    <div className="col-span-1 space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 block">設置場所</label>
-                      <select
-                         className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                         value={newDoor.location}
-                         onChange={(e) => setNewDoor(p => ({...p, location: e.target.value as UsageLocation}))}
-                      >
-                        <option value={UsageLocation.Room}>居室</option>
-                        <option value={UsageLocation.LD}>LD</option>
-                        <option value={UsageLocation.Toilet}>トイレ・洗面</option>
-                      </select>
-                    </div>
-                    <div className="col-span-1 lg:col-span-2 space-y-1">
-                       <label className="text-[10px] font-bold text-gray-500 block">デザイン</label>
-                       <input 
-                         type="text" 
-                         className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                         placeholder="例: フラット"
-                         value={newDoor.design}
-                         onChange={(e) => setNewDoor(p => ({...p, design: e.target.value}))}
-                       />
-                    </div>
-                    <div className="col-span-1 space-y-1">
-                       <label className="text-[10px] font-bold text-gray-500 block">高さ</label>
-                       <select 
-                         className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                         value={newDoor.height}
-                         onChange={(e) => setNewDoor(p => ({...p, height: e.target.value}))}
-                       >
-                         <option value="H2000">H2000</option>
-                         <option value="H2200">H2200</option>
-                         <option value="H2400">H2400</option>
-                         <option value="H900">H900</option>
-                         <option value="H1200">H1200</option>
-                       </select>
-                    </div>
-                    <div className="col-span-1 space-y-1">
-                       <label className="text-[10px] font-bold text-gray-500 block">枠価格</label>
-                       <input 
-                         type="number" 
-                         className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                         placeholder="0"
-                         value={newDoor.framePrice || ''}
-                         onChange={(e) => {
-                             const frame = parseInt(e.target.value) || 0;
-                             setNewDoor(p => ({...p, framePrice: frame, setPrice: frame + (p.doorPrice || 0) }));
-                         }}
-                       />
-                    </div>
-                    <div className="col-span-1 space-y-1">
-                       <label className="text-[10px] font-bold text-gray-500 block">扉価格</label>
-                       <input 
-                         type="number" 
-                         className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                         placeholder="0"
-                         value={newDoor.doorPrice || ''}
-                         onChange={(e) => {
-                             const door = parseInt(e.target.value) || 0;
-                             setNewDoor(p => ({...p, doorPrice: door, setPrice: (p.framePrice || 0) + door }));
-                         }}
-                       />
-                    </div>
-                    <div className="col-span-full mt-2 flex justify-end">
-                      <button 
-                        onClick={handleAddDoor} 
-                        disabled={isAdding}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-2 rounded-lg shadow-sm transition-all disabled:opacity-50"
-                      >
-                        {isAdding ? '保存中...' : '追加する'}
-                      </button>
-                    </div>
+                    <div className="col-span-1 lg:col-span-2 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">種類</label><select className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" value={newDoor.type} onChange={(e) => setNewDoor(p => ({...p, type: e.target.value}))}>{DOOR_GROUPS.map(g => (<optgroup key={g.label} label={g.label}>{g.options.map(o => <option key={o} value={o}>{o}</option>)}</optgroup>))}</select></div>
+                    <div className="col-span-1 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">設置場所</label><select className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" value={newDoor.location} onChange={(e) => setNewDoor(p => ({...p, location: e.target.value as UsageLocation}))}><option value={UsageLocation.Room}>居室</option><option value={UsageLocation.LD}>LD</option><option value={UsageLocation.Toilet}>トイレ・洗面</option></select></div>
+                    <div className="col-span-1 lg:col-span-2 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">デザイン</label><input type="text" className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="例: フラット" value={newDoor.design} onChange={(e) => setNewDoor(p => ({...p, design: e.target.value}))}/></div>
+                    <div className="col-span-1 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">高さ</label><select className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" value={newDoor.height} onChange={(e) => setNewDoor(p => ({...p, height: e.target.value}))}><option value="H2000">H2000</option><option value="H2200">H2200</option><option value="H2400">H2400</option><option value="H900">H900</option><option value="H1200">H1200</option></select></div>
+                    <div className="col-span-1 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">枠価格</label><input type="number" className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0" value={newDoor.framePrice || ''} onChange={(e) => { const frame = parseInt(e.target.value) || 0; setNewDoor(p => ({...p, framePrice: frame, setPrice: frame + (p.doorPrice || 0) })); }}/></div>
+                    <div className="col-span-1 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">扉価格</label><input type="number" className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0" value={newDoor.doorPrice || ''} onChange={(e) => { const door = parseInt(e.target.value) || 0; setNewDoor(p => ({...p, doorPrice: door, setPrice: (p.framePrice || 0) + door })); }}/></div>
+                    <div className="col-span-full mt-2 flex justify-end"><button onClick={handleAddDoor} disabled={isAdding} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-2 rounded-lg shadow-sm transition-all disabled:opacity-50">{isAdding ? '保存中...' : '追加する'}</button></div>
                   </div>
                 </details>
               </div>
@@ -417,83 +322,37 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                 <table className="w-full text-xs text-left border-collapse">
                   <thead className="bg-gray-100 text-gray-700 font-bold sticky top-0 shadow-sm z-10">
                     <tr>
-                      <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('type')}>
-                        <div className="flex items-center gap-1">
-                          種別
-                          <span className="text-gray-400 group-hover:text-gray-600">
-                             {sortConfig?.key === 'type' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
-                          </span>
-                        </div>
-                      </th>
-                      <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('design')}>
-                        <div className="flex items-center gap-1">
-                          デザイン
-                          <span className="text-gray-400 group-hover:text-gray-600">
-                             {sortConfig?.key === 'design' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
-                          </span>
-                        </div>
-                      </th>
-                      <th className="p-2 border-b text-center cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('height')}>
-                        <div className="flex items-center justify-center gap-1">
-                          高さ
-                          <span className="text-gray-400 group-hover:text-gray-600">
-                             {sortConfig?.key === 'height' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
-                          </span>
-                        </div>
-                      </th>
-                      <th className="p-2 border-b text-right cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('framePrice')}>
-                        <div className="flex items-center justify-end gap-1">
-                          枠価格
-                          <span className="text-gray-400 group-hover:text-gray-600">
-                             {sortConfig?.key === 'framePrice' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
-                          </span>
-                        </div>
-                      </th>
-                      <th className="p-2 border-b text-right cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('doorPrice')}>
-                        <div className="flex items-center justify-end gap-1">
-                          扉価格
-                          <span className="text-gray-400 group-hover:text-gray-600">
-                             {sortConfig?.key === 'doorPrice' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
-                          </span>
-                        </div>
-                      </th>
-                      <th className="p-2 border-b text-right bg-blue-50 cursor-pointer hover:bg-blue-100 transition-colors select-none group" onClick={() => handleSort('setPrice')}>
-                        <div className="flex items-center justify-end gap-1">
-                          セット価格
-                          <span className="text-gray-400 group-hover:text-gray-600">
-                             {sortConfig?.key === 'setPrice' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
-                          </span>
-                        </div>
-                      </th>
-                      <th className="p-2 border-b font-mono w-40">画像/PDF</th>
+                      <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleSort('type')}>種別<span className="text-gray-400 ml-1">{sortConfig?.key === 'type' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
+                      <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleSort('design')}>デザイン<span className="text-gray-400 ml-1">{sortConfig?.key === 'design' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
+                      <th className="p-2 border-b text-center cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleSort('height')}>高さ<span className="text-gray-400 ml-1">{sortConfig?.key === 'height' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
+                      <th className="p-2 border-b text-right">枠価格</th>
+                      <th className="p-2 border-b text-right">扉価格</th>
+                      <th className="p-2 border-b text-right bg-blue-50">セット価格</th>
+                      <th className="p-2 border-b w-40">画像/PDF</th>
                       <th className="p-2 border-b text-center w-24">操作</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {sortedPriceList.map((row, index) => {
+                  <tbody>
+                    {sortedPriceList.map((row) => {
                       const isEditing = editingId === row.id;
                       return (
-                        <tr key={row.id || index} className={`transition-colors ${isEditing ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
-                          <td className="p-1.5 font-medium text-gray-800">{row.type}</td>
-                          <td className="p-1.5">{isEditing ? <input type="text" className="w-full border rounded px-1 py-0.5" value={editValues.design || ''} onChange={(e) => setEditValues(prev => ({...prev, design: e.target.value}))}/> : row.design}</td>
+                        <tr key={row.id} className={`${isEditing ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
+                          <td className="p-1.5">{row.type}</td>
+                          <td className="p-1.5">{isEditing ? <input className="w-full border p-0.5" value={editValues.design} onChange={e => setEditValues(p=>({...p, design:e.target.value}))}/> : row.design}</td>
                           <td className="p-1.5 text-center font-mono">{row.height}</td>
-                          <td className="p-1.5 text-right font-mono text-gray-500">{isEditing ? <input type="number" className="w-20 text-right border rounded px-1 py-0.5" value={editValues.framePrice} onChange={(e) => { const val = parseInt(e.target.value) || 0; setEditValues(prev => ({...prev, framePrice: val, setPrice: val + (prev.doorPrice || 0) })); }}/> : `¥${row.framePrice.toLocaleString()}`}</td>
-                          <td className="p-1.5 text-right font-mono text-gray-500">{isEditing ? <input type="number" className="w-20 text-right border rounded px-1 py-0.5" value={editValues.doorPrice} onChange={(e) => { const val = parseInt(e.target.value) || 0; setEditValues(prev => ({...prev, doorPrice: val, setPrice: (prev.framePrice || 0) + val })); }}/> : `¥${row.doorPrice.toLocaleString()}`}</td>
-                          <td className={`p-1.5 text-right font-mono font-bold ${isEditing ? 'text-orange-600' : 'text-blue-600 bg-blue-50/30'}`}>{isEditing ? <input type="number" className="w-20 text-right border rounded px-1 py-0.5 font-bold" value={editValues.setPrice} onChange={(e) => setEditValues(prev => ({...prev, setPrice: parseInt(e.target.value) || 0 }))}/> : `¥${row.setPrice.toLocaleString()}`}</td>
-                          <td className="p-1.5 font-mono text-xs text-gray-500 align-middle">
-                            {!isEditing && (
-                              <div className="flex flex-col gap-2">
-                                {uploadingId === row.id ? <div className="flex items-center gap-2 text-blue-600 font-bold"><div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>Up...</div> : (
-                                  <>
-                                  {row.imageUrl ? <div className="flex items-center justify-between bg-blue-50 p-1 rounded border border-blue-100 w-full"><a href={row.imageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate flex-1 block w-20" title={row.imageUrl}>{row.imageUrl.split('/').pop()}</a>{row.id && <button onClick={() => handleDeleteImage(row.id!)} className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded p-0.5 transition-colors ml-1 shrink-0"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>}</div> : <span className="text-gray-400 text-[10px] flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>{getFileName(row)} (自動)</span>}
-                                  {row.id && <div className="border border-dashed border-gray-300 rounded px-1 py-1.5 text-center cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all relative group bg-gray-50/50" onDrop={(e) => row.id && handleDrop(e, row.id)} onDragOver={handleDragOver} onClick={() => row.id && fileInputRefs.current[row.id]?.click()} title="ファイルをドロップ または クリックしてアップロード"><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={(e) => row.id && handleFileSelect(e, row.id)} accept="image/*,application/pdf"/><div className="text-[10px] text-gray-500 pointer-events-none flex items-center justify-center gap-1"><svg className="w-3 h-3 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg><span className="group-hover:text-blue-600">登録/上書</span></div></div>}
-                                </>
-                                )}
+                          <td className="p-1.5 text-right font-mono">{isEditing ? <input type="number" className="w-20 text-right border p-0.5" value={editValues.framePrice} onChange={e => { const v = parseInt(e.target.value)||0; setEditValues(p=>({...p, framePrice:v, setPrice: v + (p.doorPrice||0) })) }}/> : `¥${row.framePrice.toLocaleString()}`}</td>
+                          <td className="p-1.5 text-right font-mono">{isEditing ? <input type="number" className="w-20 text-right border p-0.5" value={editValues.doorPrice} onChange={e => { const v = parseInt(e.target.value)||0; setEditValues(p=>({...p, doorPrice:v, setPrice: (p.framePrice||0) + v })) }}/> : `¥${row.doorPrice.toLocaleString()}`}</td>
+                          <td className="p-1.5 text-right font-mono font-bold text-blue-600 bg-blue-50/20">{isEditing ? <input type="number" className="w-20 text-right border p-0.5 font-bold" value={editValues.setPrice} onChange={e => setEditValues(p=>({...p, setPrice:parseInt(e.target.value)||0}))}/> : `¥${row.setPrice.toLocaleString()}`}</td>
+                          <td className="p-1.5">
+                            {uploadingId === row.id ? "アップ中..." : (
+                              <div className="flex flex-col gap-1">
+                                {row.imageUrl ? <div className="flex items-center gap-1 bg-blue-50 p-1 border rounded"><a href={row.imageUrl} target="_blank" className="truncate flex-1 text-blue-600 text-[10px]">画像登録済</a><button onClick={()=>handleDeleteImage(row.id!)} className="text-red-500">×</button></div> : <span className="text-gray-300 text-[10px]">標準PDF</span>}
+                                <div className="border border-dashed p-1 text-center cursor-pointer hover:bg-gray-100" onClick={() => row.id && fileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id)}/><span className="text-[9px] text-gray-500">変更</span></div>
                               </div>
                             )}
                           </td>
                           <td className="p-1.5 text-center">
-                            {isEditing ? <div className="flex flex-col gap-2"><button onClick={handleSaveEdit} className="bg-blue-600 hover:bg-blue-700 text-white text-[10px] px-2 py-1 rounded font-bold">保存</button><button onClick={handleCancelEdit} className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-[10px] px-2 py-1 rounded">キャンセル</button></div> : <div className="flex flex-col gap-2"><button onClick={() => handleStartEdit(row)} className="bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 text-[10px] px-2 py-1 rounded font-bold transition-colors">編集</button><button onClick={() => row.id && handleDeleteRecord(row.id)} className="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 text-[10px] px-2 py-1 rounded transition-colors">削除</button></div>}
+                            {isEditing ? <><button onClick={handleSaveEdit} className="text-blue-600 mr-2">保</button><button onClick={handleCancelEdit}>消</button></> : <><button onClick={()=>handleStartEdit(row)} className="text-emerald-600 mr-2">編</button><button onClick={()=>handleDeleteRecord(row.id!)} className="text-red-500">削</button></>}
                           </td>
                         </tr>
                       );
@@ -520,12 +379,40 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
               <div className="flex-grow overflow-auto custom-scrollbar">
                 <table className="w-full text-xs text-left border-collapse">
                   <thead className="bg-gray-100 text-gray-700 font-bold sticky top-0 shadow-sm z-10">
-                    <tr><th className="p-2 border-b">ID</th><th className="p-2 border-b">カテゴリー</th><th className="p-2 border-b">名称</th><th className="p-2 border-b text-right">幅(mm)</th><th className="p-2 border-b text-right bg-blue-50">本体価格</th><th className="p-2 border-b font-mono">画像</th></tr>
+                    <tr>
+                      <th className="p-2 border-b">ID</th>
+                      <th className="p-2 border-b">カテゴリー</th>
+                      <th className="p-2 border-b">名称</th>
+                      <th className="p-2 border-b text-right">幅(mm)</th>
+                      <th className="p-2 border-b text-right bg-blue-50">本体価格</th>
+                      <th className="p-2 border-b w-32">画像</th>
+                      <th className="p-2 border-b text-center w-24">操作</th>
+                    </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {storageTypes.filter(s => s.id !== 'NONE').map((row, index) => (
-                      <tr key={index} className="hover:bg-gray-50 transition-colors"><td className="p-1.5 font-mono text-gray-500">{row.id}</td><td className="p-1.5 text-gray-800 font-medium">{row.category}</td><td className="p-1.5">{row.name}</td><td className="p-1.5 text-right font-mono">{row.width}</td><td className="p-1.5 text-right font-mono font-bold text-blue-600 bg-blue-50/30">¥{row.price.toLocaleString()}</td><td className="p-1.5 font-mono text-xs text-gray-500 truncate">{row.imageUrl ? <a href={row.imageUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">画像リンク</a> : "標準PDF"}</td></tr>
-                    ))}
+                  <tbody>
+                    {storageTypes.filter(s => s.id !== 'NONE').map((row) => {
+                      const isEditing = editingStorageId === row.id;
+                      return (
+                        <tr key={row.id} className={`${isEditing ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
+                          <td className="p-1.5 font-mono text-gray-500">{row.id}</td>
+                          <td className="p-1.5">{isEditing ? <select className="w-full border p-0.5" value={editStorageValues.category} onChange={e=>setEditStorageValues(p=>({...p, category:e.target.value}))}>{STORAGE_CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}</select> : row.category}</td>
+                          <td className="p-1.5">{isEditing ? <input className="w-full border p-0.5" value={editStorageValues.name} onChange={e=>setEditStorageValues(p=>({...p, name:e.target.value}))}/> : row.name}</td>
+                          <td className="p-1.5 text-right font-mono">{isEditing ? <input type="number" className="w-16 text-right border p-0.5" value={editStorageValues.width} onChange={e=>setEditStorageValues(p=>({...p, width:parseInt(e.target.value)||0}))}/> : row.width}</td>
+                          <td className="p-1.5 text-right font-mono font-bold text-blue-600 bg-blue-50/20">{isEditing ? <input type="number" className="w-20 text-right border p-0.5 font-bold" value={editStorageValues.price} onChange={e=>setEditStorageValues(p=>({...p, price:parseInt(e.target.value)||0}))}/> : `¥${row.price.toLocaleString()}`}</td>
+                          <td className="p-1.5">
+                             {uploadingId === row.id ? "up..." : (
+                               <div className="flex flex-col gap-1">
+                                 {row.imageUrl ? <div className="flex items-center bg-blue-50 border rounded p-1 text-[9px]"><a href={row.imageUrl} target="_blank" className="truncate flex-1 text-blue-600">登録済</a><button onClick={()=>handleDeleteImage(row.id, true)}>×</button></div> : <span className="text-gray-300 text-[9px]">標準PDF</span>}
+                                 <div className="border border-dashed p-1 text-center cursor-pointer" onClick={()=>fileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true)}/><span className="text-[8px] text-gray-400">画像登録</span></div>
+                               </div>
+                             )}
+                          </td>
+                          <td className="p-1.5 text-center">
+                            {isEditing ? <><button onClick={handleSaveStorageEdit} className="text-blue-600 mr-2">保</button><button onClick={handleCancelStorageEdit}>消</button></> : <><button onClick={()=>handleStartStorageEdit(row)} className="text-emerald-600 mr-2">編</button><button onClick={()=>handleDeleteRecord(row.id, true)} className="text-red-500">削</button></>}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

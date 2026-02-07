@@ -202,6 +202,7 @@ export const getDoorDetailPdfUrl = (door: DoorItem): string => {
     case DoorType.Folding4W16:
       filename = "OR4mai.pdf";
       break;
+
     case DoorType.Folding6:
       filename = "OREDO6.pdf";
       break;
@@ -257,6 +258,42 @@ export const getStorageDetailPdfUrl = (typeId: string): string => {
     "L23L": "SBL6W2000(L).pdf",
   };
   return `${baseUrl}${mapping[typeId] || "storage_details.pdf"}`;
+};
+
+/**
+ * 建具詳細URL取得ヘルパー
+ */
+export const resolveDoorDrawingUrl = (door: DoorItem, priceList: PriceRecord[]): string => {
+  const isStorage = door.type === DoorType.StorageDouble || door.type === DoorType.StorageSingle;
+  let effectiveHeight = door.height;
+  if (door.height === '特寸' && door.customHeight) {
+    if (isStorage) {
+      if (door.customHeight <= 900) effectiveHeight = "H900";
+      else if (door.customHeight <= 1200) effectiveHeight = "H1200";
+      else if (door.customHeight <= 2000) effectiveHeight = "H2000";
+      else if (door.customHeight <= 2200) effectiveHeight = "H2200";
+      else effectiveHeight = "H2400";
+    } else {
+      if (door.customHeight <= 2000) effectiveHeight = "H2000";
+      else if (door.customHeight <= 2200) effectiveHeight = "H2200";
+      else effectiveHeight = "H2400";
+    }
+  }
+
+  let searchDesign = door.design;
+  if (door.isUndercut) {
+    searchDesign = "アンダーカット";
+  } else if (door.isFrameExtended) {
+    if (door.domaExtensionType === 'none') searchDesign = "土間納まり（伸長なし）";
+    else if (door.domaExtensionType === 'frame') searchDesign = "土間納まり（枠伸長）";
+    else if (door.domaExtensionType === 'door') searchDesign = "土間納まり（建具伸長）";
+  }
+
+  const record = priceList.find(p => p.type === door.type && p.design === searchDesign && p.height === effectiveHeight)
+              || priceList.find(p => p.type === door.type && p.design === door.design && p.height === effectiveHeight);
+  
+  if (record && record.imageUrl) return record.imageUrl;
+  return getDoorDetailPdfUrl(door);
 };
 
 export const DOOR_GROUPS = [

@@ -1,11 +1,12 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { DoorItem, OrderState, DoorType, EntranceStorage, BaseboardItem, PriceRecord, StorageTypeRecord, ShippingFeeRecord } from './types';
+/* UsageLocationを追加 */
+import { DoorItem, OrderState, DoorType, EntranceStorage, BaseboardItem, PriceRecord, StorageTypeRecord, ShippingFeeRecord, UsageLocation } from './types';
 import { DoorRow } from './components/DoorRow';
 import { EntranceStorageSection } from './components/EntranceStorageSection';
 import { BusinessDatePicker } from './components/BusinessDatePicker';
 import { DataViewerModal } from './components/DataViewerModal';
-import { COLORS, HANDLE_COLORS, DOOR_SPEC_MASTER, getFrameType, HINGED_HANDLES, SLIDING_HANDLES, DOOR_POINTS, getStoragePoints, getBaseboardPoints } from './constants';
+import { COLORS, HANDLE_COLORS, DOOR_SPEC_MASTER, getFrameType, HINGED_HANDLES, SLIDING_HANDLES, DOOR_POINTS, getStoragePoints, getBaseboardPoints, resolveDoorDrawingUrl, getStorageDetailPdfUrl } from './constants';
 import { supabase } from './supabase';
 
 const SIMPLE_HANDLE_OPTIONS = ["セラミックホワイト", "マットブラック", "サテンニッケル"];
@@ -94,7 +95,6 @@ const App: React.FC = () => {
     memo: '',
   });
 
-  // 住所のパーツ管理（UI表示用）
   const [addressPart, setAddressPart] = useState({
     prefecture: '',
     detail: ''
@@ -109,7 +109,7 @@ const App: React.FC = () => {
         const mappedDoors: PriceRecord[] = (doorsData || []).map(d => ({
           id: d.id,
           type: d.type,
-          location: d.location,
+          location: d.location as UsageLocation,
           design: d.design,
           notes: '',
           height: d.height,
@@ -337,7 +337,7 @@ const App: React.FC = () => {
   const showStorageBubble = hasStorage && !isStorageDateSelected && isStorageGuideOpen;
   const showBaseboardBubble = hasBaseboard && !isBaseboardDateSelected && isBaseboardGuideOpen;
 
-  const handleOpenEstimate = () => {
+  const validateOrder = () => {
     const errors: string[] = [];
     const warnings: string[] = [];
     const basicFields = [
@@ -346,7 +346,6 @@ const App: React.FC = () => {
       { key: 'contactName', label: 'ご担当者名' },
       { key: 'address', label: '納品先住所' },
     ];
-    // @ts-ignore
     basicFields.forEach(f => { if (!order.customerInfo[f.key as keyof typeof order.customerInfo]) errors.push(`${f.label}が入力されていません。`); });
 
     if (!order.customerInfo.deliveryDate1 && !order.customerInfo.deliveryDate2) {
@@ -355,25 +354,170 @@ const App: React.FC = () => {
     
     if (hasBaseboard && !order.customerInfo.delivery1Selection.baseboard && !order.customerInfo.delivery2Selection.baseboard) {
       errors.push('巾木の納品希望日（①または②）が選択されていません。');
+      setIsBaseboardGuideOpen(true);
     }
     if (hasStorage && !order.customerInfo.delivery1Selection.storage && !order.customerInfo.delivery2Selection.storage) {
       errors.push('玄関収納の納品希望日（①または②）が選択されていません。');
+      setIsStorageGuideOpen(true);
     }
 
     if (order.shipping === 0) {
-      errors.push('送料が計算できません。納品先住所を確認してください。');
+      errors.push('送料が計算できません。納品先住所（都道府県）を確認してください。');
     }
 
     if (order.doors.length === 0 && order.storage.type === 'NONE') errors.push('商品を選択してください。');
-    if (order.storage.type === 'NONE' && order.doors.length > 0) warnings.push('玄関収納が選択されていません。');
-    if (order.baseboards.reduce((s, b) => s + b.quantity, 0) === 0) warnings.push('巾木の数量が0個です。');
+    
+    return { errors, warnings };
+  };
 
+  const handleOpenEstimate = () => {
+    const { errors, warnings } = validateOrder();
     if (errors.length > 0 || warnings.length > 0) {
       setValidationData({ errors, warnings });
       setIsValidationModalOpen(true);
       return;
     }
     setIsEstimateModalOpen(true);
+  };
+
+  /**
+   * 詳細図面を一括で出力するハンドラ
+   */
+  const handleBatchExport = () => {
+    const { errors } = validateOrder();
+    if (errors.length > 0) {
+      setValidationData({ errors, warnings: [] });
+      setIsValidationModalOpen(true);
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('ポップアップがブロックされました。ブラウザの設定を確認してください。');
+      return;
+    }
+
+    let pagesHtml = '';
+
+    // 内部建具のページ生成
+    order.doors.forEach((door, index) => {
+      const finalUrl = resolveDoorDrawingUrl(door, priceList);
+      const isPdf = finalUrl.toLowerCase().endsWith('.pdf');
+      const wdText = `WD-${index + 1}`;
+      
+      const widthHtml = door.width === '特寸' ? `${door.customWidth}㎜特寸` : `${door.width}`;
+      const heightHtml = door.height === '特寸' ? `${door.customHeight}㎜特寸` : `${door.height.replace('H', '')}`;
+
+      const frameOptionText = [];
+      if (door.isUndercut) frameOptionText.push(`UC${door.undercutHeight}㎜`);
+      if (door.isFrameExtended) {
+        if (door.domaExtensionType === 'none') frameOptionText.push('土間(伸なし)');
+        else if (door.domaExtensionType === 'frame') frameOptionText.push(`土間(枠+${door.frameExtensionHeight})`);
+        else if (door.domaExtensionType === 'door') frameOptionText.push(`土間(扉+${door.frameExtensionHeight})`);
+      }
+      const frameOptionHtml = frameOptionText.length > 0 ? ` (${frameOptionText.join('/')})` : '';
+
+      pagesHtml += `
+        <div class="page-container">
+          <div class="background-media">
+            ${isPdf 
+              ? `<iframe src="${finalUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH" class="background-pdf"></iframe>`
+              : `<div class="background-image" style="background-image: url('${finalUrl}')"></div>`
+            }
+          </div>
+          <div class="overlay-header">
+            <div class="wd-box">${wdText}</div>
+            <div class="details-box">
+              <div class="details-row">
+                <div class="details-item"><span class="details-label">物件名</span><span class="details-value">${order.customerInfo.siteName}</span></div>
+                <div class="details-item"><span class="details-label">部屋名</span><span class="details-value">${door.roomName}</span></div>
+                <div class="details-item"><span class="details-label">種類</span><span class="details-value">${door.type}</span></div>
+                <div class="details-item"><span class="details-label">デザイン</span><span class="details-value">${door.design}</span></div>
+                <div class="details-item"><span class="details-label">サイズ</span><span class="details-value">${widthHtml}×${heightHtml}</span></div>
+              </div>
+              <div class="details-row">
+                <div class="details-item"><span class="details-label">枠仕様</span><span class="details-value">${door.frameType}${frameOptionHtml}</span></div>
+                <div class="details-item"><span class="details-label">吊元</span><span class="details-value">${door.hangingSide}</span></div>
+                <div class="details-item"><span class="details-label">色</span><span class="details-value">${door.doorColor}(枠:${door.frameColor})</span></div>
+                <div class="details-item"><span class="details-label">ハンドル</span><span class="details-value">${door.handleColor}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    // 玄関収納のページ生成
+    if (order.storage.type !== 'NONE') {
+      const storageRecord = storageTypes.find(s => s.id === order.storage.type);
+      const finalUrl = (storageRecord && storageRecord.imageUrl) ? storageRecord.imageUrl : getStorageDetailPdfUrl(order.storage.type);
+      const isPdf = finalUrl.toLowerCase().endsWith('.pdf');
+      const category = storageRecord?.category || '玄関収納';
+
+      pagesHtml += `
+        <div class="page-container">
+          <div class="background-media">
+            ${isPdf 
+              ? `<iframe src="${finalUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH" class="background-pdf"></iframe>`
+              : `<div class="background-image" style="background-image: url('${finalUrl}')"></div>`
+            }
+          </div>
+          <div class="overlay-header storage-overlay">
+            <div class="id-box">GS</div>
+            <div class="details-box">
+              <div class="details-row">
+                <div class="details-item"><span class="details-label">物件名</span><span class="details-value">${order.customerInfo.siteName}</span></div>
+                <div class="details-item"><span class="details-label">種類</span><span class="details-value">${category}</span></div>
+                <div class="details-item"><span class="details-label">仕様</span><span class="details-value">${order.storage.size}</span></div>
+                <div class="details-item"><span class="details-label">色</span><span class="details-value">${order.storage.color}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="ja">
+      <head>
+        <meta charset="UTF-8">
+        <title>詳細図面一括出力 - ${order.customerInfo.siteName}</title>
+        <style>
+          @page { size: A3 landscape; margin: 0; }
+          body { margin: 0; padding: 0; background: #eee; font-family: 'Noto Sans JP', sans-serif; -webkit-print-color-adjust: exact; }
+          .no-print-bar { position: fixed; top: 0; left: 0; right: 0; background: #1f2937; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+          .print-btn { background: #10b981; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
+          .page-container { width: 420mm; height: 297mm; position: relative; background-color: white; margin: 20px auto; overflow: hidden; transform: scale(0.85); transform-origin: top center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); page-break-after: always; }
+          .background-media, .background-image, .background-pdf { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 1; }
+          .background-image { background-size: contain; background-repeat: no-repeat; background-position: center; }
+          .overlay-header { position: absolute; top: 10mm; left: 27mm; display: flex; align-items: flex-start; gap: 2mm; z-index: 100; padding: 1mm 2mm; }
+          .wd-box, .id-box { padding: 1mm 4mm; font-size: 24pt; font-weight: bold; color: #1d4ed8; border: 2px solid #1d4ed8; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+          .id-box { color: #ea580c; border-color: #ea580c; border-right-width: 2px; }
+          .details-box { margin-top: 1mm; padding: 1mm 3mm; display: flex; flex-direction: column; justify-content: center; gap: 0.5mm; }
+          .details-row { display: flex; align-items: baseline; gap: 4mm; }
+          .details-item { display: flex; align-items: baseline; gap: 1.5mm; }
+          .details-label { color: #666; font-size: 8pt; white-space: nowrap; }
+          .details-value { font-weight: bold; font-size: 10pt; color: #000; white-space: nowrap; }
+          @media print {
+            .no-print-bar { display: none; }
+            body { background: white; }
+            .page-container { margin: 0; transform: none; box-shadow: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="no-print-bar">
+          <span>詳細図一括出力プレビュー (${order.customerInfo.siteName || '現場名未設定'}) - A3横サイズで印刷してください</span>
+          <button class="print-btn" onClick="window.print()">一括印刷 / PDF保存</button>
+        </div>
+        ${pagesHtml}
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   const handleLaunchMail = () => {
@@ -443,13 +587,61 @@ ${order.memo}
         />
       )}
 
+      {/* バリデーションエラーモーダル */}
+      {isValidationModalOpen && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsValidationModalOpen(false)}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-red-600 px-6 py-4 text-white font-bold flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                入力内容の確認が必要です
+              </div>
+              <button onClick={() => setIsValidationModalOpen(false)} className="hover:rotate-90 transition-transform">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              {validationData.errors.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-red-600 font-black text-sm flex items-center gap-2 border-b-2 border-red-50 pb-2 uppercase tracking-wider">
+                    <span className="bg-red-100 px-2 py-0.5 rounded text-[10px]">Must</span>
+                    修正が必要な項目 ({validationData.errors.length})
+                  </h4>
+                  <ul className="space-y-2">
+                    {validationData.errors.map((error, idx) => (
+                      <li key={idx} className="flex gap-3 text-sm font-bold text-gray-700 leading-relaxed group">
+                        <span className="text-red-500 mt-0.5 shrink-0 group-hover:scale-125 transition-transform">●</span>
+                        {error}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-3">
+                <div className="bg-blue-600 text-white rounded-full p-1 shrink-0 mt-0.5">
+                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <p className="text-[11px] font-bold text-blue-800 leading-relaxed">
+                  納品日の不備については、日付選択欄に詳細な案内（吹き出し）が表示されています。
+                </p>
+              </div>
+            </div>
+            <div className="p-6 bg-gray-50 border-t flex justify-end">
+              <button onClick={() => setIsValidationModalOpen(false)} className="bg-gray-800 hover:bg-black text-white px-10 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95">
+                閉じて修正する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isMailModalOpen && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsMailModalOpen(false)}>
           <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6 border-b pb-4">
               <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                 </div>
                 メール送信の準備
               </h3>
@@ -601,7 +793,7 @@ ${order.memo}
                   PDF保存
                 </button>
                 <button onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                   注文書送付依頼
                 </button>
               </div>
@@ -1056,7 +1248,7 @@ ${order.memo}
         </div>
       )}
       
-       <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+       <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen || isValidationModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-8 border-b-2 border-gray-900 pb-4">
           <div>
             <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">柏木工 オリジナルドア 発注書</h1>
@@ -1076,6 +1268,13 @@ ${order.memo}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               見積書作成
+            </button>
+            <button 
+              onClick={handleBatchExport}
+              className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+              詳細図一括出力
             </button>
           </div>
         </div>

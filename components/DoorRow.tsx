@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { DoorItem, DoorType, PriceRecord } from '../types';
-import { DOOR_GROUPS, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, getDoorDetailPdfUrl } from '../constants';
+import { DOOR_GROUPS, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, resolveDoorDrawingUrl } from '../constants';
 
 interface DoorRowProps {
   index: number;
@@ -172,44 +172,8 @@ export const DoorRow: React.FC<DoorRowProps> = ({
   const getTailwindHighlight = (isHighlighted: boolean) => isHighlighted ? 'text-red-600 font-bold bg-red-50 border-red-200' : '';
 
   const handleOpenDetails = () => {
-    let finalUrl = '';
-    let isPdf = false;
-
-    let effectiveHeight = door.height;
-    if (door.height === '特寸' && door.customHeight) {
-      if (isStorage) {
-        if (door.customHeight <= 900) effectiveHeight = "H900";
-        else if (door.customHeight <= 1200) effectiveHeight = "H1200";
-        else if (door.customHeight <= 2000) effectiveHeight = "H2000";
-        else if (door.customHeight <= 2200) effectiveHeight = "H2200";
-        else effectiveHeight = "H2400";
-      } else {
-        if (door.customHeight <= 2000) effectiveHeight = "H2000";
-        else if (door.customHeight <= 2200) effectiveHeight = "H2200";
-        else effectiveHeight = "H2400";
-      }
-    }
-
-    // オプションに応じた検索用デザイン名の決定
-    let searchDesign = door.design;
-    if (door.isUndercut) {
-      searchDesign = "アンダーカット";
-    } else if (door.isFrameExtended) {
-      if (door.domaExtensionType === 'none') searchDesign = "土間納まり（伸長なし）";
-      else if (door.domaExtensionType === 'frame') searchDesign = "土間納まり（枠伸長）";
-      else if (door.domaExtensionType === 'door') searchDesign = "土間納まり（建具伸長）";
-    }
-
-    const record = priceList.find(p => p.type === door.type && p.design === searchDesign && p.height === effectiveHeight)
-                || priceList.find(p => p.type === door.type && p.design === door.design && p.height === effectiveHeight);
-    
-    if (record && record.imageUrl) {
-      finalUrl = record.imageUrl;
-    } else {
-      finalUrl = getDoorDetailPdfUrl(door);
-    }
-
-    isPdf = finalUrl.toLowerCase().endsWith('.pdf');
+    const finalUrl = resolveDoorDrawingUrl(door, priceList);
+    const isPdf = finalUrl.toLowerCase().endsWith('.pdf');
     const wdText = `WD-${index + 1}`;
     
     const widthHtml = door.width === '特寸' 
