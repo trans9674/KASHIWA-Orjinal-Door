@@ -71,6 +71,12 @@ export interface StorageTypeRecord {
   imageUrl?: string;
 }
 
+export interface ShippingFeeRecord {
+  id: number;
+  prefecture: string;
+  price: number;
+}
+
 export interface EntranceStorage {
   type: string;
   size: string;
