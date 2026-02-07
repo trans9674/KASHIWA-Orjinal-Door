@@ -45,14 +45,20 @@ alter table shipping_fees enable row level security;
 -- internal_doors
 drop policy if exists "Allow public read access on internal_doors" on internal_doors;
 drop policy if exists "Allow authenticated insert/update on internal_doors" on internal_doors;
+drop policy if exists "Allow full access on internal_doors" on internal_doors;
+
 create policy "Allow full access on internal_doors" on internal_doors for all using (true) with check (true);
 
 -- entrance_storages
 drop policy if exists "Allow public read access on entrance_storages" on entrance_storages;
+drop policy if exists "Allow full access on entrance_storages" on entrance_storages;
+
 create policy "Allow full access on entrance_storages" on entrance_storages for all using (true) with check (true);
 
 -- shipping_fees
 drop policy if exists "Allow public read access on shipping_fees" on shipping_fees;
+drop policy if exists "Allow full access on shipping_fees" on shipping_fees;
+
 create policy "Allow full access on shipping_fees" on shipping_fees for all using (true) with check (true);
 
 
@@ -65,18 +71,7 @@ on conflict (id) do nothing;
 -- Storage Policies
 drop policy if exists "Public Access" on storage.objects;
 drop policy if exists "Authenticated Upload" on storage.objects;
+drop policy if exists "Allow public access on storage" on storage.objects;
 
 -- Allow public access (read, insert, update, delete) for door-images bucket
 create policy "Allow public access on storage" on storage.objects for all using ( bucket_id = 'door-images' ) with check ( bucket_id = 'door-images' );
-
-
--- --- INITIAL DATA SEEDING (Sample from Constants) ---
--- (Run this only if tables are empty)
-
--- Internal Doors (Sample)
-insert into internal_doors (type, location, design, height, frame_price, door_price, set_price) 
-select '片開き戸', 'LD', 'ガラス戸(透明強化ガラス5mm)', 'H2000', 15320, 30680, 46000
-where not exists (select 1 from internal_doors where type='片開き戸' and design='ガラス戸(透明強化ガラス5mm)' and height='H2000');
-
--- (Note: Only inserting one sample to prevent duplication errors on re-run. 
---  In a real migration, you would handle data seeding more carefully.)
