@@ -66,8 +66,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
   const [editingStorageId, setEditingStorageId] = useState<string | null>(null);
   const [editStorageValues, setEditStorageValues] = useState<Partial<StorageTypeRecord>>({});
 
-  // New Door State
-  const [newDoor, setNewDoor] = useState<Partial<PriceRecord>>({
+  // Initial Form Values
+  const initialDoorState: Partial<PriceRecord> = {
     type: DoorType.Hinged,
     location: UsageLocation.Room,
     design: 'フラット',
@@ -76,31 +76,22 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     doorPrice: 0,
     setPrice: 0,
     imageUrl: ''
-  });
+  };
 
-  // New Storage State
-  const [newStorage, setNewStorage] = useState<Partial<StorageTypeRecord>>({
+  const initialStorageState: Partial<StorageTypeRecord> = {
     id: '',
     name: '',
     category: STORAGE_CATEGORIES[1],
     width: 800,
     price: 0,
     imageUrl: ''
-  });
-
-  const getFileName = (record: PriceRecord) => {
-    if (record.imageUrl) return record.imageUrl;
-    const dummyDoor: DoorItem = {
-      id: 'dummy', roomName: '', type: record.type, design: record.design, width: '778', height: record.height,
-      frameType: 'dummy', hangingSide: 'dummy', doorColor: 'dummy', frameColor: 'dummy', handleColor: 'dummy', specialNotes: '', price: 0
-    };
-    try {
-      const url = getDoorDetailPdfUrl(dummyDoor);
-      return url.split('/').pop() || url;
-    } catch (e) {
-      return 'エラー';
-    }
   };
+
+  // New Door State
+  const [newDoor, setNewDoor] = useState<Partial<PriceRecord>>(initialDoorState);
+
+  // New Storage State
+  const [newStorage, setNewStorage] = useState<Partial<StorageTypeRecord>>(initialStorageState);
 
   const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false) => {
     try {
@@ -243,8 +234,13 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     try {
       setIsAdding(true);
       const doorData = {
-        type: newDoor.type, location: newDoor.location || UsageLocation.Room, design: newDoor.design, height: newDoor.height,
-        frame_price: newDoor.framePrice || 0, door_price: newDoor.doorPrice || 0, set_price: newDoor.setPrice || ((newDoor.framePrice || 0) + (newDoor.doorPrice || 0)),
+        type: newDoor.type, 
+        location: newDoor.location || UsageLocation.Room, 
+        design: newDoor.design, 
+        height: newDoor.height,
+        frame_price: newDoor.framePrice || 0, 
+        door_price: newDoor.doorPrice || 0, 
+        set_price: newDoor.setPrice || ((newDoor.framePrice || 0) + (newDoor.doorPrice || 0)),
         image_url: newDoor.imageUrl || null
       };
       const { data, error } = await supabase.from('internal_doors').insert([doorData]).select();
@@ -255,24 +251,62 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           notes: '', height: data[0].height, framePrice: data[0].frame_price, doorPrice: data[0].door_price, setPrice: data[0].set_price, imageUrl: data[0].image_url
         };
         setPriceList(prev => [...prev, addedRecord]);
-        alert('登録しました');
+        setNewDoor(initialDoorState);
+        alert('内部建具を追加しました');
       }
     } catch (e: any) { alert('登録に失敗しました: ' + e.message); } finally { setIsAdding(false); }
   };
 
   const handleAddStorage = async () => {
-    if (!newStorage.id || !newStorage.name || !newStorage.category) { alert('必須項目を入力してください'); return; }
+    const trimmedId = newStorage.id?.trim();
+    if (!trimmedId || !newStorage.name || !newStorage.category) { 
+      alert('ID (型番)、カテゴリー、商品名は必須項目です。'); 
+      return; 
+    }
+
+    // 重複チェック
+    if (storageTypes.some(s => s.id === trimmedId)) {
+      alert(`ID「${trimmedId}」は既に使用されています。別のIDを入力してください。`);
+      return;
+    }
+
     try {
       setIsAdding(true);
-      const storageData = { id: newStorage.id, name: newStorage.name, category: newStorage.category, width: newStorage.width || 0, price: newStorage.price || 0, image_url: newStorage.imageUrl || null };
+      const storageData = { 
+        id: trimmedId, 
+        name: newStorage.name, 
+        category: newStorage.category, 
+        width: newStorage.width || 0, 
+        price: newStorage.price || 0, 
+        image_url: newStorage.imageUrl || null 
+      };
+      
       const { data, error } = await supabase.from('entrance_storages').insert([storageData]).select();
-      if (error) throw error;
-      if (data) {
-        const addedRecord: StorageTypeRecord = { id: data[0].id, name: data[0].name, category: data[0].category, width: data[0].width, price: data[0].price, imageUrl: data[0].image_url };
-        setStorageTypes(prev => [...prev, addedRecord]);
-        alert('登録しました');
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('このIDは既に登録されています。別のIDを入力してください。');
+        }
+        throw error;
       }
-    } catch (e: any) { alert('登録に失敗しました: ' + e.message); } finally { setIsAdding(false); }
+
+      if (data) {
+        const addedRecord: StorageTypeRecord = { 
+          id: data[0].id, 
+          name: data[0].name, 
+          category: data[0].category, 
+          width: data[0].width, 
+          price: data[0].price, 
+          imageUrl: data[0].image_url 
+        };
+        setStorageTypes(prev => [...prev, addedRecord]);
+        setNewStorage(initialStorageState);
+        alert('玄関収納を追加しました');
+      }
+    } catch (e: any) { 
+      alert('登録に失敗しました:\n' + e.message); 
+    } finally { 
+      setIsAdding(false); 
+    }
   };
 
   return (
