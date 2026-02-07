@@ -57,7 +57,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
   }, [handleMouseMove]);
 
   // Sorting State
-  const [sortConfig, setSortConfig] = useState<{ key: keyof PriceRecord; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof PriceRecord; direction: 'asc' | 'desc' } | null>({ key: 'type', direction: 'asc' });
 
   // Editing State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -157,21 +157,45 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
   const sortedPriceList = useMemo(() => {
     let items = [...priceList];
-    if (sortConfig) {
-      items.sort((a, b) => {
-        if (sortConfig.key === 'type') {
-           const orderA = typeOrder[a.type] ?? 9999;
-           const orderB = typeOrder[b.type] ?? 9999;
-           if (orderA !== orderB) return sortConfig.direction === 'asc' ? orderA - orderB : orderB - orderA;
-           return 0;
+    
+    // Default multi-level sorting logic
+    const multiSort = (a: PriceRecord, b: PriceRecord, primaryKey?: keyof PriceRecord, direction: 'asc' | 'desc' = 'asc') => {
+      let comparison = 0;
+
+      const compareValues = (key: keyof PriceRecord, valA: any, valB: any) => {
+        if (key === 'type') {
+          return (typeOrder[valA] ?? 9999) - (typeOrder[valB] ?? 9999);
         }
-        // @ts-ignore
-        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
-        // @ts-ignore
-        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+        if (typeof valA === 'string' && typeof valB === 'string') {
+          return valA.localeCompare(valB, 'ja');
+        }
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return valA - valB;
+        }
         return 0;
-      });
-    }
+      };
+
+      if (primaryKey) {
+        // @ts-ignore
+        comparison = compareValues(primaryKey, a[primaryKey], b[primaryKey]);
+        if (direction === 'desc') comparison *= -1;
+      }
+
+      // Fallback: Type -> Design -> Height
+      if (comparison === 0) {
+        const typeComp = compareValues('type', a.type, b.type);
+        if (typeComp !== 0) return typeComp;
+        
+        const designComp = compareValues('design', a.design, b.design);
+        if (designComp !== 0) return designComp;
+        
+        return compareValues('height', a.height, b.height);
+      }
+
+      return comparison;
+    };
+
+    items.sort((a, b) => multiSort(a, b, sortConfig?.key, sortConfig?.direction));
     return items;
   }, [priceList, sortConfig, typeOrder]);
 
@@ -217,7 +241,6 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           notes: '', height: data[0].height, framePrice: data[0].frame_price, doorPrice: data[0].door_price, setPrice: data[0].set_price, imageUrl: data[0].image_url
         };
         setPriceList(prev => [...prev, addedRecord]);
-        // NEW: Do not reset newDoor state to allow sequential additions with same/similar specs
         alert('登録しました');
       }
     } catch (e: any) { alert('登録に失敗しました: ' + e.message); } finally { setIsAdding(false); }
@@ -233,7 +256,6 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       if (data) {
         const addedRecord: StorageTypeRecord = { id: data[0].id, name: data[0].name, category: data[0].category, width: data[0].width, price: data[0].price, imageUrl: data[0].image_url };
         setStorageTypes(prev => [...prev, addedRecord]);
-        // NEW: Also keeping storage info for convenience
         alert('登録しました');
       }
     } catch (e: any) { alert('登録に失敗しました: ' + e.message); } finally { setIsAdding(false); }
@@ -403,11 +425,46 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                           </span>
                         </div>
                       </th>
-                      <th className="p-2 border-b">デザイン</th>
-                      <th className="p-2 border-b text-center">高さ</th>
-                      <th className="p-2 border-b text-right">枠価格</th>
-                      <th className="p-2 border-b text-right">扉価格</th>
-                      <th className="p-2 border-b text-right bg-blue-50">セット価格</th>
+                      <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('design')}>
+                        <div className="flex items-center gap-1">
+                          デザイン
+                          <span className="text-gray-400 group-hover:text-gray-600">
+                             {sortConfig?.key === 'design' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
+                          </span>
+                        </div>
+                      </th>
+                      <th className="p-2 border-b text-center cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('height')}>
+                        <div className="flex items-center justify-center gap-1">
+                          高さ
+                          <span className="text-gray-400 group-hover:text-gray-600">
+                             {sortConfig?.key === 'height' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
+                          </span>
+                        </div>
+                      </th>
+                      <th className="p-2 border-b text-right cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('framePrice')}>
+                        <div className="flex items-center justify-end gap-1">
+                          枠価格
+                          <span className="text-gray-400 group-hover:text-gray-600">
+                             {sortConfig?.key === 'framePrice' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
+                          </span>
+                        </div>
+                      </th>
+                      <th className="p-2 border-b text-right cursor-pointer hover:bg-gray-200 transition-colors select-none group" onClick={() => handleSort('doorPrice')}>
+                        <div className="flex items-center justify-end gap-1">
+                          扉価格
+                          <span className="text-gray-400 group-hover:text-gray-600">
+                             {sortConfig?.key === 'doorPrice' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
+                          </span>
+                        </div>
+                      </th>
+                      <th className="p-2 border-b text-right bg-blue-50 cursor-pointer hover:bg-blue-100 transition-colors select-none group" onClick={() => handleSort('setPrice')}>
+                        <div className="flex items-center justify-end gap-1">
+                          セット価格
+                          <span className="text-gray-400 group-hover:text-gray-600">
+                             {sortConfig?.key === 'setPrice' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}
+                          </span>
+                        </div>
+                      </th>
                       <th className="p-2 border-b font-mono w-40">画像/PDF</th>
                       <th className="p-2 border-b text-center w-24">操作</th>
                     </tr>
