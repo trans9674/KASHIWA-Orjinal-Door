@@ -36,7 +36,6 @@ export const DoorRow: React.FC<DoorRowProps> = ({
   const isSliding = door.type.includes("引") || door.type.includes("引き");
   const isStorage = door.type === DoorType.StorageDouble || door.type === DoorType.StorageSingle;
 
-  // 枠オプションボタンを表示する条件（指定の6種類）
   const canShowFrameOption = [
     DoorType.Sliding,
     DoorType.Outset,
@@ -59,7 +58,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     return HINGED_HANDLES;
   };
 
-  const calculatePrice = (type: string, design: string, height: string, customHeight?: number) => {
+  const calculatePrice = (type: string, design: string, height: string, customHeight?: number, options?: Partial<DoorItem>) => {
     let effectiveHeight = height;
     if (height === '特寸' && customHeight) {
       if (isStorage) {
@@ -74,9 +73,22 @@ export const DoorRow: React.FC<DoorRowProps> = ({
         else effectiveHeight = "H2400";
       }
     }
-    const record = priceList.find(p => p.type === type && p.design === design && p.height === effectiveHeight);
+
+    // オプションに応じた検索用デザイン名の決定
+    let searchDesign = design;
+    if (options?.isUndercut) {
+      searchDesign = "アンダーカット";
+    } else if (options?.isFrameExtended) {
+      if (options.domaExtensionType === 'none') searchDesign = "土間納まり（伸長なし）";
+      else if (options.domaExtensionType === 'frame') searchDesign = "土間納まり（枠伸長）";
+      else if (options.domaExtensionType === 'door') searchDesign = "土間納まり（建具伸長）";
+    }
+
+    const record = priceList.find(p => p.type === type && p.design === searchDesign && p.height === effectiveHeight);
     if (record) return record.setPrice;
-    const fallbackRecord = priceList.find(p => p.type === type && p.height === effectiveHeight);
+    
+    // 見つからない場合は本来のデザインで再検索
+    const fallbackRecord = priceList.find(p => p.type === type && p.design === design && p.height === effectiveHeight);
     return fallbackRecord ? fallbackRecord.setPrice : 30000;
   };
 
@@ -90,6 +102,9 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       if (name === 'isFrameExtended' && checked && !door.domaExtensionType) {
         updates.domaExtensionType = 'none';
       }
+      // チェックボックス変更時は即座に価格再計算
+      const nextOptions = { ...door, ...updates };
+      updates.price = calculatePrice(door.type, door.design, door.height, door.customHeight, nextOptions);
     } else {
        updates = { [name]: value };
     }
@@ -115,7 +130,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
           updates.height = nextHeight;
         }
         updates.frameType = getFrameType(value, nextHeight === '特寸' ? 'H2400' : nextHeight);
-        updates.price = calculatePrice(value, updates.design || door.design, nextHeight, door.customHeight);
+        updates.price = calculatePrice(value, updates.design || door.design, nextHeight, door.customHeight, door);
       }
     } else if (name === 'height') {
       if (value === '特寸') {
@@ -123,7 +138,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
         setIsCustomSizeInfoOpen(true);
       }
       updates.frameType = getFrameType(door.type, value === '特寸' ? 'H2400' : value);
-      updates.price = calculatePrice(door.type, door.design, value, updates.customHeight || door.customHeight);
+      updates.price = calculatePrice(door.type, door.design, value, updates.customHeight || door.customHeight, door);
     } else if (name === 'width') {
       if (value === '特寸') {
         updates.customWidth = door.customWidth || 800;
@@ -132,11 +147,11 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     } else if (name === 'customHeight') {
       const val = Math.min(2400, parseInt(value) || 0);
       updates.customHeight = val;
-      updates.price = calculatePrice(door.type, door.design, door.height, val);
+      updates.price = calculatePrice(door.type, door.design, door.height, val, door);
     } else if (name === 'customWidth') {
       updates.customWidth = parseInt(value) || 0;
     } else if (name === 'design') {
-      updates.price = calculatePrice(door.type, value, door.height, door.customHeight);
+      updates.price = calculatePrice(door.type, value, door.height, door.customHeight, door);
     } else if (name === 'undercutHeight') {
        updates.undercutHeight = parseInt(value) || 0;
     } else if (name === 'frameExtensionHeight') {
@@ -175,8 +190,18 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       }
     }
 
-    const record = priceList.find(p => p.type === door.type && p.design === door.design && p.height === effectiveHeight)
-                || priceList.find(p => p.type === door.type && p.height === effectiveHeight);
+    // オプションに応じた検索用デザイン名の決定
+    let searchDesign = door.design;
+    if (door.isUndercut) {
+      searchDesign = "アンダーカット";
+    } else if (door.isFrameExtended) {
+      if (door.domaExtensionType === 'none') searchDesign = "土間納まり（伸長なし）";
+      else if (door.domaExtensionType === 'frame') searchDesign = "土間納まり（枠伸長）";
+      else if (door.domaExtensionType === 'door') searchDesign = "土間納まり（建具伸長）";
+    }
+
+    const record = priceList.find(p => p.type === door.type && p.design === searchDesign && p.height === effectiveHeight)
+                || priceList.find(p => p.type === door.type && p.design === door.design && p.height === effectiveHeight);
     
     if (record && record.imageUrl) {
       finalUrl = record.imageUrl;
@@ -185,7 +210,6 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     }
 
     isPdf = finalUrl.toLowerCase().endsWith('.pdf');
-
     const wdText = `WD-${index + 1}`;
     
     const widthHtml = door.width === '特寸' 
@@ -523,7 +547,15 @@ export const DoorRow: React.FC<DoorRowProps> = ({
 
                     <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all ${door.isFrameExtended ? 'opacity-100 scale-100' : 'opacity-30 pointer-events-none scale-[0.98]'}`}>
                       <div 
-                        onClick={() => door.isFrameExtended && updateDoor(door.id, { domaExtensionType: 'none' })}
+                        onClick={() => {
+                          if (door.isFrameExtended) {
+                            const newOptions = { ...door, domaExtensionType: 'none' as const };
+                            updateDoor(door.id, { 
+                              domaExtensionType: 'none', 
+                              price: calculatePrice(door.type, door.design, door.height, door.customHeight, newOptions) 
+                            });
+                          }
+                        }}
                         className={`group relative flex flex-col bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${door.domaExtensionType === 'none' ? 'border-orange-500 shadow-lg ring-4 ring-orange-50' : 'border-gray-100 hover:border-orange-200'}`}
                       >
                         <div className="h-40 bg-gray-50 flex items-center justify-center p-4 border-b">
@@ -539,7 +571,15 @@ export const DoorRow: React.FC<DoorRowProps> = ({
                       </div>
 
                       <div 
-                        onClick={() => door.isFrameExtended && updateDoor(door.id, { domaExtensionType: 'frame' })}
+                        onClick={() => {
+                          if (door.isFrameExtended) {
+                            const newOptions = { ...door, domaExtensionType: 'frame' as const };
+                            updateDoor(door.id, { 
+                              domaExtensionType: 'frame',
+                              price: calculatePrice(door.type, door.design, door.height, door.customHeight, newOptions)
+                            });
+                          }
+                        }}
                         className={`group relative flex flex-col bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${door.domaExtensionType === 'frame' ? 'border-orange-500 shadow-lg ring-4 ring-orange-50' : 'border-gray-100 hover:border-orange-200'}`}
                       >
                         <div className="h-40 bg-gray-50 flex items-center justify-center p-4 border-b">
@@ -571,7 +611,15 @@ export const DoorRow: React.FC<DoorRowProps> = ({
                       </div>
 
                       <div 
-                        onClick={() => door.isFrameExtended && updateDoor(door.id, { domaExtensionType: 'door' })}
+                        onClick={() => {
+                          if (door.isFrameExtended) {
+                            const newOptions = { ...door, domaExtensionType: 'door' as const };
+                            updateDoor(door.id, { 
+                              domaExtensionType: 'door',
+                              price: calculatePrice(door.type, door.design, door.height, door.customHeight, newOptions)
+                            });
+                          }
+                        }}
                         className={`group relative flex flex-col bg-white rounded-2xl border-2 transition-all cursor-pointer overflow-hidden ${door.domaExtensionType === 'door' ? 'border-orange-500 shadow-lg ring-4 ring-orange-50' : 'border-gray-100 hover:border-orange-200'}`}
                       >
                         <div className="h-40 bg-gray-50 flex items-center justify-center p-4 border-b">

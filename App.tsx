@@ -11,7 +11,6 @@ import { supabase } from './supabase';
 const SIMPLE_HANDLE_OPTIONS = ["セラミックホワイト", "マットブラック", "サテンニッケル"];
 const PB_OPTIONS = ["9.5", "12.5", "15.0"];
 
-// 安全なID生成関数（crypto.randomUUIDが未対応の環境へのフォールバック付き）
 const generateId = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -40,7 +39,6 @@ const App: React.FC = () => {
   const [isPbModalOpen, setIsPbModalOpen] = useState(false);
   const [isDataViewerOpen, setIsDataViewerOpen] = useState(false);
   
-  // 各セクションごとの吹き出し表示状態
   const [isStorageGuideOpen, setIsStorageGuideOpen] = useState(true);
   const [isBaseboardGuideOpen, setIsBaseboardGuideOpen] = useState(true);
 
@@ -96,12 +94,16 @@ const App: React.FC = () => {
     memo: '',
   });
 
-  // Supabase Data Fetching
+  // 住所のパーツ管理（UI表示用）
+  const [addressPart, setAddressPart] = useState({
+    prefecture: '',
+    detail: ''
+  });
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch Internal Doors
         const { data: doorsData, error: doorsError } = await supabase.from('internal_doors').select('*');
         if (doorsError) throw doorsError;
         const mappedDoors: PriceRecord[] = (doorsData || []).map(d => ({
@@ -118,7 +120,6 @@ const App: React.FC = () => {
         }));
         setPriceList(mappedDoors);
 
-        // Fetch Entrance Storage
         const { data: storageData, error: storageError } = await supabase.from('entrance_storages').select('*');
         if (storageError) throw storageError;
         const mappedStorage: StorageTypeRecord[] = (storageData || []).map(s => ({
@@ -129,13 +130,11 @@ const App: React.FC = () => {
           price: s.price,
           imageUrl: s.image_url
         }));
-        // Ensure NONE exists
         if (!mappedStorage.find(s => s.id === 'NONE')) {
           mappedStorage.unshift({ id: "NONE", name: "なし", category: "なし", width: 0, price: 0 });
         }
         setStorageTypes(mappedStorage);
 
-        // Fetch Shipping Fees
         const { data: shippingData, error: shippingError } = await supabase.from('shipping_fees').select('*').order('id');
         if (shippingError) throw shippingError;
         setShippingFees(shippingData as ShippingFeeRecord[]);
@@ -151,7 +150,6 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
-  // 送料の自動計算（住所または送料データが変更された場合に再計算）
   useEffect(() => {
     if (shippingFees.length === 0) return;
     const address = order.customerInfo.address;
@@ -159,7 +157,7 @@ const App: React.FC = () => {
     let longestMatch = -1;
     
     shippingFees.forEach(fee => {
-        if (address.includes(fee.prefecture)) {
+        if (address.startsWith(fee.prefecture)) {
             if (fee.prefecture.length > longestMatch) {
                 longestMatch = fee.prefecture.length;
                 matchedFee = fee.price;
@@ -260,9 +258,20 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleAddressChange = (address: string) => {
-    // 住所更新のみ行い、送料計算はuseEffectに任せる
-    setOrder(prev => ({ ...prev, customerInfo: { ...prev.customerInfo, address } }));
+  const handlePrefectureChange = (pref: string) => {
+    setAddressPart(prev => {
+      const newState = { ...prev, prefecture: pref };
+      setOrder(o => ({ ...o, customerInfo: { ...o.customerInfo, address: `${newState.prefecture}${newState.detail}` } }));
+      return newState;
+    });
+  };
+
+  const handleAddressDetailChange = (detail: string) => {
+    setAddressPart(prev => {
+      const newState = { ...prev, detail };
+      setOrder(o => ({ ...o, customerInfo: { ...o.customerInfo, address: `${newState.prefecture}${newState.detail}` } }));
+      return newState;
+    });
   };
 
   const handleUpdateShipping = (id: number, newPrice: number) => {
@@ -275,13 +284,11 @@ const App: React.FC = () => {
       if (dateNum === 1) {
         newInfo.delivery1Selection = { ...newInfo.delivery1Selection, [item]: checked };
         if (checked) {
-          // 排他制御: 1を選択したら2は解除
           newInfo.delivery2Selection = { ...newInfo.delivery2Selection, [item]: false };
         }
       } else {
         newInfo.delivery2Selection = { ...newInfo.delivery2Selection, [item]: checked };
         if (checked) {
-          // 排他制御: 2を選択したら1は解除
           newInfo.delivery1Selection = { ...newInfo.delivery1Selection, [item]: false };
         }
       }
@@ -290,7 +297,6 @@ const App: React.FC = () => {
   };
 
   const totals = useMemo(() => {
-    // 点数計算
     const doorPoints = order.doors.reduce((sum, d) => sum + (DOOR_POINTS[d.type] || 0), 0);
     const storagePoints = getStoragePoints(order.storage.type);
     const totalBaseboardQty = order.baseboards.reduce((sum, b) => b.unit === '本' ? sum + b.quantity : sum, 0);
@@ -298,7 +304,6 @@ const App: React.FC = () => {
     
     const totalPoints = doorPoints + storagePoints + baseboardPoints;
     
-    // 送料計算 (10点未満なら減額)
     const baseShipping = order.shipping;
     const finalShipping = totalPoints >= 10 ? baseShipping : Math.floor(baseShipping * (totalPoints / 10));
 
@@ -321,17 +326,14 @@ const App: React.FC = () => {
       finalShipping,
       isShippingDiscounted: totalPoints > 0 && totalPoints < 10
     };
-  }, [order, shippingFees]); // depend on shippingFees implicitly through order.shipping but also good to have
+  }, [order]);
 
-  // 商品の有無判定
   const hasStorage = useMemo(() => order.storage.type !== 'NONE', [order.storage.type]);
   const hasBaseboard = useMemo(() => order.baseboards.reduce((sum, b) => sum + b.quantity, 0) > 0, [order.baseboards]);
 
-  // 納品日が未選択かどうかの判定
   const isStorageDateSelected = order.customerInfo.delivery1Selection.storage || order.customerInfo.delivery2Selection.storage;
   const isBaseboardDateSelected = order.customerInfo.delivery1Selection.baseboard || order.customerInfo.delivery2Selection.baseboard;
 
-  // 吹き出しを表示するかどうか
   const showStorageBubble = hasStorage && !isStorageDateSelected && isStorageGuideOpen;
   const showBaseboardBubble = hasBaseboard && !isBaseboardDateSelected && isBaseboardGuideOpen;
 
@@ -347,12 +349,10 @@ const App: React.FC = () => {
     // @ts-ignore
     basicFields.forEach(f => { if (!order.customerInfo[f.key as keyof typeof order.customerInfo]) errors.push(`${f.label}が入力されていません。`); });
 
-    // 納品希望日のチェック
     if (!order.customerInfo.deliveryDate1 && !order.customerInfo.deliveryDate2) {
       errors.push('納品希望日が入力されていません。');
     }
     
-    // 商品選択時の納品日選択チェック
     if (hasBaseboard && !order.customerInfo.delivery1Selection.baseboard && !order.customerInfo.delivery2Selection.baseboard) {
       errors.push('巾木の納品希望日（①または②）が選択されていません。');
     }
@@ -360,7 +360,6 @@ const App: React.FC = () => {
       errors.push('玄関収納の納品希望日（①または②）が選択されていません。');
     }
 
-    // 送料チェック
     if (order.shipping === 0) {
       errors.push('送料が計算できません。納品先住所を確認してください。');
     }
@@ -432,7 +431,6 @@ ${order.memo}
   return (
     <div className="min-h-screen bg-slate-100 font-['Noto_Sans_JP']">
       
-      {/* Data Viewer Modal */}
       {isDataViewerOpen && (
         <DataViewerModal 
           onClose={() => setIsDataViewerOpen(false)} 
@@ -445,11 +443,9 @@ ${order.memo}
         />
       )}
 
-      {/* Mail Launch Modal */}
       {isMailModalOpen && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsMailModalOpen(false)}>
           <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            {/* ... Mail modal content ... */}
             <div className="flex justify-between items-center mb-6 border-b pb-4">
               <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
@@ -505,10 +501,8 @@ ${order.memo}
         </div>
       )}
 
-      {/* Order Flow Modal */}
       {isOrderFlowModalOpen && (
         <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto no-print animate-in fade-in duration-300 flex items-center justify-center p-4">
-           {/* ... Order Flow Content ... */}
            <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full p-10 relative animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
              <button onClick={() => setIsOrderFlowModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 rounded-full p-2 hover:bg-gray-100 transition-colors">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -517,7 +511,6 @@ ${order.memo}
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-1 space-y-6">
                   <h3 className="text-3xl font-bold text-gray-800 border-b-2 border-gray-100 pb-4">ご注文フロー確認</h3>
-                  {/* ... Same content ... */}
                    <div className="bg-white rounded-2xl border-2 border-blue-100 overflow-hidden shadow-sm">
                     <h5 className="text-blue-800 font-bold p-5 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
@@ -562,7 +555,7 @@ ${order.memo}
                         { step: 1, title: "見積書の入力", desc: "アプリ上で仕様を入力し、見積書PDFを作成・保存します。", color: "bg-indigo-500", ring: "ring-indigo-900" },
                         { step: 2, title: "注文書送付依頼を送る", desc: "「注文書送付依頼」ボタンからメールを起動し、見積書PDFと平面図を添付して送信します。", color: "bg-indigo-500", ring: "ring-indigo-900" },
                         { step: 3, title: "見積り確認・図面確認（柏木工側）", desc: "お送りいただいた内容を確認し、詳細図面を作成します。", color: "bg-gray-600", ring: "ring-gray-800" },
-                        { step: 4, title: "正式な注文書を送付いたします", desc: "柏木工より, 図面と正式な注文書をお客様へ送付します。", color: "bg-gray-600", ring: "ring-gray-800" },
+                        { step: 4, title: "正式な注文書を送付いたします", desc: "柏木工より, 図面と正式な注文書をお送りいたします。", color: "bg-gray-600", ring: "ring-gray-800" },
                         { step: 5, title: "注文書返信により正式発注", desc: "内容をご確認の上、注文書にご捺印いただきご返信ください。この時点で発注確定となります。", color: "bg-orange-500", ring: "ring-orange-900" },
                         { step: 6, title: "製作開始", desc: "製作期間（中2週間〜）のカウントを開始します。", color: "bg-blue-600", ring: "ring-blue-900" },
                         { step: 7, title: "1次納品（枠・巾木）", desc: "現場の進捗に合わせ、枠類を先行納品します。", color: "bg-emerald-500", ring: "ring-emerald-900" },
@@ -592,12 +585,9 @@ ${order.memo}
         </div>
       )}
 
-      {/* Estimate Modal */}
       {isEstimateModalOpen && (
         <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300 print:absolute print:inset-0 print:bg-white print:h-auto print:w-full print:z-[200] print:overflow-visible">
-          {/* ... Estimate Content ... */}
            <div className="min-h-screen py-6 px-4 flex flex-col items-center print:block print:h-auto print:p-0">
-            {/* Action Bar (Top) */}
             <div className="max-w-[1000px] w-full flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-xl border border-gray-200 gap-4 no-print">
               <button onClick={() => setIsEstimateModalOpen(false)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold group">
                 <div className="bg-gray-100 p-2 rounded-full group-hover:bg-gray-200 transition-colors">
@@ -611,18 +601,15 @@ ${order.memo}
                   PDF保存
                 </button>
                 <button onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 00-2 2z" /></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                   注文書送付依頼
                 </button>
               </div>
             </div>
 
-            {/* ... Rest of estimate modal content ... */}
             <div className="flex justify-center w-full max-w-[1000px] print:block print:w-full print:max-w-none">
-              {/* Document Column (Center) - A4 Sized Container */}
               <div className="flex-grow w-full flex justify-center print:block">
                 <div className="bg-white p-[10mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:shadow-none print:w-full print:max-w-none print:p-0 print:m-0 box-border">
-                  {/* ... PDF Header ... */}
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex-1 mr-4">
                       <h2 className="text-4xl font-bold border-b-4 border-gray-800 pb-2 mb-4 font-['Inter'] tracking-tight">御見積書</h2>
@@ -638,7 +625,6 @@ ${order.memo}
                             <p>連絡先：{order.customerInfo.phone}</p>
                             <p className={`font-bold ${order.customerInfo.ceilingPB === '15.0' ? 'text-red-600' : 'text-gray-700'}`}>天井PB厚：{order.customerInfo.ceilingPB}mm</p>
                         </div>
-                        {/* ... Dates ... */}
                         <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm leading-tight">
                           <p className="flex items-center gap-2">
                             <span className="font-bold">納品希望日①</span> 
@@ -685,7 +671,6 @@ ${order.memo}
                         </tr>
                       </thead>
                       <tbody>
-                        {/* Internal Doors Details */}
                         {order.doors.map((door, idx) => {
                           const isDesignRed = door.design !== 'フラット';
                           const isSizeRed = door.width === '特寸' || door.height === '特寸';
@@ -729,7 +714,6 @@ ${order.memo}
                           );
                         })}
 
-                        {/* Storage Details */}
                         {order.storage.type !== 'NONE' && (
                           <>
                             <tr className="border-b border-gray-200">
@@ -774,7 +758,6 @@ ${order.memo}
                           </>
                         )}
 
-                        {/* Baseboards Details */}
                         {order.baseboards.map((item, idx) => {
                            if (item.quantity === 0) return null;
                            return (
@@ -791,7 +774,6 @@ ${order.memo}
                            );
                         })}
 
-                        {/* Shipping */}
                         {order.shipping > 0 && (
                             <tr className="border-b border-gray-200">
                                <td className="py-1.5 align-top font-medium text-gray-500">他</td>
@@ -808,7 +790,6 @@ ${order.memo}
                             </tr>
                         )}
                         
-                        {/* Totals Section in Table */}
                         <tr className="border-t-2 border-gray-400">
                           <td colSpan={2}></td>
                           <td colSpan={2} className="py-1 px-2 text-right text-sm text-gray-600">小計 (税抜)</td>
@@ -844,7 +825,6 @@ ${order.memo}
         </div>
       )}
       
-      {/* ... Other Modals (Hardware, Handles, etc) ... */}
        {isHardwareModalOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHardwareModalOpen(false)}>
            <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
@@ -926,7 +906,6 @@ ${order.memo}
         </div>
       )}
 
-      {/* Main Modal (Initial Settings) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full overflow-hidden animate-in zoom-in flex flex-col max-h-[90vh]">
@@ -943,11 +922,9 @@ ${order.memo}
                 データ確認（価格表・送料等）
               </button>
             </div>
-            {/* ... Rest of Main Modal content (same as previous but simplified) ... */}
             <div className="p-6 overflow-y-auto custom-scrollbar">
               <div className="flex flex-col lg:flex-row gap-6">
                 
-                {/* 左カラム：基本設定 */}
                 <div className="flex-1 lg:max-w-[40%] flex flex-col">
                   <h3 className="font-bold text-gray-800 text-lg mb-4 border-b-2 border-blue-500 pb-1 inline-block">基本設定の入力</h3>
                   <div className="space-y-4">
@@ -990,7 +967,6 @@ ${order.memo}
                   </div>
                 </div>
 
-                {/* 右カラム：確認事項 */}
                 <div className="flex-1 lg:border-l lg:pl-6 lg:border-gray-200 flex flex-col">
                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm mb-4">
                     <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-3 text-base border-b border-orange-200 pb-2">
@@ -1005,7 +981,6 @@ ${order.memo}
                       </ul>
 
                       <div className="bg-white p-3 rounded-lg border border-orange-100">
-                        {/* ... */}
                         <p className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-2">
                           <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           枠オプション設定について
@@ -1041,7 +1016,6 @@ ${order.memo}
                       ご注文〜納品の流れ
                     </h3>
                     <div className="relative pt-2 px-1">
-                      {/* Connecting Line */}
                       <div className="absolute top-[11px] left-4 right-4 h-0.5 bg-slate-300 -z-0"></div>
                       
                       <div className="flex justify-between items-start relative z-10">
@@ -1082,7 +1056,6 @@ ${order.memo}
         </div>
       )}
       
-      {/* ... Rest of App ... */}
        <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-8 border-b-2 border-gray-900 pb-4">
           <div>
@@ -1107,9 +1080,7 @@ ${order.memo}
           </div>
         </div>
 
-        {/* ... Customer Info Form (no changes in markup, just connecting handlers) ... */}
          <div className="grid grid-cols-4 gap-6 mb-8 bg-gray-50 p-6 rounded-2xl border">
-          {/* ... */}
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">会社名</label>
             <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="会社名" value={order.customerInfo.company} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, company: e.target.value}}))} />
@@ -1127,26 +1098,39 @@ ${order.memo}
             <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="電話番号" value={order.customerInfo.phone} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, phone: e.target.value}}))} />
           </div>
           <div className="space-y-1 col-span-2">
-            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">納品先住所（都道府県から入力してください）</label>
-            <div className="relative">
-              <input 
-                type="text" 
-                className={`w-full border rounded-lg p-2.5 font-medium focus:ring-1 outline-none transition-colors ${order.customerInfo.address && order.shipping === 0 ? 'border-red-300 focus:ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-blue-500 bg-white'}`}
-                placeholder="都道府県から入力してください" 
-                value={order.customerInfo.address} 
-                onChange={(e) => handleAddressChange(e.target.value)} 
-              />
-              {order.customerInfo.address && order.shipping === 0 && (
-                <p className="text-xs text-red-500 font-bold mt-1 animate-pulse">
-                  ※ 都道府県名が含まれていないため、送料が計算できません。
-                </p>
-              )}
+            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">納品先住所</label>
+            <div className="flex gap-2">
+              <div className="w-1/3 shrink-0">
+                <select 
+                  className={`w-full border rounded-lg p-2.5 font-medium focus:ring-1 outline-none transition-colors ${!addressPart.prefecture && order.customerInfo.address ? 'border-red-300 focus:ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-blue-500 bg-white'}`}
+                  value={addressPart.prefecture}
+                  onChange={(e) => handlePrefectureChange(e.target.value)}
+                >
+                  <option value="">都道府県を選択</option>
+                  {shippingFees.map(fee => (
+                    <option key={fee.id} value={fee.prefecture}>{fee.prefecture}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1">
+                <input 
+                  type="text" 
+                  className="w-full border border-gray-200 rounded-lg p-2.5 font-medium focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                  placeholder="市区町村・番地・マンション名など" 
+                  value={addressPart.detail} 
+                  onChange={(e) => handleAddressDetailChange(e.target.value)} 
+                />
+              </div>
             </div>
+            {order.customerInfo.address && order.shipping === 0 && (
+              <p className="text-xs text-red-500 font-bold mt-1 animate-pulse">
+                ※ 都道府県名が正しく選択されていないため、送料が計算できません。
+              </p>
+            )}
           </div>
           <div className="space-y-1 col-span-1 relative">
              <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">納品希望日</label>
              <div className="space-y-2">
-                {/* Date 1 */}
                 <div className="flex flex-col gap-1 p-2 border rounded-lg bg-white shadow-sm">
                   <BusinessDatePicker 
                     value={order.customerInfo.deliveryDate1} 
@@ -1172,7 +1156,6 @@ ${order.memo}
                   )}
                 </div>
 
-                {/* Date 2 */}
                 <div className="flex flex-col gap-1 p-2 border rounded-lg bg-white shadow-sm">
                   <BusinessDatePicker 
                     value={order.customerInfo.deliveryDate2} 
@@ -1220,10 +1203,6 @@ ${order.memo}
           </div>
         </div>
 
-        {/* ... Rest of Door List ... */}
-        {/* ... */}
-
-         {/* Internal Doors Section Header */}
         <div className="flex justify-between items-center mb-4 border-l-4 border-blue-500 pl-3 mt-10">
           <h3 className="text-xl font-bold text-gray-800">内部建具</h3>
         </div>
@@ -1326,7 +1305,6 @@ ${order.memo}
           />
         </div>
 
-        {/* ... Baseboards and Total Section (unchanged logic, just render) ... */}
         <div className="grid grid-cols-2 gap-8 items-start mt-10">
           <div className="border p-6 rounded-2xl bg-white shadow-sm border-emerald-100 flex flex-col h-full relative">
             {showBaseboardBubble && (
@@ -1411,7 +1389,6 @@ ${order.memo}
             </div>
           </div>
           <div className="bg-gray-900 text-white p-10 rounded-3xl shadow-2xl flex flex-col justify-between relative overflow-hidden group">
-            {/* ... Total Display ... */}
              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 blur-2xl transition-all group-hover:bg-blue-500/20"></div>
             
             <div className="w-full space-y-3 mb-8">
