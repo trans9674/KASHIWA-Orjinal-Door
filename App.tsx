@@ -409,7 +409,7 @@ const App: React.FC = () => {
       const heightHtml = door.height === '特寸' ? `<span style="color: #ef4444; font-weight: bold;">${door.customHeight}㎜特寸</span>` : `${door.height.replace('H', '')}`;
 
       const frameOptionText = [];
-      if (door.isUndercut) frameOptionText.push(`UC${door.undercutHeight}㎜`);
+      if (door.isUndercut) frameOptionText.push(`アンダーカット${door.undercutHeight}㎜`);
       if (door.isFrameExtended) {
         if (door.domaExtensionType === 'none') frameOptionText.push('土間(伸なし)');
         else if (door.domaExtensionType === 'frame') frameOptionText.push(`土間(枠+${door.frameExtensionHeight})`);
@@ -791,7 +791,7 @@ ${order.memo}
               </button>
               <div className="flex flex-wrap justify-center items-center gap-3">
                 <button onClick={handlePrintPdf} className="bg-gray-800 hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                   PDF保存
                 </button>
                 <button onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
@@ -887,7 +887,7 @@ ${order.memo}
                                        <span className={isFrameOptionRed ? 'text-red-600 font-bold' : ''}>枠: {door.frameType}
                                          {(door.isUndercut || door.isFrameExtended) && (
                                            <span className="text-red-600 font-bold ml-1">
-                                             ※{door.isUndercut ? `UC${door.undercutHeight}mm` : ''}
+                                             ※{door.isUndercut ? `アンダーカット${door.undercutHeight}mm` : ''}
                                              {door.isUndercut && door.isFrameExtended ? '/' : ''}
                                              {door.isFrameExtended ? `土間${door.frameExtensionHeight}mm` : ''}
                                            </span>
@@ -1182,7 +1182,7 @@ ${order.memo}
                         <p className="text-[10px] text-gray-600 mb-3 leading-relaxed ml-1 flex flex-wrap items-center gap-1">
                           ドア下開口（アンダーカット）や枠伸長は、リスト内「枠仕様」欄の設定ボタン
                           <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-500">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           </span>
                           から。
                         </p>

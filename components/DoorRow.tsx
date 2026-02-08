@@ -74,7 +74,6 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       }
     }
 
-    // オプションに応じた検索用デザイン名の決定
     let searchDesign = design;
     if (options?.isUndercut) {
       searchDesign = "アンダーカット";
@@ -87,7 +86,6 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     const record = priceList.find(p => p.type === type && p.design === searchDesign && p.height === effectiveHeight);
     if (record) return record.setPrice;
     
-    // 見つからない場合は本来のデザインで再検索
     const fallbackRecord = priceList.find(p => p.type === type && p.design === design && p.height === effectiveHeight);
     return fallbackRecord ? fallbackRecord.setPrice : 30000;
   };
@@ -99,10 +97,14 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       updates = { [name]: checked };
-      if (name === 'isFrameExtended' && checked && !door.domaExtensionType) {
-        updates.domaExtensionType = 'none';
+      
+      if (name === 'isUndercut' && checked) {
+        updates.isFrameExtended = false;
+      } else if (name === 'isFrameExtended' && checked) {
+        updates.isUndercut = false;
+        if (!door.domaExtensionType) updates.domaExtensionType = 'none';
       }
-      // チェックボックス変更時は即座に価格再計算
+
       const nextOptions = { ...door, ...updates };
       updates.price = calculatePrice(door.type, door.design, door.height, door.customHeight, nextOptions);
     } else {
@@ -185,7 +187,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       : `<span style="${getHighlightStyle(door.height !== initialSettings.defaultHeight)}">${door.height.replace('H', '')}</span>`;
 
     const frameOptionText = [];
-    if (door.isUndercut) frameOptionText.push(`UC${door.undercutHeight}㎜`);
+    if (door.isUndercut) frameOptionText.push(`アンダーカット${door.undercutHeight}㎜`);
     if (door.isFrameExtended) {
       if (door.domaExtensionType === 'none') frameOptionText.push('土間(伸なし)');
       else if (door.domaExtensionType === 'frame') frameOptionText.push(`土間(枠+${door.frameExtensionHeight})`);
@@ -428,7 +430,16 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       </td>
       <td className="p-1 relative">
         <div className="flex items-center gap-1">
-           <input type="text" name="frameType" value={door.frameType} readOnly className={`w-full border rounded px-1 py-1 bg-gray-100 text-gray-600 font-medium h-8 outline-none text-[10px] ${getTailwindHighlight(isFrameHighlighted)}`} />
+           <div className={`w-full border rounded px-0.5 flex flex-col justify-center overflow-hidden h-8 bg-gray-100 text-[10px] leading-[1.0] transition-colors ${getTailwindHighlight(isFrameHighlighted)}`}>
+             <span className="text-gray-600 font-medium truncate px-0.5">{door.frameType}</span>
+             {door.isUndercut && <span className="text-red-600 font-bold truncate bg-white px-0.5 py-0.5 mt-0.5 rounded-[1px] border border-red-100">アンダーカット</span>}
+             {door.isFrameExtended && (
+               <span className="text-red-600 font-bold truncate bg-white px-0.5 py-0.5 mt-0.5 rounded-[1px] border border-red-100">
+                 {door.domaExtensionType === 'none' ? '土間(伸なし)' :
+                  door.domaExtensionType === 'frame' ? '土間(枠伸長)' : '土間(建具伸長)'}
+               </span>
+             )}
+           </div>
            {canShowFrameOption && (
              <button 
                onClick={(e) => {
@@ -458,28 +469,27 @@ export const DoorRow: React.FC<DoorRowProps> = ({
                
                <div className="space-y-10">
                  <section className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                    <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-                      <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                    <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-3">
+                      <input 
+                        type="checkbox" 
+                        name="isUndercut" 
+                        checked={door.isUndercut || false} 
+                        onChange={handleChange}
+                        className="w-6 h-6 rounded text-red-600 focus:ring-red-500 border-2 border-gray-300 cursor-pointer" 
+                      />
                       アンダーカット設定（ドア下開口）
                     </h4>
-                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-start ml-9">
                        <div className="w-full md:w-64 shrink-0 overflow-hidden rounded-xl border border-gray-200 shadow-sm bg-white h-40 flex items-center justify-center">
                           <img src="http://25663cc9bda9549d.main.jp/aistudio/door/kaikou.jpg" alt="ドア下開口" className="max-h-full w-auto object-contain mix-blend-multiply" />
                        </div>
                        <div className="flex-1 space-y-4">
-                          <label className="flex items-center gap-3 cursor-pointer bg-white p-4 rounded-xl hover:bg-gray-50 transition-colors border-2 border-transparent has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/30">
-                            <input 
-                              type="checkbox" 
-                              name="isUndercut" 
-                              checked={door.isUndercut || false} 
-                              onChange={handleChange}
-                              className="rounded text-blue-600 focus:ring-blue-500 w-6 h-6" 
-                            />
-                            <div className="flex flex-col">
-                              <span className="text-gray-800 font-bold text-sm">アンダーカット仕様にする</span>
-                              <span className="text-gray-400 text-[10px]">ドアを床から浮かせ、通気性を確保します</span>
-                            </div>
-                          </label>
+                          <div className={`bg-white p-4 rounded-xl border-2 transition-colors ${door.isUndercut ? 'border-blue-500 bg-blue-50/30' : 'border-transparent'}`}>
+                             <div className="flex flex-col">
+                               <span className="text-gray-800 font-bold text-sm">アンダーカット仕様</span>
+                               <span className="text-gray-400 text-[10px]">ドアを床から浮かせ、通気性を確保します</span>
+                             </div>
+                          </div>
                           <div className={`flex items-center gap-3 pl-2 transition-all ${door.isUndercut ? 'opacity-100' : 'opacity-30 pointer-events-none translate-x-2'}`}>
                             <span className="text-gray-600 text-xs font-bold whitespace-nowrap">隙間寸法</span>
                             <div className="flex items-center gap-2">
@@ -498,18 +508,18 @@ export const DoorRow: React.FC<DoorRowProps> = ({
                  </section>
 
                  <section className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                        <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
-                        土間納まり設定
-                      </h4>
-                      <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-full border border-gray-200 text-[11px] font-bold text-gray-600">
-                         <input type="checkbox" name="isFrameExtended" checked={door.isFrameExtended || false} onChange={handleChange} className="rounded text-orange-600" />
-                         この建具を土間納まりにする
-                      </label>
-                    </div>
+                    <h4 className="text-base font-bold text-gray-800 mb-4 flex items-center gap-3">
+                      <input 
+                        type="checkbox" 
+                        name="isFrameExtended" 
+                        checked={door.isFrameExtended || false} 
+                        onChange={handleChange} 
+                        className="w-6 h-6 rounded text-red-600 focus:ring-red-500 border-2 border-gray-300 cursor-pointer" 
+                      />
+                      土間納まり設定
+                    </h4>
 
-                    <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all ${door.isFrameExtended ? 'opacity-100 scale-100' : 'opacity-30 pointer-events-none scale-[0.98]'}`}>
+                    <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 transition-all ml-9 ${door.isFrameExtended ? 'opacity-100 scale-100' : 'opacity-30 pointer-events-none scale-[0.98]'}`}>
                       <div 
                         onClick={() => {
                           if (door.isFrameExtended) {
