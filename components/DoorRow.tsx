@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { DoorItem, DoorType, PriceRecord } from '../types';
-import { DOOR_GROUPS, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, resolveDoorDrawingUrl } from '../constants';
+import { DOOR_GROUPS, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, resolveDoorDrawingUrl, ROOM_NAME_OPTIONS } from '../constants';
 
 interface DoorRowProps {
   index: number;
@@ -17,6 +17,8 @@ interface DoorRowProps {
   siteName: string;
   priceList: PriceRecord[];
 }
+
+const BUBBLE_TRIGGER_ROOMS = ["玄関", "シューズクローク", "土間", "シューズクローゼット", "土間収納"];
 
 export const DoorRow: React.FC<DoorRowProps> = ({ 
   index, 
@@ -36,14 +38,18 @@ export const DoorRow: React.FC<DoorRowProps> = ({
   const isSliding = door.type.includes("引") || door.type.includes("引き");
   const isStorage = door.type === DoorType.StorageDouble || door.type === DoorType.StorageSingle;
 
+  // 片引戸（Sliding）を除外
   const canShowFrameOption = [
-    DoorType.Sliding,
+    DoorType.Hinged, // 片開き戸も枠オプション（アンダーカット等）があるので追加
     DoorType.Outset,
     DoorType.OutsetIncorner,
     DoorType.Folding2,
     DoorType.Folding4W12,
     DoorType.Folding4W16
-  ].includes(door.type as DoorType);
+  ].includes(door.type as DoorType) && door.type !== DoorType.Sliding;
+
+  // 吹き出しを表示するかどうかの判定
+  const showOptionBubble = canShowFrameOption && BUBBLE_TRIGGER_ROOMS.includes(door.roomName);
   
   const standardHeights = isStorage 
     ? ["H900", "H1200", "H2000", "H2200", "H2400"] 
@@ -384,7 +390,20 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors text-[11px]">
       <td className="p-2 font-medium text-gray-500 text-center border-r border-gray-100">WD{index + 1}</td>
       <td className="p-1">
-        <input type="text" name="roomName" value={door.roomName} onChange={handleChange} className="w-full border rounded px-1 py-1 h-8" placeholder="部屋名" />
+        <input 
+          type="text" 
+          name="roomName" 
+          list="room-name-list"
+          value={door.roomName} 
+          onChange={handleChange} 
+          className="w-full border rounded px-1 py-1 h-8" 
+          placeholder="選択/入力" 
+        />
+        <datalist id="room-name-list">
+          {ROOM_NAME_OPTIONS.map(option => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
       </td>
       <td className="p-1">
         <select name="type" value={door.type} onChange={handleChange} className="w-full border rounded px-1 py-1 h-8 font-semibold text-gray-700">
@@ -441,16 +460,26 @@ export const DoorRow: React.FC<DoorRowProps> = ({
              )}
            </div>
            {canShowFrameOption && (
-             <button 
-               onClick={(e) => {
-                 e.preventDefault();
-                 setIsFrameOptionOpen(!isFrameOptionOpen);
-               }}
-               className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors shadow-sm ${isFrameHighlighted ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
-               title="枠オプション設定"
-             >
-               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-             </button>
+             <div className="relative shrink-0">
+               {showOptionBubble && (
+                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 animate-bounce pointer-events-none">
+                    <div className="bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap relative">
+                      【枠のオプションが設定できます】
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-x-4 border-x-transparent border-t-4 border-t-red-600"></div>
+                    </div>
+                 </div>
+               )}
+               <button 
+                 onClick={(e) => {
+                   e.preventDefault();
+                   setIsFrameOptionOpen(!isFrameOptionOpen);
+                 }}
+                 className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors shadow-sm ${isFrameHighlighted ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}
+                 title="枠オプション設定"
+               >
+                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+               </button>
+             </div>
            )}
         </div>
         
@@ -682,7 +711,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
             title="詳細図面にWD番号を合成して表示・印刷"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
             詳細図
           </button>

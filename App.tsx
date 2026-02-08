@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 /* UsageLocationを追加 */
 import { DoorItem, OrderState, DoorType, EntranceStorage, BaseboardItem, PriceRecord, StorageTypeRecord, ShippingFeeRecord, UsageLocation } from './types';
@@ -33,7 +32,6 @@ const App: React.FC = () => {
   const [isHandleModalOpen, setIsHandleModalOpen] = useState(false);
   const [isHardwareModalOpen, setIsHardwareModalOpen] = useState(false);
   const [isColorModalOpen, setIsColorModalOpen] = useState(false);
-  // Line 36: Fixed missing useState call for isEstimateModalOpen
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
   const [isOrderFlowModalOpen, setIsOrderFlowModalOpen] = useState(false);
   const [isMailModalOpen, setIsMailModalOpen] = useState(false);
@@ -379,18 +377,6 @@ const App: React.FC = () => {
       return;
     }
     setIsEstimateModalOpen(true);
-  };
-
-  /**
-   * データ編集画面を開く（パスワード認証）
-   */
-  const handleOpenDataViewer = () => {
-    const pass = window.prompt("パスワードを入力してください。");
-    if (pass === "0000") {
-      setIsDataViewerOpen(true);
-    } else if (pass !== null) {
-      alert("パスワードが正しくありません。");
-    }
   };
 
   /**
@@ -1122,7 +1108,7 @@ ${order.memo}
                 初期設定【柏木工 オリジナルドア】
               </div>
               <button 
-                onClick={handleOpenDataViewer}
+                onClick={() => setIsDataViewerOpen(true)}
                 className="bg-gray-700 hover:bg-gray-600 text-white p-2.5 rounded-lg flex items-center transition-colors shadow-sm"
                 title="データ確認（価格表・送料等）"
               >
@@ -1241,7 +1227,7 @@ ${order.memo}
                               <span className={`text-[10px] font-bold ${step.active ? 'text-orange-600' : 'text-slate-700'} leading-tight whitespace-nowrap`}>
                                 {step.label}
                               </span>
-                              <span className="text-slate-400 leading-none scale-90 whitespace-nowrap text-[9px]">{step.sub}</span>
+                              <span className="text-[9px] text-slate-400 leading-none scale-90 whitespace-nowrap">{step.sub}</span>
                             </div>
                           </div>
                         ))}
