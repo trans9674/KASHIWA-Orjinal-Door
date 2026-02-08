@@ -33,6 +33,7 @@ const App: React.FC = () => {
   const [isHandleModalOpen, setIsHandleModalOpen] = useState(false);
   const [isHardwareModalOpen, setIsHardwareModalOpen] = useState(false);
   const [isColorModalOpen, setIsColorModalOpen] = useState(false);
+  // Line 36: Fixed missing useState call for isEstimateModalOpen
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
   const [isOrderFlowModalOpen, setIsOrderFlowModalOpen] = useState(false);
   const [isMailModalOpen, setIsMailModalOpen] = useState(false);
@@ -378,6 +379,18 @@ const App: React.FC = () => {
       return;
     }
     setIsEstimateModalOpen(true);
+  };
+
+  /**
+   * データ編集画面を開く（パスワード認証）
+   */
+  const handleOpenDataViewer = () => {
+    const pass = window.prompt("パスワードを入力してください。");
+    if (pass === "0000") {
+      setIsDataViewerOpen(true);
+    } else if (pass !== null) {
+      alert("パスワードが正しくありません。");
+    }
   };
 
   /**
@@ -1109,11 +1122,11 @@ ${order.memo}
                 初期設定【柏木工 オリジナルドア】
               </div>
               <button 
-                onClick={() => setIsDataViewerOpen(true)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors shadow-sm"
+                onClick={handleOpenDataViewer}
+                className="bg-gray-700 hover:bg-gray-600 text-white p-2.5 rounded-lg flex items-center transition-colors shadow-sm"
+                title="データ確認（価格表・送料等）"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
-                データ確認（価格表・送料等）
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
               </button>
             </div>
             <div className="p-6 overflow-y-auto custom-scrollbar">
@@ -1228,7 +1241,7 @@ ${order.memo}
                               <span className={`text-[10px] font-bold ${step.active ? 'text-orange-600' : 'text-slate-700'} leading-tight whitespace-nowrap`}>
                                 {step.label}
                               </span>
-                              <span className="text-[9px] text-slate-400 leading-none scale-90 whitespace-nowrap">{step.sub}</span>
+                              <span className="text-slate-400 leading-none scale-90 whitespace-nowrap text-[9px]">{step.sub}</span>
                             </div>
                           </div>
                         ))}
