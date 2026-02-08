@@ -1,13 +1,6 @@
 
 import { DoorType, UsageLocation, PriceRecord, DoorItem, StorageTypeRecord } from './types';
 
-// 部屋名の選択肢
-export const ROOM_NAME_OPTIONS = [
-  "玄関", "土間", "ホール", "シューズクローク", "リビング", "ダイニング", "キッチン", 
-  "和室", "洋室①", "洋室②", "洋室③", "寝室", "書斎", "洗面", "ランドリールーム", 
-  "収納", "ウォークインクローゼット", "1階トイレ", "2階トイレ", "パントリー", "クローゼット"
-];
-
 // アイテムごとの配送点数定義
 export const DOOR_POINTS: Record<string, number> = {
   [DoorType.Hinged]: 1,
@@ -344,3 +337,24 @@ export const DAIWA_PRICES: Record<number, number> = {
   1600: 3700,
   2000: 3900
 };
+
+export const ROOM_NAMES = [
+  "玄関",
+  "シューズクローク",
+  "ホール",
+  "リビング",
+  "ダイニング",
+  "キッチン",
+  "パントリー",
+  "和室",
+  "洗面",
+  "脱衣室",
+  "トイレ",
+  "寝室",
+  "洋室①",
+  "洋室②",
+  "洋室③",
+  "書斎",
+  "ウォークインクロゼット",
+  "クロゼット"
+];

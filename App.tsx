@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 /* UsageLocationを追加 */
 import { DoorItem, OrderState, DoorType, EntranceStorage, BaseboardItem, PriceRecord, StorageTypeRecord, ShippingFeeRecord, UsageLocation } from './types';
@@ -196,7 +197,7 @@ const App: React.FC = () => {
       baseboards: prev.baseboards.map(b => ({ ...b, color: initialSettings.defaultBaseboardColor })),
       doors: [{
         id: generateId(),
-        roomName: 'LDK',
+        roomName: '',
         type: defaultType,
         design: defaultDesign,
         width: '778',

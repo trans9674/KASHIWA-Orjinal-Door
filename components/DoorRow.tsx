@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DoorItem, DoorType, PriceRecord } from '../types';
-import { DOOR_GROUPS, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, resolveDoorDrawingUrl, ROOM_NAME_OPTIONS } from '../constants';
+import { DOOR_GROUPS, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, resolveDoorDrawingUrl, ROOM_NAMES } from '../constants';
 
 interface DoorRowProps {
   index: number;
@@ -18,6 +18,7 @@ interface DoorRowProps {
   priceList: PriceRecord[];
 }
 
+// 枠オプションの吹き出しを表示する部屋名のリスト
 const BUBBLE_TRIGGER_ROOMS = ["玄関", "シューズクローク", "土間", "シューズクローゼット", "土間収納"];
 
 export const DoorRow: React.FC<DoorRowProps> = ({ 
@@ -32,15 +33,15 @@ export const DoorRow: React.FC<DoorRowProps> = ({
 }) => {
   const [isCustomSizeInfoOpen, setIsCustomSizeInfoOpen] = useState(false);
   const [isFrameOptionOpen, setIsFrameOptionOpen] = useState(false);
+  const [isBubbleVisible, setIsBubbleVisible] = useState(false);
   
   const spec = DOOR_SPEC_MASTER[door.type] || { designs: [], widths: [], hangingSides: ["なし"] };
   const isFoldingOrStorage = door.type.includes("折戸") || door.type.includes("物入");
   const isSliding = door.type.includes("引") || door.type.includes("引き");
   const isStorage = door.type === DoorType.StorageDouble || door.type === DoorType.StorageSingle;
 
-  // 片引戸（Sliding）を除外
+  // 片引戸（Sliding）を除外、片開き戸（Hinged）もユーザー指示により除外
   const canShowFrameOption = [
-    DoorType.Hinged, // 片開き戸も枠オプション（アンダーカット等）があるので追加
     DoorType.Outset,
     DoorType.OutsetIncorner,
     DoorType.Folding2,
@@ -48,8 +49,17 @@ export const DoorRow: React.FC<DoorRowProps> = ({
     DoorType.Folding4W16
   ].includes(door.type as DoorType) && door.type !== DoorType.Sliding;
 
-  // 吹き出しを表示するかどうかの判定
-  const showOptionBubble = canShowFrameOption && BUBBLE_TRIGGER_ROOMS.includes(door.roomName);
+  useEffect(() => {
+    if (canShowFrameOption && BUBBLE_TRIGGER_ROOMS.includes(door.roomName)) {
+      setIsBubbleVisible(true);
+      const timer = setTimeout(() => {
+        setIsBubbleVisible(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setIsBubbleVisible(false);
+    }
+  }, [door.roomName, canShowFrameOption]);
   
   const standardHeights = isStorage 
     ? ["H900", "H1200", "H2000", "H2200", "H2400"] 
@@ -393,15 +403,15 @@ export const DoorRow: React.FC<DoorRowProps> = ({
         <input 
           type="text" 
           name="roomName" 
-          list="room-name-list"
           value={door.roomName} 
           onChange={handleChange} 
           className="w-full border rounded px-1 py-1 h-8" 
-          placeholder="選択/入力" 
+          placeholder="部屋名" 
+          list={`room-list-${index}`}
         />
-        <datalist id="room-name-list">
-          {ROOM_NAME_OPTIONS.map(option => (
-            <option key={option} value={option} />
+        <datalist id={`room-list-${index}`}>
+          {ROOM_NAMES.map(room => (
+            <option key={room} value={room} />
           ))}
         </datalist>
       </td>
@@ -461,11 +471,11 @@ export const DoorRow: React.FC<DoorRowProps> = ({
            </div>
            {canShowFrameOption && (
              <div className="relative shrink-0">
-               {showOptionBubble && (
-                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 animate-bounce pointer-events-none">
+               {isBubbleVisible && (
+                 <div className="absolute bottom-full right-[-6px] mb-1.5 z-20 animate-bounce pointer-events-none">
                     <div className="bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap relative">
                       【枠のオプションが設定できます】
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-x-4 border-x-transparent border-t-4 border-t-red-600"></div>
+                      <div className="absolute top-full right-2 border-x-4 border-x-transparent border-t-4 border-t-red-600"></div>
                     </div>
                  </div>
                )}
@@ -711,7 +721,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
             title="詳細図面にWD番号を合成して表示・印刷"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 00-2 2v4h10z" />
             </svg>
             詳細図
           </button>
