@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { EntranceStorage, StorageTypeRecord } from '../types';
 import { STORAGE_CATEGORIES, COLORS, DAIWA_PRICES, getStorageDetailPdfUrl } from '../constants';
@@ -97,8 +96,11 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
             display: flex;
             align-items: stretch;
             z-index: 100;
-            background: transparent;
+            background: white;
             padding: 2mm 5mm;
+            border: 2px solid #ea580c;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
           }
           .id-box {
             padding: 1mm 4mm;
@@ -152,31 +154,23 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
             align-items: center;
             z-index: 1000;
           }
-          .print-btn {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-          }
           @media print {
             .no-print-bar { display: none; }
-            body { background: white; overflow: visible; }
+            body { background: white; overflow: visible; margin: 0; }
             .page-container { 
               margin: 0; 
-              transform: none; 
+              transform: scale(0.95); 
+              transform-origin: top left;
               box-shadow: none;
+              page-break-after: always;
             }
           }
         </style>
       </head>
       <body>
         <div class="no-print-bar">
-          <span>図面プレビュー: ${storage.size} (${siteName || '現場名未設定'}) - 表示倍率 85%</span>
-          <button class="print-btn" onClick="window.print()">印刷 / PDF保存</button>
+          <span>図面プレビュー: ${storage.size} (${siteName || '現場名未設定'})</span>
+          <span style="font-size: 11px; background: #374151; padding: 4px 10px; border-radius: 4px; border: 1px solid #4b5563;">※印刷は「詳細図一括出力」をご利用ください</span>
         </div>
         <div class="page-container">
           <div class="background-media">
@@ -363,9 +357,10 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
           className={`no-print px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md active:scale-95 whitespace-nowrap flex items-center gap-2 ${isNone ? 'bg-gray-100 text-gray-300 cursor-not-allowed shadow-none border border-gray-100' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18l-6-6m0 0l6-6m-6 6h18" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
-          玄関収納 詳細図面
+          玄関収納 プレビュー
         </button>
       </div>
       
