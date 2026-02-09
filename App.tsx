@@ -8,6 +8,7 @@ import { BusinessDatePicker } from './components/BusinessDatePicker';
 import { DataViewerModal } from './components/DataViewerModal';
 import { COLORS, HANDLE_COLORS, DOOR_SPEC_MASTER, getFrameType, HINGED_HANDLES, SLIDING_HANDLES, DOOR_POINTS, getStoragePoints, getBaseboardPoints, resolveDoorDrawingUrl, getStorageDetailPdfUrl } from './constants';
 import { supabase } from './supabase';
+import { PDFDocument, degrees } from 'pdf-lib';
 
 const SIMPLE_HANDLE_OPTIONS = ["セラミックホワイト", "マットブラック", "サテンニッケル"];
 const PB_OPTIONS = ["9.5", "12.5", "15.0"];
@@ -18,6 +19,165 @@ const generateId = () => {
   }
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
+
+// Canvasを使ってオーバーレイ画像（WD番号や仕様詳細）を生成するヘルパー関数
+const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: string): Promise<string> => {
+    const canvas = document.createElement('canvas');
+    const scale = 3; // 高解像度化
+    // おおよそのサイズ感 (pt換算で調整: A3横=1191pt, オーバーレイ幅は約700pt程度)
+    const width = 800 * scale; 
+    const height = 80 * scale;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+    
+    ctx.scale(scale, scale);
+    ctx.textBaseline = 'middle';
+    
+    // --- WD Box (左側) ---
+    const wdX = 2; const wdY = 2; const wdW = 100; const wdH = 50;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(wdX, wdY, wdW, wdH);
+    ctx.strokeStyle = '#1d4ed8'; // Blue
+    ctx.lineWidth = 2;
+    ctx.strokeRect(wdX, wdY, wdW, wdH);
+    
+    // Text WD
+    ctx.font = 'bold 24px "Noto Sans JP", sans-serif';
+    ctx.fillStyle = '#1d4ed8';
+    ctx.textAlign = 'center';
+    ctx.fillText(`WD-${index+1}`, wdX + wdW/2, wdY + wdH/2 + 2);
+    
+    // --- Details Box (右側) ---
+    const detX = wdX + wdW + 10; const detY = 2; const detW = 680; const detH = 60;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(detX, detY, detW, detH);
+    ctx.strokeStyle = '#1d4ed8';
+    ctx.strokeRect(detX, detY, detW, detH);
+    
+    // Text Details Helpers
+    ctx.textAlign = 'left';
+    const row1Y = detY + 18;
+    const row2Y = detY + 44;
+    
+    const drawLabelValue = (x: number, y: number, label: string, value: string, color: string = '#000') => {
+        ctx.font = 'normal 10px "Noto Sans JP", sans-serif';
+        ctx.fillStyle = '#666';
+        ctx.fillText(label, x, y);
+        const labelWidth = ctx.measureText(label).width;
+        
+        ctx.font = 'bold 12px "Noto Sans JP", sans-serif';
+        ctx.fillStyle = color;
+        ctx.fillText(value, x + labelWidth + 6, y);
+    };
+
+    // Row 1
+    let curX = detX + 10;
+    drawLabelValue(curX, row1Y, "物件名", siteName || ''); curX += 160;
+    drawLabelValue(curX, row1Y, "部屋名", door.roomName || ''); curX += 120;
+    drawLabelValue(curX, row1Y, "種類", door.type); curX += 100;
+    drawLabelValue(curX, row1Y, "デザイン", door.design); curX += 150;
+    
+    // Size logic
+    const wStr = door.width === '特寸' ? `${door.customWidth}㎜特寸` : door.width;
+    const hStr = door.height === '特寸' ? `${door.customHeight}㎜特寸` : door.height.replace('H','');
+    const sizeColor = (door.width === '特寸' || door.height === '特寸') ? '#ef4444' : '#000';
+    drawLabelValue(curX, row1Y, "サイズ", `${wStr}×${hStr}`, sizeColor);
+
+    // Row 2
+    curX = detX + 10;
+    // Frame text construction
+    let frameText = door.frameType;
+    let frameColor = '#000';
+    const opts = [];
+    if(door.isUndercut) opts.push(`UC${door.undercutHeight}`);
+    if(door.isFrameExtended) {
+       if(door.domaExtensionType === 'none') opts.push('土間');
+       else opts.push(`土間+${door.frameExtensionHeight}`);
+    }
+    if(opts.length > 0) {
+      frameText += ` (${opts.join('/')})`;
+      frameColor = '#ef4444';
+    }
+
+    drawLabelValue(curX, row2Y, "枠仕様", frameText, frameColor); curX += 200;
+    drawLabelValue(curX, row2Y, "吊元", door.hangingSide); curX += 80;
+    drawLabelValue(curX, row2Y, "色", `${door.doorColor}(枠:${door.frameColor})`); curX += 200;
+    drawLabelValue(curX, row2Y, "ハンドル", door.handleColor);
+
+    return canvas.toDataURL('image/png');
+};
+
+const createStorageOverlayImage = async (storage: EntranceStorage, category: string, siteName: string): Promise<string> => {
+    const canvas = document.createElement('canvas');
+    const scale = 3;
+    const width = 800 * scale; 
+    const height = 80 * scale;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+    
+    ctx.scale(scale, scale);
+    ctx.textBaseline = 'middle';
+    
+    // --- ID Box (左側) ---
+    const idX = 2; const idY = 2; const idW = 80; const idH = 50;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(idX, idY, idW, idH);
+    ctx.strokeStyle = '#ea580c'; // Orange
+    ctx.lineWidth = 2;
+    // 枠は右側のみ太線っぽく、今回は全体枠
+    ctx.strokeRect(idX, idY, idW, idH);
+    
+    // Text ID
+    ctx.font = 'bold 26px "Noto Sans JP", sans-serif';
+    ctx.fillStyle = '#ea580c';
+    ctx.textAlign = 'center';
+    ctx.fillText("GS", idX + idW/2, idY + idH/2 + 2);
+    
+    // --- Details Box (右側) ---
+    const detX = idX + idW + 10; const detY = 2; const detW = 500; const detH = 60;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(detX, detY, detW, detH);
+    // 玄関収納は枠なし（CSSに合わせて）だが、視認性のため薄くつけるか、あるいは枠をつける
+    ctx.strokeStyle = '#ea580c';
+    ctx.strokeRect(detX, detY, detW, detH);
+
+    // Text Details Helpers
+    ctx.textAlign = 'left';
+    const row1Y = detY + 18;
+    const row2Y = detY + 44;
+    
+    const drawLabelValue = (x: number, y: number, label: string, value: string) => {
+        ctx.font = 'normal 10px "Noto Sans JP", sans-serif';
+        ctx.fillStyle = '#666';
+        ctx.fillText(label, x, y);
+        const labelWidth = ctx.measureText(label).width;
+        
+        ctx.font = 'bold 12px "Noto Sans JP", sans-serif';
+        ctx.fillStyle = '#000';
+        ctx.fillText(value, x + labelWidth + 6, y);
+    };
+
+    // Row 1
+    let curX = detX + 15;
+    drawLabelValue(curX, row1Y, "物件名", siteName || ''); curX += 200;
+    drawLabelValue(curX, row1Y, "種類", category);
+
+    // Row 2
+    curX = detX + 15;
+    drawLabelValue(curX, row2Y, "仕様", storage.size); curX += 200;
+    drawLabelValue(curX, row2Y, "色", storage.color);
+    
+    return canvas.toDataURL('image/png');
+};
+
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -381,145 +541,192 @@ const App: React.FC = () => {
   };
 
   /**
-   * 詳細図面を一括で出力するハンドラ
+   * 詳細図面を一括でPDF化して出力するハンドラ
    */
-  const handleBatchExport = () => {
+  const handleBatchExport = async () => {
     const { errors } = validateOrder();
     if (errors.length > 0) {
       setValidationData({ errors, warnings: [] });
       setIsValidationModalOpen(true);
       return;
     }
+    
+    setLoading(true);
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('ポップアップがブロックされました。ブラウザの設定を確認してください。');
-      return;
-    }
-
-    let pagesHtml = '';
-
-    // 内部建具のページ生成
-    order.doors.forEach((door, index) => {
-      const finalUrl = resolveDoorDrawingUrl(door, priceList);
-      const isPdf = finalUrl.toLowerCase().endsWith('.pdf');
-      const wdText = `WD-${index + 1}`;
+    try {
+      const doc = await PDFDocument.create();
       
-      const widthHtml = door.width === '特寸' ? `<span style="color: #ef4444; font-weight: bold;">${door.customWidth}㎜特寸</span>` : `${door.width}`;
-      const heightHtml = door.height === '特寸' ? `<span style="color: #ef4444; font-weight: bold;">${door.customHeight}㎜特寸</span>` : `${door.height.replace('H', '')}`;
+      // 内部建具のページ生成
+      for (let i = 0; i < order.doors.length; i++) {
+        const door = order.doors[i];
+        const url = resolveDoorDrawingUrl(door, priceList);
+        
+        // 1. 図面ファイルの取得
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`図面の取得に失敗しました: ${url}`);
+        const buffer = await res.arrayBuffer();
+        
+        const isPdf = url.toLowerCase().endsWith('.pdf');
+        
+        // 2. オーバーレイ画像の生成
+        const overlayDataUrl = await createDoorOverlayImage(door, i, order.customerInfo.siteName);
+        const overlayImage = await doc.embedPng(overlayDataUrl);
+        
+        // 3. ページ作成 (A3 Landscape: 420mm x 297mm -> approx 1190.55 x 841.89 points)
+        const pageWidth = 1190.55;
+        const pageHeight = 841.89;
+        
+        let page;
 
-      const frameOptionText = [];
-      if (door.isUndercut) frameOptionText.push(`アンダーカット${door.undercutHeight}㎜`);
-      if (door.isFrameExtended) {
-        if (door.domaExtensionType === 'none') frameOptionText.push('土間(伸なし)');
-        else if (door.domaExtensionType === 'frame') frameOptionText.push(`土間(枠+${door.frameExtensionHeight})`);
-        else if (door.domaExtensionType === 'door') frameOptionText.push(`土間(扉+${door.frameExtensionHeight})`);
+        if (isPdf) {
+           const externalPdf = await PDFDocument.load(buffer);
+           const [embeddedPage] = await doc.embedPdf(externalPdf, [0]); // 最初のページのみ
+           page = doc.addPage([pageWidth, pageHeight]);
+           
+           // PDFを中心に合わせて描画（スケーリング調整）
+           const { width: srcW, height: srcH } = embeddedPage.scale(1.0);
+           // A3 Landscapeにフィットさせるスケール計算
+           const scale = Math.min(pageWidth / srcW, pageHeight / srcH);
+           
+           page.drawPage(embeddedPage, {
+             x: (pageWidth - srcW * scale) / 2,
+             y: (pageHeight - srcH * scale) / 2,
+             width: srcW * scale,
+             height: srcH * scale
+           });
+        } else {
+           // 画像の場合
+           let embeddedImage;
+           const contentType = res.headers.get('content-type');
+           if (contentType && contentType.includes('png')) {
+               embeddedImage = await doc.embedPng(buffer);
+           } else {
+               embeddedImage = await doc.embedJpg(buffer);
+           }
+           
+           page = doc.addPage([pageWidth, pageHeight]);
+           const { width: imgW, height: imgH } = embeddedImage.scale(1.0);
+           // アスペクト比維持で最大化
+           const scale = Math.min(pageWidth / imgW, pageHeight / imgH);
+           
+           page.drawImage(embeddedImage, {
+             x: (pageWidth - imgW * scale) / 2,
+             y: (pageHeight - imgH * scale) / 2,
+             width: imgW * scale,
+             height: imgH * scale
+           });
+        }
+        
+        // 4. オーバーレイ情報の描画
+        const overlayScale = 0.25; // Canvas解像度が高いため縮小
+        const overlayW = overlayImage.width * overlayScale;
+        const overlayH = overlayImage.height * overlayScale;
+        const xPos = 76; // 27mm
+        const yPos = pageHeight - 28 - overlayH; // top 10mm
+        
+        page.drawImage(overlayImage, {
+          x: xPos,
+          y: yPos,
+          width: overlayW,
+          height: overlayH
+        });
       }
-      const frameOptionHtml = frameOptionText.length > 0 
-        ? `<span style="color: #ef4444; font-weight: bold; margin-left: 0.5em;">(${frameOptionText.join('/')})</span>` 
-        : '';
 
-      pagesHtml += `
-        <div class="page-container">
-          <div class="background-media">
-            ${isPdf 
-              ? `<iframe src="${finalUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH" class="background-pdf"></iframe>`
-              : `<div class="background-image" style="background-image: url('${finalUrl}')"></div>`
+      // 玄関収納のページ生成
+      if (order.storage.type !== 'NONE') {
+         const storageRecord = storageTypes.find(s => s.id === order.storage.type);
+         const finalUrl = (storageRecord && storageRecord.imageUrl) ? storageRecord.imageUrl : getStorageDetailPdfUrl(order.storage.type);
+         
+         const res = await fetch(finalUrl);
+         if (!res.ok) throw new Error(`図面の取得に失敗しました: ${finalUrl}`);
+         const buffer = await res.arrayBuffer();
+         const isPdf = finalUrl.toLowerCase().endsWith('.pdf');
+         const category = storageRecord?.category || '玄関収納';
+
+         // オーバーレイ生成
+         const overlayDataUrl = await createStorageOverlayImage(order.storage, category, order.customerInfo.siteName);
+         const overlayImage = await doc.embedPng(overlayDataUrl);
+
+         const pageWidth = 1190.55;
+         const pageHeight = 841.89;
+         let page;
+
+         // 玄関収納は時計回りに90度回転させて表示（縦長図面を横長用紙に合わせるため）
+         if (isPdf) {
+            const externalPdf = await PDFDocument.load(buffer);
+            const [embeddedPage] = await doc.embedPdf(externalPdf, [0]);
+            page = doc.addPage([pageWidth, pageHeight]);
+            
+            const { width: srcW, height: srcH } = embeddedPage.scale(1.0);
+            
+            // 90度回転（時計回り）させてフィットさせるため、WとHを入れ替えてスケール計算
+            const scale = Math.min(pageWidth / srcH, pageHeight / srcW);
+            
+            const destW = srcH * scale; // 回転後の幅
+            const destH = srcW * scale; // 回転後の高さ
+            const targetX = (pageWidth - destW) / 2;
+            const targetY = (pageHeight - destH) / 2;
+
+            page.drawPage(embeddedPage, {
+              x: targetX,
+              y: targetY + destH, // 時計回り90度(-90度)の場合、左下起点が回転後の左上にくるためY補正
+              width: srcW * scale,
+              height: srcH * scale,
+              rotate: degrees(-90)
+            });
+         } else {
+            let embeddedImage;
+            const contentType = res.headers.get('content-type');
+            if (contentType && contentType.includes('png')) {
+                embeddedImage = await doc.embedPng(buffer);
+            } else {
+                embeddedImage = await doc.embedJpg(buffer);
             }
-          </div>
-          <div class="overlay-header">
-            <div class="wd-box">${wdText}</div>
-            <div class="details-box">
-              <div class="details-row">
-                <div class="details-item"><span class="details-label">物件名</span><span class="details-value">${order.customerInfo.siteName}</span></div>
-                <div class="details-item"><span class="details-label">部屋名</span><span class="details-value">${door.roomName}</span></div>
-                <div class="details-item"><span class="details-label">種類</span><span class="details-value">${door.type}</span></div>
-                <div class="details-item"><span class="details-label">デザイン</span><span class="details-value">${door.design}</span></div>
-                <div class="details-item"><span class="details-label">サイズ</span><span class="details-value">${widthHtml}×${heightHtml}</span></div>
-              </div>
-              <div class="details-row">
-                <div class="details-item"><span class="details-label">枠仕様</span><span class="details-value">${door.frameType}${frameOptionHtml}</span></div>
-                <div class="details-item"><span class="details-label">吊元</span><span class="details-value">${door.hangingSide}</span></div>
-                <div class="details-item"><span class="details-label">色</span><span class="details-value">${door.doorColor}(枠:${door.frameColor})</span></div>
-                <div class="details-item"><span class="details-label">ハンドル</span><span class="details-value">${door.handleColor}</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-    });
+            page = doc.addPage([pageWidth, pageHeight]);
+            const { width: imgW, height: imgH } = embeddedImage.scale(1.0);
+            
+            const scale = Math.min(pageWidth / imgH, pageHeight / imgW);
+            
+            const destW = imgH * scale;
+            const destH = imgW * scale;
+            const targetX = (pageWidth - destW) / 2;
+            const targetY = (pageHeight - destH) / 2;
 
-    // 玄関収納のページ生成
-    if (order.storage.type !== 'NONE') {
-      const storageRecord = storageTypes.find(s => s.id === order.storage.type);
-      const finalUrl = (storageRecord && storageRecord.imageUrl) ? storageRecord.imageUrl : getStorageDetailPdfUrl(order.storage.type);
-      const isPdf = finalUrl.toLowerCase().endsWith('.pdf');
-      const category = storageRecord?.category || '玄関収納';
+            page.drawImage(embeddedImage, {
+              x: targetX,
+              y: targetY + destH,
+              width: imgW * scale,
+              height: imgH * scale,
+              rotate: degrees(-90)
+            });
+         }
+         
+         const overlayScale = 0.25;
+         const overlayW = overlayImage.width * overlayScale;
+         const overlayH = overlayImage.height * overlayScale;
+         const xPos = 76;
+         const yPos = pageHeight - 28 - overlayH;
+         
+         page.drawImage(overlayImage, {
+           x: xPos,
+           y: yPos,
+           width: overlayW,
+           height: overlayH
+         });
+      }
 
-      pagesHtml += `
-        <div class="page-container">
-          <div class="background-media">
-            ${isPdf 
-              ? `<iframe src="${finalUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH" class="background-pdf"></iframe>`
-              : `<div class="background-image" style="background-image: url('${finalUrl}')"></div>`
-            }
-          </div>
-          <div class="overlay-header storage-overlay">
-            <div class="id-box">GS</div>
-            <div class="details-box">
-              <div class="details-row">
-                <div class="details-item"><span class="details-label">物件名</span><span class="details-value">${order.customerInfo.siteName}</span></div>
-                <div class="details-item"><span class="details-label">種類</span><span class="details-value">${category}</span></div>
-                <div class="details-item"><span class="details-label">仕様</span><span class="details-value">${order.storage.size}</span></div>
-                <div class="details-item"><span class="details-label">色</span><span class="details-value">${order.storage.color}</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
+      // PDF保存と表示
+      const pdfBytes = await doc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+
+    } catch (e: any) {
+      console.error(e);
+      alert('PDF作成中にエラーが発生しました。\n・ネットワーク接続を確認してください。\n・サーバーのCORS設定が原因で図面が取得できない可能性があります。\nエラー詳細: ' + e.message);
+    } finally {
+      setLoading(false);
     }
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html lang="ja">
-      <head>
-        <meta charset="UTF-8">
-        <title>詳細図面一括出力 - ${order.customerInfo.siteName}</title>
-        <style>
-          @page { size: A3 landscape; margin: 0; }
-          body { margin: 0; padding: 0; background: #eee; font-family: 'Noto Sans JP', sans-serif; -webkit-print-color-adjust: exact; }
-          .no-print-bar { position: fixed; top: 0; left: 0; right: 0; background: #1f2937; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
-          .print-btn { background: #10b981; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
-          .page-container { width: 420mm; height: 297mm; position: relative; background-color: white; margin: 20px auto; overflow: hidden; transform: scale(0.85); transform-origin: top center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); page-break-after: always; }
-          .background-media, .background-image, .background-pdf { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: 1; }
-          .background-image { background-size: contain; background-repeat: no-repeat; background-position: center; }
-          .overlay-header { position: absolute; top: 10mm; left: 27mm; display: flex; align-items: flex-start; gap: 2mm; z-index: 100; padding: 1mm 2mm; }
-          .wd-box, .id-box { padding: 1mm 4mm; font-size: 24pt; font-weight: bold; color: #1d4ed8; border: 2px solid #1d4ed8; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
-          .id-box { color: #ea580c; border-color: #ea580c; border-right-width: 2px; }
-          .details-box { margin-top: 1mm; padding: 1mm 3mm; display: flex; flex-direction: column; justify-content: center; gap: 0.5mm; }
-          .details-row { display: flex; align-items: baseline; gap: 4mm; }
-          .details-item { display: flex; align-items: baseline; gap: 1.5mm; }
-          .details-label { color: #666; font-size: 8pt; white-space: nowrap; }
-          .details-value { font-weight: bold; font-size: 10pt; color: #000; white-space: nowrap; }
-          @media print {
-            .no-print-bar { display: none; }
-            body { background: white; }
-            .page-container { margin: 0; transform: none; box-shadow: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="no-print-bar">
-          <span>詳細図一括出力プレビュー (${order.customerInfo.siteName || '現場名未設定'}) - A3横サイズで印刷してください</span>
-          <button class="print-btn" onClick="window.print()">一括印刷 / PDF保存</button>
-        </div>
-        ${pagesHtml}
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
   };
 
   const handleLaunchMail = () => {
@@ -740,7 +947,7 @@ ${order.memo}
                 <div className="lg:col-span-2">
                   <div className="bg-gray-900 p-8 rounded-3xl shadow-xl text-white h-full">
                     <h5 className="text-indigo-400 font-bold mb-8 text-xl border-b border-gray-800 pb-4 flex items-center gap-3">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18l-6-6m0 0l6-6m-6 6h18" /></svg>
                       ご注文から納品までの流れ
                     </h5>
                     <div className="space-y-0 relative">
@@ -791,7 +998,7 @@ ${order.memo}
               </button>
               <div className="flex flex-wrap justify-center items-center gap-3">
                 <button onClick={handlePrintPdf} className="bg-gray-800 hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                   PDF保存
                 </button>
                 <button onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
@@ -1261,7 +1468,7 @@ ${order.memo}
               onClick={() => setIsOrderFlowModalOpen(true)}
               className="bg-white text-blue-700 border-2 border-blue-600 hover:bg-blue-50 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18l-6-6m0 0l6-6m-6 6h18" /></svg>
               注文フロー確認
             </button>
             <button 
@@ -1292,7 +1499,7 @@ ${order.memo}
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">担当者名</label>
-            <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="担当者名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, contactName: e.target.value}))} />
+            <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="担当者名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, contactName: e.target.value}}))} />
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">連絡先(電話番号)</label>
