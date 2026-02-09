@@ -1,4 +1,3 @@
-
 import { DoorType, UsageLocation, PriceRecord, DoorItem, StorageTypeRecord } from './types';
 
 // アイテムごとの配送点数定義
@@ -48,7 +47,7 @@ export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: strin
   },
   [DoorType.Sliding]: {
     designs: ["フラット", "フラット 表示錠", "ガラス戸(透明強化ガラス5mm)"],
-    widths: ["1645", "1450", "1200"],
+    widths: ["1645", "1541", "1450", "1200"],
     hangingSides: ["右戸袋(R)", "左戸袋(L)"]
   },
   [DoorType.Sliding2]: {
@@ -358,3 +357,4 @@ export const ROOM_NAMES = [
   "ウォークインクロゼット",
   "クロゼット"
 ];
+
