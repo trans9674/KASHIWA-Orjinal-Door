@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DoorItem, DoorType, PriceRecord } from '../types';
 import { DOOR_GROUPS, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, resolveDoorDrawingUrl, ROOM_NAMES } from '../constants';
@@ -287,18 +286,22 @@ export const DoorRow: React.FC<DoorRowProps> = ({
             display: flex;
             align-items: center;
             justify-content: center;
-            background: transparent;
+            background: white;
             border: 2px solid #1d4ed8;
             border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
           .details-box {
             margin-top: 1mm;
-            padding: 1mm 3mm;
+            padding: 1.5mm 4mm;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 0.5mm;
-            background: transparent;
+            gap: 0.8mm;
+            background: white;
+            border: 1px solid #1d4ed8;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
           .details-row {
             display: flex;
@@ -335,31 +338,23 @@ export const DoorRow: React.FC<DoorRowProps> = ({
             align-items: center;
             z-index: 1000;
           }
-          .print-btn {
-            background: #2563eb;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-          }
           @media print {
             .no-print-bar { display: none; }
-            body { background: white; overflow: visible; }
+            body { background: white; overflow: visible; margin: 0; }
             .page-container { 
               margin: 0; 
-              transform: none; 
+              transform: scale(0.95); 
+              transform-origin: top left;
               box-shadow: none;
+              page-break-after: always;
             }
           }
         </style>
       </head>
       <body>
         <div class="no-print-bar">
-          <span>図面プレビュー: ${wdText} (${siteName || '現場名未設定'}) - 表示倍率 85%</span>
-          <button class="print-btn" onClick="window.print()">印刷 / PDF保存</button>
+          <span>図面プレビュー: ${wdText} (${siteName || '現場名未設定'})</span>
+          <span style="font-size: 11px; background: #374151; padding: 4px 10px; border-radius: 4px; border: 1px solid #4b5563;">※印刷は「詳細図一括出力」をご利用ください</span>
         </div>
         <div class="page-container">
           <div class="background-media">
@@ -718,12 +713,13 @@ export const DoorRow: React.FC<DoorRowProps> = ({
           <button 
             onClick={(e) => { e.preventDefault(); handleOpenDetails(); }}
             className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1 transition-all active:scale-95 shadow-sm whitespace-nowrap"
-            title="詳細図面にWD番号を合成して表示・印刷"
+            title="詳細図面にWD番号を合成して表示"
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 00-2 2v4h10z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            詳細図
+            プレビュー
           </button>
           <button onClick={() => removeDoor(door.id)} className="text-red-500 hover:text-red-700 p-1 transition-colors shrink-0" title="行を削除">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
