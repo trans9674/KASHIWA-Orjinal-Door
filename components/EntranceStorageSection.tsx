@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { EntranceStorage, StorageTypeRecord } from '../types';
 import { STORAGE_CATEGORIES, COLORS, DAIWA_PRICES, getStorageDetailPdfUrl } from '../constants';

@@ -248,8 +248,8 @@ const App: React.FC = () => {
       mirrorPrice: 0,
     },
     baseboards: [
-      { product: 'スリム巾木(t5.5×H23×L3960)', color: COLORS[0], unitPrice: 900, quantity: 0, unit: '本' },
-      { product: 'スリムコーナー巾木', color: COLORS[0], unitPrice: 500, quantity: 0, unit: '個' },
+      { product: 'スリム巾木(t5.5×H23×L3960)', color: COLORS[0], unitPrice: 940, quantity: 0, unit: '本' },
+      { product: 'スリムコーナー巾木', color: COLORS[0], unitPrice: 540, quantity: 0, unit: '個' },
     ],
     shipping: 0,
     memo: '',

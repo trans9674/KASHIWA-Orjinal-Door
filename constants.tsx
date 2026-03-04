@@ -1,3 +1,4 @@
+
 import { DoorType, UsageLocation, PriceRecord, DoorItem, StorageTypeRecord } from './types';
 
 // アイテムごとの配送点数定義
@@ -357,4 +358,3 @@ export const ROOM_NAMES = [
   "ウォークインクロゼット",
   "クロゼット"
 ];
-

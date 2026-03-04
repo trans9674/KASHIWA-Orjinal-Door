@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DoorItem, DoorType, PriceRecord } from '../types';
 import { DOOR_GROUPS, COLORS, SLIDING_HANDLES, HINGED_HANDLES, DOOR_SPEC_MASTER, getFrameType, resolveDoorDrawingUrl, ROOM_NAMES } from '../constants';
