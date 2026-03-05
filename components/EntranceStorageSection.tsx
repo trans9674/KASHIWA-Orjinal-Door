@@ -447,11 +447,11 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
             <select
               value={storage.mirror}
               disabled={isMirrorDisabled}
-              onChange={(e) => updateStorage({ mirror: e.target.value, mirrorPrice: e.target.value === 'あり' ? 10400 : 0 })}
+              onChange={(e) => updateStorage({ mirror: e.target.value, mirrorPrice: e.target.value === 'あり' ? 11440 : 0 })}
               className={`w-full border rounded px-1 py-1.5 text-sm focus:ring-1 focus:ring-blue-500 ${isMirrorDisabled ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' : 'bg-white'}`}
             >
               <option value="なし">なし</option>
-              {!isMirrorDisabled && <option value="あり">あり (+¥10,400)</option>}
+              {!isMirrorDisabled && <option value="あり">あり (+¥11,440)</option>}
             </select>
           </div>
           <div className="col-span-3">
@@ -474,7 +474,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
                 disabled={isNone}
                 onChange={(e) => {
                   const count = Math.max(0, parseInt(e.target.value) || 0);
-                  updateStorage({ fillerCount: count, fillerPrice: 2000 });
+                  updateStorage({ fillerCount: count, fillerPrice: 2200 });
                 }}
                 className={`w-[40%] border rounded px-1 py-1.5 text-sm text-center focus:ring-1 focus:ring-blue-500 ${isNone ? 'bg-gray-50 text-gray-400 border-gray-100' : 'bg-white'}`}
               />
