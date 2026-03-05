@@ -190,6 +190,8 @@ const App: React.FC = () => {
   const [isWakuModalOpen, setIsWakuModalOpen] = useState(false);
   const [isHabakiModalOpen, setIsHabakiModalOpen] = useState(false);
   const [isCornerHabakiModalOpen, setIsCornerHabakiModalOpen] = useState(false);
+  const [isDoorStopperSvModalOpen, setIsDoorStopperSvModalOpen] = useState(false);
+  const [isDoorStopperBkModalOpen, setIsDoorStopperBkModalOpen] = useState(false);
   const [isHandleModalOpen, setIsHandleModalOpen] = useState(false);
   const [isHardwareModalOpen, setIsHardwareModalOpen] = useState(false);
   const [isColorModalOpen, setIsColorModalOpen] = useState(false);
@@ -250,6 +252,8 @@ const App: React.FC = () => {
     baseboards: [
       { product: 'スリム巾木(t5.5×H23×L3960)', color: COLORS[0], unitPrice: 940, quantity: 0, unit: '本' },
       { product: 'スリムコーナー巾木', color: COLORS[0], unitPrice: 540, quantity: 0, unit: '個' },
+      { product: 'マグネット式ドアストッパー(サテンニッケル)', color: 'サテンニッケル', unitPrice: 990, quantity: 0, unit: '個' },
+      { product: 'マグネット式ドアストッパー(マットブラック)', color: 'マットブラック', unitPrice: 990, quantity: 0, unit: '個' },
     ],
     shipping: 0,
     memo: '',
@@ -354,7 +358,10 @@ const App: React.FC = () => {
         phone: initialSettings.phone
       },
       storage: { ...prev.storage, color: initialSettings.defaultDoorColor },
-      baseboards: prev.baseboards.map(b => ({ ...b, color: initialSettings.defaultBaseboardColor })),
+      baseboards: prev.baseboards.map(b => {
+        if (b.product.includes('マグネット式ドアストッパー')) return b;
+        return { ...b, color: initialSettings.defaultBaseboardColor };
+      }),
       doors: [{
         id: generateId(),
         roomName: '',
@@ -1293,6 +1300,32 @@ ${order.memo}
           </div>
         </div>
       )}
+      {isDoorStopperSvModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsDoorStopperSvModalOpen(false)}>
+           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-10 right-0 text-white p-2" onClick={() => setIsDoorStopperSvModalOpen(false)}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div className="bg-gray-50 p-4 border-b rounded-t-lg">
+              <h4 className="text-center font-bold text-gray-800">マグネット式ドアストッパー(サテンニッケル) 詳細</h4>
+            </div>
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/toatariSV.JPG" alt="サテンニッケル" className="w-full h-auto rounded-b-lg" />
+          </div>
+        </div>
+      )}
+      {isDoorStopperBkModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsDoorStopperBkModalOpen(false)}>
+           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-10 right-0 text-white p-2" onClick={() => setIsDoorStopperBkModalOpen(false)}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div className="bg-gray-50 p-4 border-b rounded-t-lg">
+              <h4 className="text-center font-bold text-gray-800">マグネット式ドアストッパー(マットブラック) 詳細</h4>
+            </div>
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/toatariBK.JPG" alt="マットブラック" className="w-full h-auto rounded-b-lg" />
+          </div>
+        </div>
+      )}
       {isColorModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsColorModalOpen(false)}>
           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
@@ -1750,6 +1783,22 @@ ${order.memo}
                           >
                             i
                           </button>
+                        ) : b.product.includes('マグネット式ドアストッパー(サテンニッケル)') ? (
+                          <button
+                            onClick={() => setIsDoorStopperSvModalOpen(true)}
+                            className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
+                            title="ドアストッパー(サテンニッケル)の詳細を表示"
+                          >
+                            i
+                          </button>
+                        ) : b.product.includes('マグネット式ドアストッパー(マットブラック)') ? (
+                          <button
+                            onClick={() => setIsDoorStopperBkModalOpen(true)}
+                            className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
+                            title="ドアストッパー(マットブラック)の詳細を表示"
+                          >
+                            i
+                          </button>
                         ) : null}
                       </div>
                       <div className="flex items-center gap-2 mt-1">
@@ -1760,7 +1809,10 @@ ${order.memo}
                               const newColor = e.target.value;
                               setOrder(prev => ({
                                 ...prev,
-                                baseboards: prev.baseboards.map(board => ({ ...board, color: newColor }))
+                                baseboards: prev.baseboards.map(board => {
+                                  if (board.product.includes('マグネット式ドアストッパー')) return board;
+                                  return { ...board, color: newColor };
+                                })
                               }));
                             }}
                             className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer max-w-[180px]"
