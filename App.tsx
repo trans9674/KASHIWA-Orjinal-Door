@@ -1028,7 +1028,7 @@ ${order.memo}
       )}
 
       {isEstimateModalOpen && (
-        <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300 print:absolute print:inset-0 print:bg-white print:h-auto print:w-full print:z-[200] print:overflow-visible">
+        <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300 print:static print:inset-auto print:bg-white print:h-auto print:w-full print:z-[200] print:overflow-visible">
            <style>{`
              @media print {
                @page {
@@ -1040,6 +1040,12 @@ ${order.memo}
                  padding: 0;
                  -webkit-print-color-adjust: exact;
                  print-color-adjust: exact;
+                 height: auto !important;
+                 overflow: visible !important;
+               }
+               #root {
+                 height: auto !important;
+                 overflow: visible !important;
                }
              }
            `}</style>
@@ -1065,7 +1071,7 @@ ${order.memo}
 
             <div className="flex justify-center w-full max-w-[1000px] print:block print:w-full print:max-w-none">
               <div className="flex-grow w-full flex justify-center print:block">
-                <div className="bg-white p-[10mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:shadow-none print:w-full print:max-w-none print:p-[20mm] print:m-0 print:min-h-0 box-border">
+                <div className="bg-white p-[10mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:block print:shadow-none print:w-full print:max-w-none print:p-[20mm] print:m-0 print:min-h-0 box-border">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex-1 mr-4">
                       <h2 className="text-4xl font-bold border-b-4 border-gray-800 pb-2 mb-4 font-['Inter'] tracking-tight">御見積書</h2>
