@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { getDoorDetailPdfUrl, DOOR_GROUPS, STORAGE_CATEGORIES } from '../constants';
+import { getDoorDetailPdfUrl, getStorageDetailPdfUrl, DOOR_GROUPS, STORAGE_CATEGORIES } from '../constants';
 import { DoorItem, PriceRecord, StorageTypeRecord, ShippingFeeRecord, UsageLocation, DoorType } from '../types';
 import { supabase } from '../supabase';
 
@@ -92,6 +92,14 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
   // New Storage State
   const [newStorage, setNewStorage] = useState<Partial<StorageTypeRecord>>(initialStorageState);
+
+  const getFileName = (url: string) => {
+    try {
+      return url.split('/').pop() || url;
+    } catch (e) {
+      return url;
+    }
+  };
 
   const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false) => {
     try {
@@ -386,7 +394,18 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                           <td className="p-1.5">
                             {uploadingId === row.id ? "アップ中..." : (
                               <div className="flex flex-col gap-1">
-                                {row.imageUrl ? <div className="flex items-center gap-1 bg-blue-50 p-1 border rounded"><a href={row.imageUrl} target="_blank" className="truncate flex-1 text-blue-600 text-[10px]">画像登録済</a><button onClick={()=>handleDeleteImage(row.id!)} className="text-red-500">×</button></div> : <span className="text-gray-300 text-[10px]">標準PDF</span>}
+                                {row.imageUrl ? (
+                                  <div className="flex items-center gap-1 bg-blue-50 p-1 border rounded">
+                                    <a href={row.imageUrl} target="_blank" className="truncate flex-1 text-blue-600 text-[10px]" title={getFileName(row.imageUrl)}>
+                                      {getFileName(row.imageUrl)}
+                                    </a>
+                                    <button onClick={()=>handleDeleteImage(row.id!)} className="text-red-500">×</button>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-300 text-[10px] truncate" title={getFileName(getDoorDetailPdfUrl(row as unknown as DoorItem))}>
+                                    {getFileName(getDoorDetailPdfUrl(row as unknown as DoorItem))}
+                                  </span>
+                                )}
                                 <div className="border border-dashed p-1 text-center cursor-pointer hover:bg-gray-100" onClick={() => row.id && fileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id)}/><span className="text-[9px] text-gray-500">変更</span></div>
                               </div>
                             )}
@@ -442,7 +461,18 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                           <td className="p-1.5">
                              {uploadingId === row.id ? "up..." : (
                                <div className="flex flex-col gap-1">
-                                 {row.imageUrl ? <div className="flex items-center bg-blue-50 border rounded p-1 text-[9px]"><a href={row.imageUrl} target="_blank" className="truncate flex-1 text-blue-600">登録済</a><button onClick={()=>handleDeleteImage(row.id, true)}>×</button></div> : <span className="text-gray-300 text-[9px]">標準PDF</span>}
+                                 {row.imageUrl ? (
+                                   <div className="flex items-center bg-blue-50 border rounded p-1 text-[9px]">
+                                     <a href={row.imageUrl} target="_blank" className="truncate flex-1 text-blue-600" title={getFileName(row.imageUrl)}>
+                                       {getFileName(row.imageUrl)}
+                                     </a>
+                                     <button onClick={()=>handleDeleteImage(row.id, true)}>×</button>
+                                   </div>
+                                 ) : (
+                                   <span className="text-gray-300 text-[9px] truncate" title={getFileName(getStorageDetailPdfUrl(row.id))}>
+                                     {getFileName(getStorageDetailPdfUrl(row.id))}
+                                   </span>
+                                 )}
                                  <div className="border border-dashed p-1 text-center cursor-pointer" onClick={()=>fileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true)}/><span className="text-[8px] text-gray-400">画像登録</span></div>
                                </div>
                              )}

@@ -339,7 +339,7 @@ const App: React.FC = () => {
     if (doorType.includes("折戸") || doorType.includes("物入")) return "J型取手";
     const isSliding = doorType.includes("引") || doorType.includes("引き");
     const list = isSliding ? SLIDING_HANDLES : HINGED_HANDLES;
-    return list.find(h => h.includes(simpleName)) || list[0];
+    return list.find(h => h.startsWith(simpleName)) || list[0];
   };
 
   const handleStart = () => {

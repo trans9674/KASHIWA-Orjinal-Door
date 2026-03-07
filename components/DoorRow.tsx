@@ -68,8 +68,18 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       updateDoor(door.id, { hangingSide: "吊元左右兼用" });
     } else if ((door.type === DoorType.Folding4W12 || door.type === DoorType.Folding4W16) && door.hangingSide === "軸固定4") {
       updateDoor(door.id, { hangingSide: "軸固定" });
+    } else if (door.type === DoorType.Sliding3 && door.width === "3167") {
+      updateDoor(door.id, { width: "3215" });
+    } else if (door.type === DoorType.Folding2 && door.width === "755") {
+      updateDoor(door.id, { width: "735" });
+    } else if (door.type === DoorType.StorageDouble && door.width === "900") {
+      updateDoor(door.id, { width: "735" });
+    } else if (door.type === DoorType.StorageSingle && door.width === "600") {
+      updateDoor(door.id, { width: "435" });
+    } else if (door.type === DoorType.Pocket && door.width === "735") {
+      updateDoor(door.id, { width: "1450" });
     }
-  }, [door.type, door.hangingSide, door.id, updateDoor]);
+  }, [door.type, door.hangingSide, door.width, door.id, updateDoor]);
   
   const standardHeights = isStorage 
     ? ["H900", "H1200", "H2000", "H2200", "H2400"] 
@@ -158,9 +168,13 @@ export const DoorRow: React.FC<DoorRowProps> = ({
         updates.hangingSide = newSpec.hangingSides[0];
         const nextIsFoldingOrStorage = value.includes("折戸") || value.includes("物入");
         const nextIsSliding = value.includes("引") || value.includes("引き");
-        if (nextIsFoldingOrStorage) updates.handleColor = "J型取手";
-        else if (nextIsSliding) updates.handleColor = SLIDING_HANDLES[0];
-        else updates.handleColor = HINGED_HANDLES[0];
+        if (nextIsFoldingOrStorage) {
+          updates.handleColor = "J型取手";
+        } else {
+          const list = nextIsSliding ? SLIDING_HANDLES : HINGED_HANDLES;
+          const matched = list.find(h => h.startsWith(initialSettings.defaultHandleColor));
+          updates.handleColor = matched || list[0];
+        }
         const nextIsStorage = value === DoorType.StorageDouble || value === DoorType.StorageSingle;
         const nextAvailableHeights = nextIsStorage 
           ? ["H900", "H1200", "H2000", "H2200", "H2400", "特寸"] 
@@ -453,7 +467,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       <td className="p-1">
         <div className="flex flex-col gap-1 min-w-[70px]">
           <select name="width" value={door.width} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getTailwindHighlight(isWidthHighlighted)}`}>
-            {availableWidths.map(w => <option key={w} value={w}>{w === '特寸' ? '特寸' : `${w}mm`}</option>)}
+            {availableWidths.map(w => <option key={w} value={w}>{w === '特寸' ? '特寸' : w}</option>)}
           </select>
           {door.width === '特寸' && (
             <div className="flex items-center gap-1 text-red-600 font-bold">
@@ -466,7 +480,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       <td className="p-1">
         <div className="flex flex-col gap-1 min-w-[70px]">
           <select name="height" value={door.height} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getTailwindHighlight(isHeightHighlighted)}`}>
-            {availableHeights.map(h => <option key={h} value={h}>{h === '特寸' ? '特寸' : h}</option>)}
+            {availableHeights.map(h => <option key={h} value={h}>{h === '特寸' ? '特寸' : h.replace('H', '')}</option>)}
           </select>
           {door.height === '特寸' && (
             <div className="flex items-center gap-1 text-red-600 font-bold">

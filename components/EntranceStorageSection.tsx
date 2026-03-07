@@ -34,6 +34,10 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
 
     isPdf = finalUrl.toLowerCase().endsWith('.pdf');
     
+    const daiwaText = storage.baseRing === 'あり' ? 'あり' : 'なし';
+    const mirrorText = storage.mirror === 'あり' ? 'あり' : '';
+    const fillerText = storage.fillerCount > 0 ? `${storage.fillerCount}個` : 'なし';
+    
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert('ポップアップがブロックされました。ブラウザの設定を確認してください。');
@@ -201,6 +205,21 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
                 <div class="details-item">
                   <span class="details-label">カラー</span>
                   <span class="details-value">${storage.color}</span>
+                </div>
+              </div>
+              <div class="details-row" style="margin-top: 1mm;">
+                <div class="details-item">
+                  <span class="details-label">台輪</span>
+                  <span class="details-value">${daiwaText}</span>
+                </div>
+                ${mirrorText ? `
+                <div class="details-item">
+                  <span class="details-label">ミラー</span>
+                  <span class="details-value">${mirrorText}</span>
+                </div>` : ''}
+                <div class="details-item">
+                  <span class="details-label">フィラー</span>
+                  <span class="details-value">${fillerText}</span>
                 </div>
               </div>
             </div>

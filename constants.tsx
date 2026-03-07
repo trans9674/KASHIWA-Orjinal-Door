@@ -58,12 +58,12 @@ export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: strin
   },
   [DoorType.Sliding3]: {
     designs: ["フラット", "ガラス戸(透明強化ガラス5mm)"],
-    widths: ["3167"],
+    widths: ["3215"],
     hangingSides: ["勝手(R)", "勝手(L)"]
   },
   [DoorType.Pocket]: {
     designs: ["フラット", "フラット 表示錠", "ガラス戸(透明強化ガラス5mm)"],
-    widths: ["1645", "1450", "735"],
+    widths: ["1645", "1450"],
     hangingSides: ["吊元左右兼用"]
   },
   [DoorType.Outset]: {
@@ -93,7 +93,7 @@ export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: strin
   },
   [DoorType.Folding2]: {
     designs: ["フラット"],
-    widths: ["735", "755"],
+    widths: ["735"],
     hangingSides: ["右吊元(R)/軸固定", "左吊元(L)/軸固定"]
   },
   [DoorType.Folding4W12]: {
@@ -118,12 +118,12 @@ export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: strin
   },
   [DoorType.StorageDouble]: {
     designs: ["フラット"],
-    widths: ["735", "900"],
+    widths: ["735"],
     hangingSides: ["クローザー"]
   },
   [DoorType.StorageSingle]: {
     designs: ["フラット"],
-    widths: ["435", "600"],
+    widths: ["435"],
     hangingSides: ["右吊元(R)", "左吊元(L)"]
   }
 };
