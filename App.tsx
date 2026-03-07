@@ -250,7 +250,7 @@ const App: React.FC = () => {
       mirrorPrice: 0,
     },
     baseboards: [
-      { product: 'スリム巾木(t5.5×H23×L3960)', color: COLORS[0], unitPrice: 940, quantity: 0, unit: '本' },
+      { product: 'スリム巾木(t5.5×H23×L3960)', color: COLORS[0], unitPrice: 980, quantity: 0, unit: '本' },
       { product: 'スリムコーナー巾木', color: COLORS[0], unitPrice: 540, quantity: 0, unit: '個' },
       { product: 'マグネット式ドアストッパー(サテンニッケル)', color: 'サテンニッケル', unitPrice: 990, quantity: 0, unit: '個' },
       { product: 'マグネット式ドアストッパー(マットブラック)', color: 'マットブラック', unitPrice: 990, quantity: 0, unit: '個' },
@@ -1655,11 +1655,11 @@ ${order.memo}
                 <th className="p-4 w-12 border-r border-gray-700">No.</th>
                 <th className="w-24">部屋名</th>
                 <th className="w-52">建具種類</th>
-                <th className="w-32">デザイン</th>
+                <th className="w-44">デザイン</th>
                 <th className="w-20">幅</th>
                 <th className="w-20">高さ</th>
-                <th className="w-40">枠仕様</th>
-                <th className="w-28">
+                <th className="w-28">枠仕様</th>
+                <th className="w-40">
                   <div className="flex items-center justify-center gap-1">
                     <span>吊元</span>
                     <button

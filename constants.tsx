@@ -64,7 +64,7 @@ export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: strin
   [DoorType.Pocket]: {
     designs: ["フラット", "フラット 表示錠", "ガラス戸(透明強化ガラス5mm)"],
     widths: ["1645", "1450", "735"],
-    hangingSides: ["右戸袋(R)", "左戸袋(L)"]
+    hangingSides: ["吊元左右兼用"]
   },
   [DoorType.Outset]: {
     designs: ["フラット", "フラット 表示錠", "ガラス戸(透明強化ガラス5mm)"],
@@ -99,12 +99,12 @@ export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: strin
   [DoorType.Folding4W12]: {
     designs: ["フラット"],
     widths: ["1200"],
-    hangingSides: ["軸固定4"]
+    hangingSides: ["軸固定"]
   },
   [DoorType.Folding4W16]: {
     designs: ["フラット"],
     widths: ["1645"],
-    hangingSides: ["軸固定4"]
+    hangingSides: ["軸固定"]
   },
   [DoorType.Folding6]: {
     designs: ["フラット"],

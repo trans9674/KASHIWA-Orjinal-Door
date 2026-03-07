@@ -60,6 +60,16 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       setIsBubbleVisible(false);
     }
   }, [door.roomName, canShowFrameOption]);
+
+  // 片引込戸の場合、吊元を「吊元左右兼用」に強制更新
+  // 折戸4枚の場合、吊元を「軸固定」に強制更新（旧データ対応）
+  useEffect(() => {
+    if (door.type === DoorType.Pocket && door.hangingSide !== "吊元左右兼用") {
+      updateDoor(door.id, { hangingSide: "吊元左右兼用" });
+    } else if ((door.type === DoorType.Folding4W12 || door.type === DoorType.Folding4W16) && door.hangingSide === "軸固定4") {
+      updateDoor(door.id, { hangingSide: "軸固定" });
+    }
+  }, [door.type, door.hangingSide, door.id, updateDoor]);
   
   const standardHeights = isStorage 
     ? ["H900", "H1200", "H2000", "H2200", "H2400"] 
@@ -97,6 +107,19 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       if (options.domaExtensionType === 'none') searchDesign = "土間納まり（伸長なし）";
       else if (options.domaExtensionType === 'frame') searchDesign = "土間納まり（枠伸長）";
       else if (options.domaExtensionType === 'door') searchDesign = "土間納まり（建具伸長）";
+    }
+
+    // 片引込戸のガラス戸の特例対応（表記ゆれ対応）
+    // デザイン名に「ガラス戸」が含まれる場合、DB上の表記ゆれ（全角・半角・スペース等）を無視して
+    // 「ガラス戸」を含むレコードを検索して適用する。
+    // さらに、重複レコードが存在する場合（価格改定等で古いデータが残っている場合など）を考慮し、
+    // 最も高い価格を採用する（通常、新しい価格の方が高いため）。
+    if (type === DoorType.Pocket && searchDesign.includes("ガラス戸")) {
+        const candidates = priceList.filter(p => p.type === type && p.height === effectiveHeight && p.design.includes("ガラス戸"));
+        if (candidates.length > 0) {
+            const maxPriceRecord = candidates.reduce((prev, current) => (prev.setPrice > current.setPrice) ? prev : current);
+            return maxPriceRecord.setPrice;
+        }
     }
 
     const record = priceList.find(p => p.type === type && p.design === searchDesign && p.height === effectiveHeight);
@@ -670,9 +693,15 @@ export const DoorRow: React.FC<DoorRowProps> = ({
         )}
       </td>
       <td className="p-1">
-        <select name="hangingSide" value={door.hangingSide} onChange={handleChange} className="w-full border rounded px-1 py-1 h-8">
-          {spec.hangingSides.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+        {door.type === DoorType.Pocket ? (
+          <div className="w-full border rounded px-1 py-1 h-8 bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-xs">
+            吊元左右兼用
+          </div>
+        ) : (
+          <select name="hangingSide" value={door.hangingSide} onChange={handleChange} className="w-full border rounded px-1 py-1 h-8">
+            {spec.hangingSides.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        )}
       </td>
       <td className="p-1">
         <select name="doorColor" value={door.doorColor} onChange={handleChange} className={`w-full border rounded px-1 py-1 h-8 ${getTailwindHighlight(isDoorColorHighlighted)}`}>
