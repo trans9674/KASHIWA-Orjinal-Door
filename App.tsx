@@ -24,8 +24,8 @@ const generateId = () => {
 const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: string): Promise<string> => {
     const canvas = document.createElement('canvas');
     const scale = 3; // 高解像度化
-    // おおよそのサイズ感 (pt換算で調整: A3横=1191pt, オーバーレイ幅は約700pt程度) -> 幅広げて重なり防止
-    const width = 1300 * scale; 
+    // 幅を30%縮小: 1300 * 0.7 = 910
+    const width = 910 * scale; 
     const height = 80 * scale;
     canvas.width = width;
     canvas.height = height;
@@ -51,7 +51,8 @@ const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: s
     ctx.fillText(`WD-${index+1}`, wdX + wdW/2, wdY + wdH/2 + 2);
     
     // --- Details Box (右側) ---
-    const detX = wdX + wdW + 10; const detY = 2; const detW = 1180; const detH = 60;
+    // 幅を30%縮小: 1180 * 0.7 = 826 -> 790 (余白調整)
+    const detX = wdX + wdW + 10; const detY = 2; const detW = 790; const detH = 60;
     
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(detX, detY, detW, detH);
@@ -75,11 +76,12 @@ const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: s
     };
 
     // Row 1
+    // 各項目の間隔も約30%縮小
     let curX = detX + 10;
-    drawLabelValue(curX, row1Y, "物件名", siteName || ''); curX += 200;
-    drawLabelValue(curX, row1Y, "部屋名", door.roomName || ''); curX += 150;
-    drawLabelValue(curX, row1Y, "種類", door.type); curX += 220;
-    drawLabelValue(curX, row1Y, "デザイン", door.design); curX += 250;
+    drawLabelValue(curX, row1Y, "物件名", siteName || ''); curX += 140;
+    drawLabelValue(curX, row1Y, "部屋名", door.roomName || ''); curX += 105;
+    drawLabelValue(curX, row1Y, "種類", door.type); curX += 154;
+    drawLabelValue(curX, row1Y, "デザイン", door.design); curX += 175;
     
     // Size logic
     const wStr = door.width === '特寸' ? `${door.customWidth}㎜特寸` : door.width;
@@ -103,9 +105,9 @@ const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: s
       frameColor = '#ef4444';
     }
 
-    drawLabelValue(curX, row2Y, "枠仕様", frameText, frameColor); curX += 250;
-    drawLabelValue(curX, row2Y, "吊元", door.hangingSide); curX += 100;
-    drawLabelValue(curX, row2Y, "色", `${door.doorColor}(枠:${door.frameColor})`); curX += 350;
+    drawLabelValue(curX, row2Y, "枠仕様", frameText, frameColor); curX += 175;
+    drawLabelValue(curX, row2Y, "吊元", door.hangingSide); curX += 70;
+    drawLabelValue(curX, row2Y, "色", `${door.doorColor}(枠:${door.frameColor})`); curX += 245;
     drawLabelValue(curX, row2Y, "ハンドル", door.handleColor);
 
     return canvas.toDataURL('image/png');
@@ -1027,6 +1029,20 @@ ${order.memo}
 
       {isEstimateModalOpen && (
         <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300 print:absolute print:inset-0 print:bg-white print:h-auto print:w-full print:z-[200] print:overflow-visible">
+           <style>{`
+             @media print {
+               @page {
+                 size: A4;
+                 margin: 0;
+               }
+               body {
+                 margin: 0;
+                 padding: 0;
+                 -webkit-print-color-adjust: exact;
+                 print-color-adjust: exact;
+               }
+             }
+           `}</style>
            <div className="min-h-screen py-6 px-4 flex flex-col items-center print:block print:h-auto print:p-0">
             <div className="max-w-[1000px] w-full flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-xl border border-gray-200 gap-4 no-print">
               <button onClick={() => setIsEstimateModalOpen(false)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold group">
@@ -1049,7 +1065,7 @@ ${order.memo}
 
             <div className="flex justify-center w-full max-w-[1000px] print:block print:w-full print:max-w-none">
               <div className="flex-grow w-full flex justify-center print:block">
-                <div className="bg-white p-[10mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:shadow-none print:w-full print:max-w-none print:p-0 print:m-0 box-border">
+                <div className="bg-white p-[10mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:shadow-none print:w-full print:max-w-none print:p-[20mm] print:m-0 print:min-h-0 box-border">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex-1 mr-4">
                       <h2 className="text-4xl font-bold border-b-4 border-gray-800 pb-2 mb-4 font-['Inter'] tracking-tight">御見積書</h2>
