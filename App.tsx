@@ -73,15 +73,20 @@ const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: s
         ctx.font = 'bold 12px "Noto Sans JP", sans-serif';
         ctx.fillStyle = color;
         ctx.fillText(value, x + labelWidth + 6, y);
+
+        const valueWidth = ctx.measureText(value).width;
+        return labelWidth + 6 + valueWidth;
     };
 
+    const itemGap = 20; // 項目間の余白
+
     // Row 1
-    // 各項目の間隔も約30%縮小
     let curX = detX + 10;
-    drawLabelValue(curX, row1Y, "物件名", siteName || ''); curX += 140;
-    drawLabelValue(curX, row1Y, "部屋名", door.roomName || ''); curX += 105;
-    drawLabelValue(curX, row1Y, "種類", door.type); curX += 154;
-    drawLabelValue(curX, row1Y, "デザイン", door.design); curX += 175;
+    let w = 0;
+    w = drawLabelValue(curX, row1Y, "物件名", siteName || ''); curX += w + itemGap;
+    w = drawLabelValue(curX, row1Y, "部屋名", door.roomName || ''); curX += w + itemGap;
+    w = drawLabelValue(curX, row1Y, "種類", door.type); curX += w + itemGap;
+    w = drawLabelValue(curX, row1Y, "デザイン", door.design); curX += w + itemGap;
     
     // Size logic
     const wStr = door.width === '特寸' ? `${door.customWidth}㎜特寸` : door.width;
@@ -105,9 +110,9 @@ const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: s
       frameColor = '#ef4444';
     }
 
-    drawLabelValue(curX, row2Y, "枠仕様", frameText, frameColor); curX += 175;
-    drawLabelValue(curX, row2Y, "吊元", door.hangingSide); curX += 70;
-    drawLabelValue(curX, row2Y, "色", `${door.doorColor}(枠:${door.frameColor})`); curX += 245;
+    w = drawLabelValue(curX, row2Y, "枠仕様", frameText, frameColor); curX += w + itemGap;
+    w = drawLabelValue(curX, row2Y, "吊元", door.hangingSide); curX += w + itemGap;
+    w = drawLabelValue(curX, row2Y, "色", `${door.doorColor}(枠:${door.frameColor})`); curX += w + itemGap;
     drawLabelValue(curX, row2Y, "ハンドル", door.handleColor);
 
     return canvas.toDataURL('image/png');
