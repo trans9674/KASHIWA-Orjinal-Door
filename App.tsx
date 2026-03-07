@@ -24,8 +24,8 @@ const generateId = () => {
 const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: string): Promise<string> => {
     const canvas = document.createElement('canvas');
     const scale = 3; // 高解像度化
-    // おおよそのサイズ感 (pt換算で調整: A3横=1191pt, オーバーレイ幅は約700pt程度)
-    const width = 800 * scale; 
+    // おおよそのサイズ感 (pt換算で調整: A3横=1191pt, オーバーレイ幅は約700pt程度) -> 幅広げて重なり防止
+    const width = 1300 * scale; 
     const height = 80 * scale;
     canvas.width = width;
     canvas.height = height;
@@ -51,7 +51,7 @@ const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: s
     ctx.fillText(`WD-${index+1}`, wdX + wdW/2, wdY + wdH/2 + 2);
     
     // --- Details Box (右側) ---
-    const detX = wdX + wdW + 10; const detY = 2; const detW = 680; const detH = 60;
+    const detX = wdX + wdW + 10; const detY = 2; const detW = 1180; const detH = 60;
     
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(detX, detY, detW, detH);
@@ -76,10 +76,10 @@ const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: s
 
     // Row 1
     let curX = detX + 10;
-    drawLabelValue(curX, row1Y, "物件名", siteName || ''); curX += 160;
-    drawLabelValue(curX, row1Y, "部屋名", door.roomName || ''); curX += 120;
-    drawLabelValue(curX, row1Y, "種類", door.type); curX += 100;
-    drawLabelValue(curX, row1Y, "デザイン", door.design); curX += 150;
+    drawLabelValue(curX, row1Y, "物件名", siteName || ''); curX += 200;
+    drawLabelValue(curX, row1Y, "部屋名", door.roomName || ''); curX += 150;
+    drawLabelValue(curX, row1Y, "種類", door.type); curX += 220;
+    drawLabelValue(curX, row1Y, "デザイン", door.design); curX += 250;
     
     // Size logic
     const wStr = door.width === '特寸' ? `${door.customWidth}㎜特寸` : door.width;
@@ -103,9 +103,9 @@ const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: s
       frameColor = '#ef4444';
     }
 
-    drawLabelValue(curX, row2Y, "枠仕様", frameText, frameColor); curX += 200;
-    drawLabelValue(curX, row2Y, "吊元", door.hangingSide); curX += 80;
-    drawLabelValue(curX, row2Y, "色", `${door.doorColor}(枠:${door.frameColor})`); curX += 200;
+    drawLabelValue(curX, row2Y, "枠仕様", frameText, frameColor); curX += 250;
+    drawLabelValue(curX, row2Y, "吊元", door.hangingSide); curX += 100;
+    drawLabelValue(curX, row2Y, "色", `${door.doorColor}(枠:${door.frameColor})`); curX += 350;
     drawLabelValue(curX, row2Y, "ハンドル", door.handleColor);
 
     return canvas.toDataURL('image/png');
