@@ -532,7 +532,7 @@ const App: React.FC = () => {
       errors.push('送料が計算できません。納品先住所（都道府県）を確認してください。');
     }
 
-    if (order.doors.length === 0 && order.storage.type === 'NONE') errors.push('商品を選択してください。');
+    if (order.doors.length === 0 && order.storage.type === 'NONE' && !hasBaseboard) errors.push('商品を選択してください。');
     
     return { errors, warnings };
   };
@@ -584,23 +584,40 @@ const App: React.FC = () => {
         const pageHeight = 841.89;
         
         let page;
+        
+        // アウトセット系は縦長図面なので90度回転させる
+        const shouldRotate = door.type === DoorType.Outset || door.type === DoorType.OutsetIncorner;
 
         if (isPdf) {
            const externalPdf = await PDFDocument.load(buffer);
            const [embeddedPage] = await doc.embedPdf(externalPdf, [0]); // 最初のページのみ
            page = doc.addPage([pageWidth, pageHeight]);
            
-           // PDFを中心に合わせて描画（スケーリング調整）
            const { width: srcW, height: srcH } = embeddedPage.scale(1.0);
-           // A3 Landscapeにフィットさせるスケール計算
-           const scale = Math.min(pageWidth / srcW, pageHeight / srcH);
            
-           page.drawPage(embeddedPage, {
-             x: (pageWidth - srcW * scale) / 2,
-             y: (pageHeight - srcH * scale) / 2,
-             width: srcW * scale,
-             height: srcH * scale
-           });
+           if (shouldRotate) {
+             const scale = Math.min(pageWidth / srcH, pageHeight / srcW);
+             const destW = srcH * scale;
+             const destH = srcW * scale;
+             const targetX = (pageWidth - destW) / 2;
+             const targetY = (pageHeight - destH) / 2;
+
+             page.drawPage(embeddedPage, {
+               x: targetX,
+               y: targetY + destH,
+               width: srcW * scale,
+               height: srcH * scale,
+               rotate: degrees(-90)
+             });
+           } else {
+             const scale = Math.min(pageWidth / srcW, pageHeight / srcH);
+             page.drawPage(embeddedPage, {
+               x: (pageWidth - srcW * scale) / 2,
+               y: (pageHeight - srcH * scale) / 2,
+               width: srcW * scale,
+               height: srcH * scale
+             });
+           }
         } else {
            // 画像の場合
            let embeddedImage;
@@ -613,15 +630,30 @@ const App: React.FC = () => {
            
            page = doc.addPage([pageWidth, pageHeight]);
            const { width: imgW, height: imgH } = embeddedImage.scale(1.0);
-           // アスペクト比維持で最大化
-           const scale = Math.min(pageWidth / imgW, pageHeight / imgH);
            
-           page.drawImage(embeddedImage, {
-             x: (pageWidth - imgW * scale) / 2,
-             y: (pageHeight - imgH * scale) / 2,
-             width: imgW * scale,
-             height: imgH * scale
-           });
+           if (shouldRotate) {
+             const scale = Math.min(pageWidth / imgH, pageHeight / imgW);
+             const destW = imgH * scale;
+             const destH = imgW * scale;
+             const targetX = (pageWidth - destW) / 2;
+             const targetY = (pageHeight - destH) / 2;
+
+             page.drawImage(embeddedImage, {
+               x: targetX,
+               y: targetY + destH,
+               width: imgW * scale,
+               height: imgH * scale,
+               rotate: degrees(-90)
+             });
+           } else {
+             const scale = Math.min(pageWidth / imgW, pageHeight / imgH);
+             page.drawImage(embeddedImage, {
+               x: (pageWidth - imgW * scale) / 2,
+               y: (pageHeight - imgH * scale) / 2,
+               width: imgW * scale,
+               height: imgH * scale
+             });
+           }
         }
         
         // 4. オーバーレイ情報の描画
@@ -1837,7 +1869,7 @@ ${order.memo}
                         <input type="number" min="0" className="w-16 border rounded-lg text-center h-9 font-bold focus:ring-1 focus:ring-emerald-500 outline-none" value={b.quantity} onChange={e => { const nb = [...order.baseboards]; nb[i].quantity = Math.max(0, parseInt(e.target.value)||0); setOrder(p=>({...p, baseboards:nb})); }} />
                         <span className="text-xs font-bold text-gray-400">{b.unit}</span>
                       </div>
-                      <span className="text-base font-bold text-blue-600 font-mono whitespace-nowrap min-w-[80px] text-right">小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
+                      <span className="text-base font-bold text-blue-600 font-mono whitespace-nowrap w-[120px] text-right">小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
                     </div>
                   </div>
                 ))}
