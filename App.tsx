@@ -1033,7 +1033,7 @@ ${order.memo}
              @media print {
                @page {
                  size: A4;
-                 margin: 0;
+                 margin: 10mm;
                }
                body {
                  margin: 0;
@@ -1046,6 +1046,10 @@ ${order.memo}
                #root {
                  height: auto !important;
                  overflow: visible !important;
+               }
+               tr {
+                 break-inside: avoid;
+                 page-break-inside: avoid;
                }
              }
            `}</style>
@@ -1071,7 +1075,7 @@ ${order.memo}
 
             <div className="flex justify-center w-full max-w-[1000px] print:block print:w-full print:max-w-none">
               <div className="flex-grow w-full flex justify-center print:block">
-                <div className="bg-white p-[10mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:block print:shadow-none print:w-full print:max-w-none print:p-[20mm] print:m-0 print:min-h-0 box-border">
+                <div className="bg-white p-[10mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:block print:shadow-none print:w-full print:max-w-none print:p-0 print:m-0 print:min-h-0 box-border">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex-1 mr-4">
                       <h2 className="text-4xl font-bold border-b-4 border-gray-800 pb-2 mb-4 font-['Inter'] tracking-tight">御見積書</h2>
@@ -1142,12 +1146,11 @@ ${order.memo}
 
                           return (
                             <React.Fragment key={door.id}>
-                              <tr className="border-b border-gray-200">
+                              <tr className="border-b border-gray-200 break-inside-avoid page-break-inside-avoid">
                                   <td className="py-1.5 align-top font-medium text-gray-500">WD{idx+1}</td>
                                   <td className="py-1.5 align-top">
-                                    <div className="font-bold text-sm">内部建具 {door.roomName}</div>
+                                    <div className="font-bold text-sm">{door.type} {door.roomName}</div>
                                     <div className="text-[10px] text-gray-600 mt-0.5 flex flex-wrap gap-x-3 gap-y-0 leading-tight">
-                                       <span>種類: {door.type}</span>
                                        <span className={isDesignRed ? 'text-red-600 font-bold' : ''}>デザイン: {door.design}</span>
                                        <span className={isSizeRed ? 'text-red-600 font-bold' : ''}>サイズ: {door.width==='特寸'?`W${door.customWidth}㎜特寸`:door.width} × {door.height==='特寸'?`H${door.customHeight}㎜特寸`:door.height}</span>
                                        <span>吊元: {door.hangingSide}</span>
