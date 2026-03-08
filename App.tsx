@@ -408,7 +408,7 @@ const App: React.FC = () => {
         width: '778', 
         height: initialSettings.defaultHeight,
         frameType: getFrameType(defaultType, initialSettings.defaultHeight),
-        hangingSide: 'なし',
+        hangingSide: '右吊元(R)',
         doorColor: initialSettings.defaultDoorColor,
         frameColor: initialSettings.defaultDoorColor,
         handleColor: resolveHandleName(initialSettings.defaultHandleColor, defaultType),
@@ -592,15 +592,15 @@ const App: React.FC = () => {
         
         let page;
         
-        // アウトセット系は縦長図面なので90度回転させる
-        const shouldRotate = door.type === DoorType.Outset || door.type === DoorType.OutsetIncorner;
-
         if (isPdf) {
            const externalPdf = await PDFDocument.load(buffer);
            const [embeddedPage] = await doc.embedPdf(externalPdf, [0]); // 最初のページのみ
            page = doc.addPage([pageWidth, pageHeight]);
            
-           const { width: srcW, height: srcH } = embeddedPage.scale(1.0);
+           const { width: srcW, height: srcH } = embeddedPage;
+           
+           // 縦長の場合は回転させる (幅 < 高さ)
+           const shouldRotate = srcW < srcH;
            
            if (shouldRotate) {
              const scale = Math.min(pageWidth / srcH, pageHeight / srcW);
@@ -611,7 +611,7 @@ const App: React.FC = () => {
 
              page.drawPage(embeddedPage, {
                x: targetX,
-               y: targetY + destH,
+               y: targetY + destH, // -90度回転時の補正
                width: srcW * scale,
                height: srcH * scale,
                rotate: degrees(-90)
@@ -636,7 +636,10 @@ const App: React.FC = () => {
            }
            
            page = doc.addPage([pageWidth, pageHeight]);
-           const { width: imgW, height: imgH } = embeddedImage.scale(1.0);
+           const { width: imgW, height: imgH } = embeddedImage;
+           
+           // 縦長の場合は回転させる
+           const shouldRotate = imgW < imgH;
            
            if (shouldRotate) {
              const scale = Math.min(pageWidth / imgH, pageHeight / imgW);

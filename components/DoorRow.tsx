@@ -63,11 +63,17 @@ export const DoorRow: React.FC<DoorRowProps> = ({
 
   // 片引込戸の場合、吊元を「吊元左右兼用」に強制更新
   // 折戸4枚の場合、吊元を「軸固定」に強制更新（旧データ対応）
+  // 吊元が選択肢にない場合、デフォルト値に更新
   useEffect(() => {
+    const currentSpec = DOOR_SPEC_MASTER[door.type];
+    
     if (door.type === DoorType.Pocket && door.hangingSide !== "吊元左右兼用") {
       updateDoor(door.id, { hangingSide: "吊元左右兼用" });
     } else if ((door.type === DoorType.Folding4W12 || door.type === DoorType.Folding4W16) && door.hangingSide === "軸固定4") {
       updateDoor(door.id, { hangingSide: "軸固定" });
+    } else if (currentSpec && !currentSpec.hangingSides.includes(door.hangingSide)) {
+      // 選択肢に含まれていない場合（'なし'など）、先頭の有効な値に更新
+      updateDoor(door.id, { hangingSide: currentSpec.hangingSides[0] });
     } else if (door.type === DoorType.Sliding3 && door.width === "3167") {
       updateDoor(door.id, { width: "3215" });
     } else if (door.type === DoorType.Folding2 && door.width === "755") {
