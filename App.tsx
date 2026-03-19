@@ -505,6 +505,9 @@ const App: React.FC = () => {
   const hasStorage = useMemo(() => order.storage.type !== 'NONE', [order.storage.type]);
   const hasBaseboard = useMemo(() => order.baseboards.reduce((sum, b) => sum + b.quantity, 0) > 0, [order.baseboards]);
 
+  const isBaseboardDisabled = useMemo(() => order.doors.length === 0 && order.storage.type === 'NONE', [order.doors.length, order.storage.type]);
+  const hasHingedDoor = useMemo(() => order.doors.some(d => d.type === DoorType.Hinged), [order.doors]);
+
   const isStorageDateSelected = order.customerInfo.delivery1Selection.storage || order.customerInfo.delivery2Selection.storage;
   const isBaseboardDateSelected = order.customerInfo.delivery1Selection.baseboard || order.customerInfo.delivery2Selection.baseboard;
 
@@ -1822,90 +1825,120 @@ ${order.memo}
                 <div className="absolute -bottom-2 left-1/2 w-4 h-4 bg-red-600 rotate-45"></div>
               </div>
             )}
-            <div className="flex-grow">
+            <div className="flex-grow relative">
+              {isBaseboardDisabled && (
+                <div className="absolute -top-12 left-0 z-30 bg-amber-100 border border-amber-400 text-amber-800 px-3 py-2 rounded-lg shadow-md text-xs font-bold whitespace-nowrap animate-pulse">
+                  【巾木のみの注文の際は直接お問い合わせください】
+                  <div className="absolute -bottom-1.5 left-6 w-3 h-3 bg-amber-100 border-r border-b border-amber-400 rotate-45"></div>
+                </div>
+              )}
               <h3 className="text-xl font-bold border-l-4 border-emerald-600 pl-3 mb-6 text-gray-800">
                 巾木・造作材
               </h3>
               <div className="divide-y divide-emerald-50">
-                {order.baseboards.map((b,i) => (
-                  <div key={i} className="flex flex-col xl:flex-row justify-between items-center py-4 border-b border-gray-100 last:border-0">
-                    <div className="flex flex-col mb-2 xl:mb-0 w-full xl:w-auto">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-700 text-sm">{b.product}</span>
-                        {b.product === 'スリムコーナー巾木' ? (
-                          <button
-                            onClick={() => setIsCornerHabakiModalOpen(true)}
-                            className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
-                            title="コーナー巾形の詳細を表示"
-                          >
-                            i
-                          </button>
-                        ) : b.product.includes('スリム巾木') ? (
-                          <button
-                            onClick={() => setIsHabakiModalOpen(true)}
-                            className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
-                            title="巾形の詳細を表示"
-                          >
-                            i
-                          </button>
-                        ) : b.product.includes('マグネット式ドアストッパー(サテンニッケル)') ? (
-                          <button
-                            onClick={() => setIsDoorStopperSvModalOpen(true)}
-                            className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
-                            title="ドアストッパー(サテンニッケル)の詳細を表示"
-                          >
-                            i
-                          </button>
-                        ) : b.product.includes('マグネット式ドアストッパー(マットブラック)') ? (
-                          <button
-                            onClick={() => setIsDoorStopperBkModalOpen(true)}
-                            className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
-                            title="ドアストッパー(マットブラック)の詳細を表示"
-                          >
-                            i
-                          </button>
-                        ) : null}
+                {order.baseboards.map((b,i) => {
+                  const isSlimBaseboard = b.product.includes('スリム巾木') || b.product.includes('スリムコーナー巾木');
+                  const isDoorStopper = b.product.includes('マグネット式ドアストッパー');
+                  const isDisabled = (isBaseboardDisabled && isSlimBaseboard) || (isDoorStopper && !hasHingedDoor);
+                  
+                  return (
+                    <div key={i} className={`flex flex-col xl:flex-row justify-between items-center py-4 border-b border-gray-100 last:border-0 ${isDisabled ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                      <div className="flex flex-col mb-2 xl:mb-0 w-full xl:w-auto">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-bold text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>{b.product}</span>
+                          {b.product === 'スリムコーナー巾木' ? (
+                            <button
+                              onClick={() => !isDisabled && setIsCornerHabakiModalOpen(true)}
+                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                              title="コーナー巾形の詳細を表示"
+                              disabled={isDisabled}
+                            >
+                              i
+                            </button>
+                          ) : b.product.includes('スリム巾木') ? (
+                            <button
+                              onClick={() => !isDisabled && setIsHabakiModalOpen(true)}
+                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                              title="巾形の詳細を表示"
+                              disabled={isDisabled}
+                            >
+                              i
+                            </button>
+                          ) : b.product.includes('マグネット式ドアストッパー(サテンニッケル)') ? (
+                            <button
+                              onClick={() => !isDisabled && setIsDoorStopperSvModalOpen(true)}
+                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                              title="ドアストッパー(サテンニッケル)の詳細を表示"
+                              disabled={isDisabled}
+                            >
+                              i
+                            </button>
+                          ) : b.product.includes('マグネット式ドアストッパー(マットブラック)') ? (
+                            <button
+                              onClick={() => !isDisabled && setIsDoorStopperBkModalOpen(true)}
+                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                              title="ドアストッパー(マットブラック)の詳細を表示"
+                              disabled={isDisabled}
+                            >
+                              i
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {i === 0 ? (
+                            <select
+                              value={b.color}
+                              disabled={isDisabled}
+                              onChange={(e) => {
+                                const newColor = e.target.value;
+                                setOrder(prev => ({
+                                  ...prev,
+                                  baseboards: prev.baseboards.map(board => {
+                                    if (board.product.includes('マグネット式ドアストッパー')) return board;
+                                    return { ...board, color: newColor };
+                                  })
+                                }));
+                              }}
+                              className={`text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-emerald-500 max-w-[180px] ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                            >
+                              {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                          ) : (
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full border cursor-not-allowed ${isDisabled ? 'text-gray-300 bg-gray-50 border-gray-100' : 'text-gray-500 bg-gray-100 border-gray-200'}`} title="スリム巾木の色と連動します">
+                              {b.color}
+                            </span>
+                          )}
+                          {b.product.includes('3960') && b.quantity > 0 && (
+                            <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                              換算: {(b.quantity * 3.96).toFixed(2)}m
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        {i === 0 ? (
-                          <select
-                            value={b.color}
-                            onChange={(e) => {
-                              const newColor = e.target.value;
-                              setOrder(prev => ({
-                                ...prev,
-                                baseboards: prev.baseboards.map(board => {
-                                  if (board.product.includes('マグネット式ドアストッパー')) return board;
-                                  return { ...board, color: newColor };
-                                })
-                              }));
-                            }}
-                            className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer max-w-[180px]"
-                          >
-                            {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        ) : (
-                          <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200 cursor-not-allowed" title="スリム巾木の色と連動します">
-                            {b.color}
-                          </span>
-                        )}
-                        {b.product.includes('3960') && b.quantity > 0 && (
-                          <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                            換算: {(b.quantity * 3.96).toFixed(2)}m
-                          </span>
-                        )}
+                      <div className="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
+                        <span className={`text-sm font-medium whitespace-nowrap ${isDisabled ? 'text-gray-300' : 'text-gray-500'}`}>単価 ¥{b.unitPrice.toLocaleString()}</span>
+                        <div className="flex items-center gap-1">
+                          <input 
+                            type="number" 
+                            min="0" 
+                            disabled={isDisabled}
+                            className={`w-16 border rounded-lg text-center h-9 font-bold focus:ring-1 focus:ring-emerald-500 outline-none ${isDisabled ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-white text-gray-900'}`} 
+                            value={b.quantity} 
+                            onChange={e => { 
+                              const val = Math.max(0, parseInt(e.target.value)||0);
+                              setOrder(p=>({
+                                ...p, 
+                                baseboards: p.baseboards.map((board, idx) => idx === i ? {...board, quantity: val} : board)
+                              })); 
+                            }} 
+                          />
+                          <span className={`text-xs font-bold ${isDisabled ? 'text-gray-300' : 'text-gray-400'}`}>{b.unit}</span>
+                        </div>
+                        <span className={`text-base font-bold font-mono whitespace-nowrap w-[120px] text-right ${isDisabled ? 'text-gray-300' : 'text-blue-600'}`}>小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
-                      <span className="text-sm font-medium text-gray-500 whitespace-nowrap">単価 ¥{b.unitPrice.toLocaleString()}</span>
-                      <div className="flex items-center gap-1">
-                        <input type="number" min="0" className="w-16 border rounded-lg text-center h-9 font-bold focus:ring-1 focus:ring-emerald-500 outline-none" value={b.quantity} onChange={e => { const nb = [...order.baseboards]; nb[i].quantity = Math.max(0, parseInt(e.target.value)||0); setOrder(p=>({...p, baseboards:nb})); }} />
-                        <span className="text-xs font-bold text-gray-400">{b.unit}</span>
-                      </div>
-                      <span className="text-base font-bold text-blue-600 font-mono whitespace-nowrap w-[120px] text-right">小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
             <div className="mt-4 pt-4 border-t border-emerald-100 flex justify-end items-baseline gap-2">
