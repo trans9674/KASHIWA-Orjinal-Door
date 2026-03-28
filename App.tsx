@@ -208,6 +208,9 @@ const App: React.FC = () => {
   const [isEstimateSaved, setIsEstimateSaved] = useState(false);
   const [isPbModalOpen, setIsPbModalOpen] = useState(false);
   const [isDataViewerOpen, setIsDataViewerOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
   
   const [isStorageGuideOpen, setIsStorageGuideOpen] = useState(true);
   const [isBaseboardGuideOpen, setIsBaseboardGuideOpen] = useState(true);
@@ -834,6 +837,18 @@ ${order.memo}
 
   const handlePrintPdf = () => { window.print(); };
 
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === '3005') {
+      setIsPasswordModalOpen(false);
+      setPasswordInput('');
+      setPasswordError(false);
+      setIsDataViewerOpen(true);
+    } else {
+      setPasswordError(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100">
@@ -848,6 +863,54 @@ ${order.memo}
   return (
     <div className="min-h-screen bg-slate-100 font-['Noto_Sans_JP']">
       
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in zoom-in">
+            <button 
+              onClick={() => {
+                setIsPasswordModalOpen(false);
+                setPasswordInput('');
+                setPasswordError(false);
+              }} 
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 rounded-full p-2 hover:bg-gray-100 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">パスワードの入力</h3>
+              <p className="text-gray-500 text-sm">管理画面にアクセスするにはパスワードを入力してください。</p>
+            </div>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => {
+                    setPasswordInput(e.target.value);
+                    setPasswordError(false);
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-colors text-center text-xl tracking-widest ${passwordError ? 'border-red-500 focus:border-red-500 bg-red-50' : 'border-gray-200 focus:border-blue-500 bg-gray-50 focus:bg-white'}`}
+                  placeholder="••••"
+                  autoFocus
+                />
+                {passwordError && (
+                  <p className="text-red-500 text-sm mt-2 text-center font-bold">パスワードが間違っています</p>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-colors shadow-lg active:scale-95"
+              >
+                確認
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {isDataViewerOpen && (
         <DataViewerModal 
           onClose={() => setIsDataViewerOpen(false)} 
@@ -967,13 +1030,20 @@ ${order.memo}
       )}
 
       {isOrderFlowModalOpen && (
-        <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto no-print animate-in fade-in duration-300 flex items-center justify-center p-4">
-           <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full p-10 relative animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-             <button onClick={() => setIsOrderFlowModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 rounded-full p-2 hover:bg-gray-100 transition-colors">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-             </button>
-             
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div 
+          className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto no-print animate-in fade-in duration-300 flex justify-center p-4"
+          onClick={() => setIsOrderFlowModalOpen(false)}
+        >
+           <div 
+             className="w-full max-w-5xl scale-[0.8] origin-top transition-transform my-auto"
+             onClick={(e) => e.stopPropagation()}
+           >
+             <div className="bg-white rounded-3xl shadow-2xl w-full p-10 relative animate-in zoom-in">
+               <button onClick={() => setIsOrderFlowModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 rounded-full p-2 hover:bg-gray-100 transition-colors">
+                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+               </button>
+               
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-1 space-y-6">
                   <h3 className="text-3xl font-bold text-gray-800 border-b-2 border-gray-100 pb-4">ご注文フロー確認</h3>
                    <div className="bg-white rounded-2xl border-2 border-blue-100 overflow-hidden shadow-sm">
@@ -1049,7 +1119,8 @@ ${order.memo}
                  閉じる
                </button>
              </div>
-          </div>
+           </div>
+           </div>
         </div>
       )}
 
@@ -1453,7 +1524,7 @@ ${order.memo}
                 初期設定【柏木工 オリジナルドア】
               </div>
               <button 
-                onClick={() => setIsDataViewerOpen(true)}
+                onClick={() => setIsPasswordModalOpen(true)}
                 className="bg-gray-700 hover:bg-gray-600 text-white p-2.5 rounded-lg flex items-center transition-colors shadow-sm"
                 title="データ確認（価格表・送料等）"
               >
