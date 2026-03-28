@@ -436,7 +436,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
   };
 
   return (
-    <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors text-[11px]">
+    <tr className="border-b border-gray-200 hover:bg-gray-50 transition-colors text-[10px]">
       <td className="p-2 font-medium text-gray-500 text-center border-r border-gray-100">WD{index + 1}</td>
       <td className="p-1">
         <input 
@@ -714,7 +714,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
       </td>
       <td className="p-1">
         {door.type === DoorType.Pocket ? (
-          <div className="w-full border rounded px-1 py-1 h-8 bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-xs">
+          <div className="w-full border rounded px-1 py-1 h-8 bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-[10px]">
             吊元左右兼用
           </div>
         ) : (
@@ -755,7 +755,7 @@ export const DoorRow: React.FC<DoorRowProps> = ({
           )}
         </div>
       </td>
-      <td className="p-1 text-right font-mono font-bold text-base pr-2 text-gray-900 border-l border-gray-100">
+      <td className="p-1 text-right font-mono font-bold text-sm pr-2 text-gray-900 border-l border-gray-100">
         {door.price.toLocaleString()}
       </td>
       <td className="p-1 text-center no-print relative">

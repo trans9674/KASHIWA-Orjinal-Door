@@ -426,10 +426,21 @@ const App: React.FC = () => {
     setOrder(prev => ({ ...prev, doors: prev.doors.map(d => d.id === id ? { ...d, ...updates } : d) }));
   }, []);
 
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
   const removeDoor = useCallback((id: string) => {
-    if (window.confirm('このWD行を削除してもよろしいですか？')) {
-      setOrder(prev => ({ ...prev, doors: prev.doors.filter(d => d.id !== id) }));
+    setDeleteTargetId(id);
+  }, []);
+
+  const confirmDeleteDoor = useCallback(() => {
+    if (deleteTargetId) {
+      setOrder(prev => ({ ...prev, doors: prev.doors.filter(d => d.id !== deleteTargetId) }));
+      setDeleteTargetId(null);
     }
+  }, [deleteTargetId]);
+
+  const cancelDeleteDoor = useCallback(() => {
+    setDeleteTargetId(null);
   }, []);
 
   const handlePrefectureChange = (pref: string) => {
@@ -1407,6 +1418,27 @@ ${order.memo}
           </div>
         </div>
       )}
+      {deleteTargetId && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in" onClick={cancelDeleteDoor}>
+          <div className="bg-[#f8f9f4] rounded-2xl shadow-2xl max-w-sm w-full p-8" onClick={e => e.stopPropagation()}>
+            <p className="text-[#2c2c2c] text-base font-medium mb-8">このWD行を削除してもよろしいですか？</p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={confirmDeleteDoor}
+                className="bg-[#417538] hover:bg-[#325a2b] text-white px-6 py-2 rounded-2xl font-bold transition-colors shadow-sm"
+              >
+                OK
+              </button>
+              <button 
+                onClick={cancelDeleteDoor}
+                className="bg-[#bdf4a9] hover:bg-[#a5e090] text-[#2c2c2c] px-6 py-2 rounded-2xl font-bold transition-colors shadow-sm"
+              >
+                キャンセル
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -1718,16 +1750,16 @@ ${order.memo}
 
         <div className="mb-8 overflow-x-auto rounded-2xl border shadow-sm">
           <table className="w-full border-collapse min-w-[1300px]">
-            <thead className="bg-gray-800 text-white text-[11px] uppercase font-bold text-center">
+            <thead className="bg-gray-800 text-white text-[10px] uppercase font-bold text-center">
               <tr>
                 <th className="p-4 w-12 border-r border-gray-700">No.</th>
-                <th className="w-24">部屋名</th>
-                <th className="w-52">建具種類</th>
-                <th className="w-44">デザイン</th>
-                <th className="w-20">幅</th>
-                <th className="w-20">高さ</th>
-                <th className="w-28">枠仕様</th>
-                <th className="w-40">
+                <th className="w-[106px]">部屋名</th>
+                <th className="w-[218px]">建具種類</th>
+                <th className="w-[186px]">デザイン</th>
+                <th className="w-[55px]">幅</th>
+                <th className="w-[55px]">高さ</th>
+                <th className="w-[122px]">枠仕様</th>
+                <th className="w-[135px]">
                   <div className="flex items-center justify-center gap-1">
                     <span>吊元</span>
                     <button
@@ -1739,7 +1771,7 @@ ${order.memo}
                     </button>
                   </div>
                 </th>
-                <th className="w-40">
+                <th className="w-[170px]">
                   <div className="flex items-center justify-center gap-1">
                     <span>扉カラー</span>
                     <button
@@ -1751,7 +1783,7 @@ ${order.memo}
                     </button>
                   </div>
                 </th>
-                <th className="w-40">枠カラー</th>
+                <th className="w-[170px]">枠カラー</th>
                 <th className="w-48">
                   <div className="flex items-center justify-center gap-1">
                     <span>ハンドル</span>
@@ -1764,7 +1796,7 @@ ${order.memo}
                     </button>
                   </div>
                 </th>
-                <th className="w-28">価格 (円)</th>
+                <th className="w-[90px]">価格 (円)</th>
                 <th className="w-32">操作</th>
               </tr>
             </thead>
