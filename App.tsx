@@ -489,8 +489,9 @@ const App: React.FC = () => {
     
     const totalPoints = doorPoints + storagePoints + baseboardPoints;
     
+    const isShippingSeparate = order.doors.length === 0 && (order.storage.type !== 'NONE' || order.baseboards.reduce((sum, b) => sum + b.quantity, 0) > 0);
     const baseShipping = order.shipping;
-    const finalShipping = totalPoints >= 10 ? baseShipping : Math.floor(baseShipping * (totalPoints / 10));
+    const finalShipping = isShippingSeparate ? 0 : (totalPoints >= 10 ? baseShipping : Math.floor(baseShipping * (totalPoints / 10)));
 
     const doorSubtotal = order.doors.reduce((sum, d) => sum + d.price, 0);
     const storageSubtotal = order.storage.type === 'NONE' ? 0 : order.storage.basePrice + order.storage.baseRingPrice + (order.storage.fillerPrice * order.storage.fillerCount) + order.storage.mirrorPrice;
@@ -509,14 +510,14 @@ const App: React.FC = () => {
       total, 
       totalPoints, 
       finalShipping,
-      isShippingDiscounted: totalPoints > 0 && totalPoints < 10
+      isShippingDiscounted: totalPoints > 0 && totalPoints < 10,
+      isShippingSeparate
     };
   }, [order]);
 
   const hasStorage = useMemo(() => order.storage.type !== 'NONE', [order.storage.type]);
   const hasBaseboard = useMemo(() => order.baseboards.reduce((sum, b) => sum + b.quantity, 0) > 0, [order.baseboards]);
 
-  const isBaseboardDisabled = useMemo(() => order.doors.length === 0 && order.storage.type === 'NONE', [order.doors.length, order.storage.type]);
   const hasHingedDoor = useMemo(() => order.doors.some(d => d.type === DoorType.Hinged), [order.doors]);
 
   const isStorageDateSelected = order.customerInfo.delivery1Selection.storage || order.customerInfo.delivery2Selection.storage;
@@ -1003,7 +1004,10 @@ ${order.memo}
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                       ご注意
                     </p>
-                    <p>正式発注後の変更・キャンセルは原則お受けできません。仕様や寸法は十分にご確認ください。</p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>正式発注後の変更・キャンセルは原則お受けできません。仕様や寸法は十分にご確認ください。</li>
+                      <li>玄関収納、造作材のみの注文の場合の送料は自動計算ではなく別途計算いたします。</li>
+                    </ul>
                   </div>
                 </div>
 
@@ -1268,12 +1272,12 @@ ${order.memo}
                                  <div className="font-bold text-sm">運搬諸経費（点数計算: {totals.totalPoints}点）</div>
                                  <div className="text-[10px] text-gray-500 mt-0.5">
                                    納品先: {order.customerInfo.address}
-                                   {totals.isShippingDiscounted && ` (送料算定点数: ${totals.totalPoints}/10)`}
+                                   {totals.isShippingDiscounted && !totals.isShippingSeparate && ` (送料算定点数: ${totals.totalPoints}/10)`}
                                  </div>
                                </td>
                                <td className="py-1.5 align-top text-center">1式</td>
-                               <td className="py-1.5 align-top text-left font-mono text-sm">¥{totals.finalShipping.toLocaleString()}</td>
-                               <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{totals.finalShipping.toLocaleString()}</td>
+                               <td className="py-1.5 align-top text-left font-mono text-sm">{totals.isShippingSeparate ? '【別途】' : `¥${totals.finalShipping.toLocaleString()}`}</td>
+                               <td className="py-1.5 align-top text-right font-bold font-mono text-sm">{totals.isShippingSeparate ? '【別途】' : `¥${totals.finalShipping.toLocaleString()}`}</td>
                             </tr>
                         )}
                         
@@ -1858,59 +1862,32 @@ ${order.memo}
               </div>
             )}
             <div className="flex-grow relative">
-              {isBaseboardDisabled && (
-                <div className="absolute -top-12 left-0 z-30 bg-amber-100 border border-amber-400 text-amber-800 px-3 py-2 rounded-lg shadow-md text-xs font-bold whitespace-nowrap animate-pulse">
-                  【巾木のみの注文の際は直接お問い合わせください】
-                  <div className="absolute -bottom-1.5 left-6 w-3 h-3 bg-amber-100 border-r border-b border-amber-400 rotate-45"></div>
-                </div>
-              )}
               <h3 className="text-xl font-bold border-l-4 border-emerald-600 pl-3 mb-6 text-gray-800">
                 巾木・造作材
               </h3>
               <div className="divide-y divide-emerald-50">
                 {order.baseboards.map((b,i) => {
-                  const isSlimBaseboard = b.product.includes('スリム巾木') || b.product.includes('スリムコーナー巾木');
                   const isDoorStopper = b.product.includes('マグネット式ドアストッパー');
-                  const isDisabled = (isBaseboardDisabled && isSlimBaseboard) || (isDoorStopper && !hasHingedDoor);
+                  if (isDoorStopper) return null;
                   
                   return (
-                    <div key={i} className={`flex flex-col xl:flex-row justify-between items-center py-4 border-b border-gray-100 last:border-0 ${isDisabled ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                    <div key={i} className="flex flex-col xl:flex-row justify-between items-center py-4 border-b border-gray-100 last:border-0">
                       <div className="flex flex-col mb-2 xl:mb-0 w-full xl:w-auto">
                         <div className="flex items-center gap-2">
-                          <span className={`font-bold text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>{b.product}</span>
+                          <span className="font-bold text-sm text-gray-700">{b.product}</span>
                           {b.product === 'スリムコーナー巾木' ? (
                             <button
-                              onClick={() => !isDisabled && setIsCornerHabakiModalOpen(true)}
-                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                              onClick={() => setIsCornerHabakiModalOpen(true)}
+                              className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
                               title="コーナー巾形の詳細を表示"
-                              disabled={isDisabled}
                             >
                               i
                             </button>
                           ) : b.product.includes('スリム巾木') ? (
                             <button
-                              onClick={() => !isDisabled && setIsHabakiModalOpen(true)}
-                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                              onClick={() => setIsHabakiModalOpen(true)}
+                              className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
                               title="巾形の詳細を表示"
-                              disabled={isDisabled}
-                            >
-                              i
-                            </button>
-                          ) : b.product.includes('マグネット式ドアストッパー(サテンニッケル)') ? (
-                            <button
-                              onClick={() => !isDisabled && setIsDoorStopperSvModalOpen(true)}
-                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                              title="ドアストッパー(サテンニッケル)の詳細を表示"
-                              disabled={isDisabled}
-                            >
-                              i
-                            </button>
-                          ) : b.product.includes('マグネット式ドアストッパー(マットブラック)') ? (
-                            <button
-                              onClick={() => !isDisabled && setIsDoorStopperBkModalOpen(true)}
-                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
-                              title="ドアストッパー(マットブラック)の詳細を表示"
-                              disabled={isDisabled}
                             >
                               i
                             </button>
@@ -1920,7 +1897,6 @@ ${order.memo}
                           {i === 0 ? (
                             <select
                               value={b.color}
-                              disabled={isDisabled}
                               onChange={(e) => {
                                 const newColor = e.target.value;
                                 setOrder(prev => ({
@@ -1931,12 +1907,12 @@ ${order.memo}
                                   })
                                 }));
                               }}
-                              className={`text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-emerald-500 max-w-[180px] ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                              className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-emerald-500 max-w-[180px] cursor-pointer"
                             >
                               {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                           ) : (
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full border cursor-not-allowed ${isDisabled ? 'text-gray-300 bg-gray-50 border-gray-100' : 'text-gray-500 bg-gray-100 border-gray-200'}`} title="スリム巾木の色と連動します">
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full border cursor-not-allowed text-gray-500 bg-gray-100 border-gray-200" title="スリム巾木の色と連動します">
                               {b.color}
                             </span>
                           )}
@@ -1948,13 +1924,12 @@ ${order.memo}
                         </div>
                       </div>
                       <div className="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
-                        <span className={`text-sm font-medium whitespace-nowrap ${isDisabled ? 'text-gray-300' : 'text-gray-500'}`}>単価 ¥{b.unitPrice.toLocaleString()}</span>
+                        <span className="text-sm font-medium whitespace-nowrap text-gray-500">単価 ¥{b.unitPrice.toLocaleString()}</span>
                         <div className="flex items-center gap-1">
                           <input 
                             type="number" 
                             min="0" 
-                            disabled={isDisabled}
-                            className={`w-16 border rounded-lg text-center h-9 font-bold focus:ring-1 focus:ring-emerald-500 outline-none ${isDisabled ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-white text-gray-900'}`} 
+                            className="w-16 border rounded-lg text-center h-9 font-bold focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-gray-900" 
                             value={b.quantity} 
                             onChange={e => { 
                               const val = Math.max(0, parseInt(e.target.value)||0);
@@ -1964,13 +1939,62 @@ ${order.memo}
                               })); 
                             }} 
                           />
-                          <span className={`text-xs font-bold ${isDisabled ? 'text-gray-300' : 'text-gray-400'}`}>{b.unit}</span>
+                          <span className="text-xs font-bold text-gray-400">{b.unit}</span>
                         </div>
-                        <span className={`text-base font-bold font-mono whitespace-nowrap w-[120px] text-right ${isDisabled ? 'text-gray-300' : 'text-blue-600'}`}>小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
+                        <span className="text-base font-bold font-mono whitespace-nowrap w-[120px] text-right text-blue-600">小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
                       </div>
                     </div>
                   );
                 })}
+
+                <div className="py-4 border-b border-gray-100 last:border-0">
+                  <h4 className="font-bold text-sm text-gray-700 mb-4">マグネット式ドアストッパー</h4>
+                  <div className="space-y-4">
+                    {order.baseboards.map((b, i) => {
+                      if (!b.product.includes('マグネット式ドアストッパー')) return null;
+                      const isDisabled = !hasHingedDoor;
+                      const isSv = b.product.includes('サテンニッケル');
+                      return (
+                        <div key={i} className={`flex flex-col xl:flex-row justify-between items-center pl-4 ${isDisabled ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                          <div className="flex items-center gap-2 mb-2 xl:mb-0 w-full xl:w-auto">
+                            <span className={`text-xs font-bold px-3 py-1 rounded-full border ${isDisabled ? 'text-gray-400 bg-gray-50 border-gray-200' : 'text-gray-700 bg-gray-50 border-gray-200'}`}>
+                              {isSv ? 'サテンニッケル' : 'マットブラック'}
+                            </span>
+                            <button
+                              onClick={() => !isDisabled && (isSv ? setIsDoorStopperSvModalOpen(true) : setIsDoorStopperBkModalOpen(true))}
+                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                              title={`ドアストッパー(${isSv ? 'サテンニッケル' : 'マットブラック'})の詳細を表示`}
+                              disabled={isDisabled}
+                            >
+                              i
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
+                            <span className={`text-sm font-medium whitespace-nowrap ${isDisabled ? 'text-gray-300' : 'text-gray-500'}`}>単価 ¥{b.unitPrice.toLocaleString()}</span>
+                            <div className="flex items-center gap-1">
+                              <input 
+                                type="number" 
+                                min="0" 
+                                disabled={isDisabled}
+                                className={`w-16 border rounded-lg text-center h-9 font-bold focus:ring-1 focus:ring-emerald-500 outline-none ${isDisabled ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-white text-gray-900'}`} 
+                                value={b.quantity} 
+                                onChange={e => { 
+                                  const val = Math.max(0, parseInt(e.target.value)||0);
+                                  setOrder(p=>({
+                                    ...p, 
+                                    baseboards: p.baseboards.map((board, idx) => idx === i ? {...board, quantity: val} : board)
+                                  })); 
+                                }} 
+                              />
+                              <span className={`text-xs font-bold ${isDisabled ? 'text-gray-300' : 'text-gray-400'}`}>{b.unit}</span>
+                            </div>
+                            <span className={`text-base font-bold font-mono whitespace-nowrap w-[120px] text-right ${isDisabled ? 'text-gray-300' : 'text-blue-600'}`}>小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t border-emerald-100 flex justify-end items-baseline gap-2">
@@ -1989,11 +2013,11 @@ ${order.memo}
                 <div className="flex justify-between items-center border-b border-gray-100 pb-3">
                     <div className="flex flex-col">
                       <span className="text-gray-500 font-bold text-base">運搬諸経費</span>
-                      {totals.isShippingDiscounted && (
+                      {totals.isShippingDiscounted && !totals.isShippingSeparate && (
                         <span className="text-[10px] text-orange-500 font-bold leading-tight">送料算定点数 ({totals.totalPoints}/10)</span>
                       )}
                     </div>
-                    <span className="text-xl font-bold font-['Inter'] text-gray-800">¥{totals.finalShipping.toLocaleString()}</span>
+                    <span className="text-xl font-bold font-['Inter'] text-gray-800">{totals.isShippingSeparate ? '【別途】' : `¥${totals.finalShipping.toLocaleString()}`}</span>
                 </div>
                 <div className="flex justify-between items-center">
                     <span className="text-gray-500 font-bold text-base">小計 (税抜)</span>
