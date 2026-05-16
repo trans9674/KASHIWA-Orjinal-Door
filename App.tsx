@@ -222,10 +222,10 @@ const App: React.FC = () => {
   }>({ errors: [], warnings: [] });
 
   const [initialSettings, setInitialSettings] = useState({
-    company: '',
+    company: localStorage.getItem('order_company') || '',
     siteName: '',
-    contactName: '',
-    phone: '',
+    contactName: localStorage.getItem('order_contactName') || '',
+    phone: localStorage.getItem('order_phone') || '',
     defaultHeight: 'H2200',
     defaultDoorColor: COLORS[0],
     defaultHandleColor: SIMPLE_HANDLE_OPTIONS[0],
@@ -234,11 +234,11 @@ const App: React.FC = () => {
 
   const [order, setOrder] = useState<OrderState>({
     customerInfo: {
-      company: '',
+      company: localStorage.getItem('order_company') || '',
       address: '',
       siteName: '',
-      contactName: '',
-      phone: '',
+      contactName: localStorage.getItem('order_contactName') || '',
+      phone: localStorage.getItem('order_phone') || '',
       deliveryDate1: '',
       deliveryDate2: '',
       delivery1Selection: { baseboard: false, storage: false },
@@ -273,6 +273,19 @@ const App: React.FC = () => {
     prefecture: '',
     detail: ''
   });
+
+  useEffect(() => {
+    const info = order.customerInfo;
+    localStorage.setItem('order_company', info.company);
+    localStorage.setItem('order_contactName', info.contactName);
+    localStorage.setItem('order_phone', info.phone);
+  }, [order.customerInfo.company, order.customerInfo.contactName, order.customerInfo.phone]);
+
+  useEffect(() => {
+    localStorage.setItem('order_company', initialSettings.company);
+    localStorage.setItem('order_contactName', initialSettings.contactName);
+    localStorage.setItem('order_phone', initialSettings.phone);
+  }, [initialSettings.company, initialSettings.contactName, initialSettings.phone]);
 
   useEffect(() => {
     const fetchData = async () => {
