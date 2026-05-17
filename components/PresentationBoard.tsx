@@ -34,22 +34,22 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
              style={{ width: '100%', maxWidth: '420mm', minHeight: '297mm', margin: '0 auto' }}>
           
           {/* Header Area */}
-          <div className="bg-black text-white p-8 mb-4 flex justify-between items-end shrink-0">
+          <div className="bg-black text-white p-6 mb-2 flex justify-between items-end shrink-0">
             <div>
-              <h1 className="text-4xl font-black tracking-tighter mb-2">PRESENTATION BOARD</h1>
+              <h1 className="text-4xl font-black tracking-tighter mb-1">PRESENTATION BOARD</h1>
               <p className="text-white font-black uppercase tracking-widest text-xs">Custom Door & Storage Solution</p>
             </div>
             <div className="text-right">
               <p className="text-xl font-black">{order.customerInfo.siteName} 様邸 新築工事</p>
-              <p className="text-sm font-black opacity-90 font-['Inter']">{new Date().toLocaleDateString('ja-JP')} 発行</p>
+              <p className="text-sm font-black font-['Inter']">{new Date().toLocaleDateString('ja-JP')} 発行</p>
             </div>
           </div>
 
           {/* Color Palette Summary */}
-          <div className="px-10 mb-8 shrink-0">
-             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="px-8 mb-4 shrink-0">
+             <div className="bg-gray-50 border border-black rounded-xl p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                   <div className="text-[10px] font-black text-black uppercase tracking-widest border-r border-gray-300 pr-4 mr-2">Color Palette</div>
+                   <div className="text-[11px] font-black text-black uppercase tracking-widest border-r border-black pr-4 mr-2">Color Palette</div>
                    <div className="flex flex-wrap gap-6">
                       {Array.from(new Set([
                         ...order.doors.map(d => d.doorColor),
@@ -58,8 +58,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                         ...order.baseboards.filter(b => b.quantity > 0).map(b => b.color)
                       ])).filter(Boolean).map((color, cIdx) => (
                         <div key={cIdx} className="flex items-center gap-2">
-                           <div className="w-6 h-6 rounded border border-gray-300 shadow-sm" style={{ backgroundColor: COLOR_MAP[color!] || '#eee' }}></div>
-                           <span className="text-[10px] font-black text-black">{color}</span>
+                           <div className="w-6 h-6 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[color!] || '#666' }}></div>
+                           <span className="text-[11px] font-black text-black">{color}</span>
                         </div>
                       ))}
                    </div>
@@ -79,40 +79,40 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                   const door = item.data as DoorItem;
                   const master = priceList.find(p => p.type === door.type && p.design === door.design);
                   return (
-                    <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200 flex flex-col h-full min-h-[140px]">
+                    <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
                       {/* Image Area */}
-                      <div className="h-24 bg-white p-1 relative flex items-center justify-center overflow-hidden border-b border-gray-200">
+                      <div className="h-24 bg-white p-1 relative flex items-center justify-center overflow-hidden border-b border-black">
                         {master?.pbImageUrl ? (
                           <img src={master.pbImageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                         ) : master?.imageUrl ? (
                           <img src={master.imageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                         ) : (
-                          <div className="text-[8px] text-gray-300 text-center font-bold px-1">
+                          <div className="text-[9px] text-black text-center font-black px-1">
                             {door.design}<br/>IMAGE
                           </div>
                         )}
-                        <div className="absolute top-1 left-1 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded shadow-sm text-[7px] font-black border border-gray-200 text-black">
+                        <div className="absolute top-1 left-1 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded shadow-sm text-[9px] font-black border border-black text-black">
                           WD-{item.index! + 1}
                         </div>
                       </div>
                       {/* Details */}
                       <div className="p-2 flex flex-col justify-between flex-1">
                         <div>
-                          <div className="text-black font-black text-[7px] leading-none mb-1 truncate">{door.roomName}</div>
-                          <h3 className="font-black text-black text-[9px] leading-tight mb-0.5 truncate">{door.type}</h3>
-                          <p className="font-black text-black text-[8px] leading-tight mb-1 truncate">{door.design}</p>
-                          <div className="grid grid-cols-2 gap-y-0.5 text-[7px] font-black text-black">
+                          <div className="text-black font-black text-[9px] leading-none mb-1 truncate">{door.roomName}</div>
+                          <h3 className="font-black text-black text-[11px] leading-tight mb-0.5 truncate">{door.type}</h3>
+                          <p className="font-black text-black text-[10px] leading-tight mb-1 truncate">{door.design}</p>
+                          <div className="grid grid-cols-2 gap-y-0.5 text-[9px] font-black text-black">
                             <div className="truncate">サイズ</div>
                             <div className="text-right truncate">{door.width}×{door.height}</div>
                             <div className="truncate">カラー</div>
                             <div className="flex items-center justify-end gap-1">
-                              <div className="w-2.5 h-2.5 rounded border border-gray-400 shadow-sm" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#ccc' }}></div>
+                              <div className="w-4 h-4 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#555' }}></div>
                             </div>
                           </div>
                         </div>
                         {showPrices && (
-                          <div className="pt-1 mt-1 border-t border-gray-300 text-right">
-                            <span className="font-black text-black font-['Inter'] text-[9px]">¥{door.price.toLocaleString()}</span>
+                          <div className="pt-1 mt-1 border-t border-black text-right">
+                            <span className="font-black text-black font-['Inter'] text-[11px]">¥{door.price.toLocaleString()}</span>
                           </div>
                         )}
                       </div>
@@ -123,27 +123,27 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                   const storageMaster = storageTypes.find(s => s.id === storage.type);
                   const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
                   return (
-                    <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200 flex flex-col h-full min-h-[140px]">
-                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-gray-200">
+                    <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
+                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
                         {imgUrl ? (
                           <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
                         ) : (
-                          <div className="text-[8px] text-gray-300 font-bold">STORAGE</div>
+                          <div className="text-[9px] text-black font-black">STORAGE</div>
                         )}
-                        <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[7px] font-black">
+                        <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
                           ST-1
                         </div>
                       </div>
                         {/* Details */}
                         <div className="p-2 flex flex-col justify-between flex-1">
                           <div>
-                            <div className="text-black font-black text-[7px] leading-none mb-1 uppercase bg-gray-200 px-1 py-0.5 rounded-full inline-block">玄関収納</div>
-                            <h3 className="font-black text-black text-[9px] leading-tight truncate">{storage.type}</h3>
-                            <div className="text-[7px] font-black text-black mt-0.5 truncate">{storage.size} / {storage.filler}</div>
+                            <div className="text-black font-black text-[9px] leading-none mb-1 uppercase bg-gray-200 px-1 py-0.5 rounded-full inline-block">玄関収納</div>
+                            <h3 className="font-black text-black text-[11px] leading-tight truncate">{storage.type}</h3>
+                            <div className="text-[9px] font-black text-black mt-0.5 truncate">{storage.size} / {storage.filler}</div>
                           </div>
                           {showPrices && (
-                            <div className="pt-1 mt-1 border-t border-gray-300 text-right">
-                              <span className="font-black text-black font-['Inter'] text-[9px]">¥{storage.basePrice.toLocaleString()}</span>
+                            <div className="pt-1 mt-1 border-t border-black text-right">
+                              <span className="font-black text-black font-['Inter'] text-[11px]">¥{storage.basePrice.toLocaleString()}</span>
                             </div>
                           )}
                         </div>
@@ -152,23 +152,23 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                 } else {
                   const baseboard = item.data as any;
                   return (
-                    <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200 flex flex-col h-full min-h-[140px]">
-                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-gray-200">
-                        <div className="w-12 h-12 rounded border border-gray-200 shadow-inner" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#eee' }}></div>
-                        <div className="absolute top-1 left-1 bg-amber-600 text-white px-1.5 py-0.5 rounded shadow-sm text-[7px] font-black">
+                    <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
+                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
+                        <div className="w-12 h-12 rounded border border-black shadow-inner" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#666' }}></div>
+                        <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
                           BB-{idx}
                         </div>
                       </div>
                       <div className="p-2 flex flex-col justify-between flex-1">
                         <div>
-                          <div className="text-black font-black text-[7px] leading-none mb-1 uppercase bg-gray-200 px-1 py-0.5 rounded-full inline-block">巾木・造作</div>
-                          <h3 className="font-black text-black text-[9px] leading-tight truncate">{baseboard.product}</h3>
-                          <div className="text-[7px] font-black text-black mt-0.5 truncate">{baseboard.color}</div>
+                          <div className="text-black font-black text-[9px] leading-none mb-1 uppercase bg-gray-200 px-1 py-0.5 rounded-full inline-block">巾木・造作</div>
+                          <h3 className="font-black text-black text-[11px] leading-tight truncate">{baseboard.product}</h3>
+                          <div className="text-[9px] font-black text-black mt-0.5 truncate">{baseboard.color}</div>
                         </div>
                         <div className="mt-1 flex justify-between items-end">
-                           <div className="text-[7px] font-black text-black">数量: {baseboard.quantity}</div>
+                           <div className="text-[9px] font-black text-black">数量: {baseboard.quantity}</div>
                            {showPrices && (
-                             <span className="font-black text-black font-['Inter'] text-[9px]">¥{(baseboard.unitPrice * baseboard.quantity).toLocaleString()}</span>
+                             <span className="font-black text-black font-['Inter'] text-[11px]">¥{(baseboard.unitPrice * baseboard.quantity).toLocaleString()}</span>
                            )}
                         </div>
                       </div>
@@ -178,26 +178,26 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
               })}
               {/* Fill remaining slots if necessary */}
               {Array.from({ length: Math.max(0, 24 - (order.doors.length + (order.storage.type !== 'NONE' ? 1 : 0) + order.baseboards.filter(b => b.quantity > 0).length)) }).map((_, i) => (
-                <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-gray-200 min-h-[140px]"></div>
+                <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-black min-h-[140px]"></div>
               ))}
             </div>
 
             {/* Footer Area */}
-            <div className={`mt-12 pt-8 border-t-2 border-black flex justify-between items-start`}>
+            <div className={`mt-6 pt-4 border-t-2 border-black flex justify-between items-start`}>
               <div className="flex gap-12">
                 <div>
-                   <p className="text-[10px] font-black text-black uppercase tracking-widest mb-1">Contractor</p>
+                   <p className="text-[11px] font-black text-black uppercase tracking-widest mb-1">Contractor</p>
                    <p className="font-black text-black text-lg">{order.customerInfo.company}</p>
                 </div>
                 <div>
-                   <p className="text-[10px] font-black text-black uppercase tracking-widest mb-1">Representative</p>
+                   <p className="text-[11px] font-black text-black uppercase tracking-widest mb-1">Representative</p>
                    <p className="font-black text-black text-lg">{order.customerInfo.contactName}</p>
                 </div>
               </div>
               <div className="flex flex-col items-end">
                 {showPrices && (
-                  <div className="mb-6 text-right">
-                     <p className="text-[10px] font-black text-black uppercase tracking-widest mb-1">Total Estimated Amount</p>
+                  <div className="mb-4 text-right">
+                     <p className="text-[11px] font-black text-black uppercase tracking-widest mb-1">Total Estimated Amount</p>
                      <p className="text-4xl font-black text-black font-['Inter'] tracking-tighter italic">¥{(
                        order.doors.reduce((sum, d) => sum + d.price, 0) + 
                        (order.storage.type !== 'NONE' ? order.storage.basePrice : 0) + 
@@ -256,6 +256,10 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
+          * { 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+          }
           body * { visibility: hidden !important; }
           .print-area, .print-area * { visibility: visible !important; }
           .no-print { display: none !important; }
@@ -263,8 +267,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
             position: fixed !important; 
             left: 0 !important; 
             top: 0 !important; 
-            width: 100% !important;
-            height: 100% !important;
+            width: 420mm !important; 
+            height: 297mm !important; 
             max-width: none !important;
             margin: 0 !important;
             padding: 0 !important;
