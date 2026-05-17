@@ -7,6 +7,8 @@ interface PresentationBoardProps {
   order: OrderState;
   priceList: PriceRecord[];
   storageTypes: StorageTypeRecord[];
+  handleMaster: HandleRecord[];
+  baseboardMaster: BaseboardItem[];
   showPrices: boolean;
   setShowPrices: (show: boolean) => void;
   onClose: () => void;
@@ -21,10 +23,34 @@ const COLOR_MAP: Record<string, string> = {
   "プレシャスウォールナット(PW)": "#523a2d",
 };
 
-export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, priceList, storageTypes, showPrices, setShowPrices, onClose }) => {
+export const PresentationBoard: React.FC<PresentationBoardProps> = ({ 
+  order, priceList, storageTypes, handleMaster, baseboardMaster, showPrices, setShowPrices, onClose 
+}) => {
   const handlePrint = () => {
     window.print();
   };
+
+  const resolveHandleNameLocal = (simpleName: string, doorType: string) => {
+    if (doorType.includes("折戸") || doorType.includes("物入")) return "J型取手";
+    const isSliding = doorType.includes("引") || doorType.includes("引き");
+    const SLIDING = [
+      "セラミックホワイト(PC-422-001)",
+      "マットブラック(PC-422-003)",
+      "サテンニッケル(PC-422-XN)"
+    ];
+    const HINGED = [
+      "セラミックホワイト(丁番・戸当りサテンニッケル色)",
+      "マットブラック(丁番・戸当りブラック色)",
+      "サテンニッケル(丁番・戸当りサテンニッケル色)"
+    ];
+    const list = isSliding ? SLIDING : HINGED;
+    return list.find(h => h.startsWith(simpleName)) || list[0];
+  };
+
+  const usedHandles = React.useMemo(() => {
+    const handles = order.doors.map(d => resolveHandleNameLocal(d.handleColor, d.type));
+    return Array.from(new Set(handles));
+  }, [order.doors]);
 
   return (
     <div className="fixed inset-0 z-[600] bg-gray-900/95 backdrop-blur-md overflow-y-auto p-4 md:p-12 print:static print:p-0 print:bg-white print:overflow-visible">
@@ -68,7 +94,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
               {[
                 ...order.doors.map((door, idx) => ({ type: 'door' as const, data: door, index: idx })),
                 ...(order.storage.type !== 'NONE' ? [{ type: 'storage' as const, data: order.storage }] : []),
-                ...order.baseboards.filter(b => b.quantity > 0).map(b => ({ type: 'baseboard' as const, data: b }))
+                ...order.baseboards.filter(b => b.quantity > 0).map(b => ({ type: 'baseboard' as const, data: b })),
+                ...usedHandles.map(h => ({ type: 'handle' as const, data: h }))
               ].slice(0, 24).map((item, idx) => {
                 if (item.type === 'door') {
                   const door = item.data as DoorItem;
@@ -101,7 +128,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                             <div className="text-right truncate">{door.width}×{door.height}</div>
                             <div className="truncate">カラー</div>
                             <div className="flex items-center justify-end gap-1.5 overflow-hidden">
-                              <span className="text-[7px] truncate">{door.doorColor.split('(')[1]?.replace(')', '') || door.doorColor}</span>
+                              <span className="text-[7px] truncate font-black text-black">{door.doorColor.split('(')[1]?.replace(')', '') || door.doorColor}</span>
                               <div className="w-4 h-4 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#555' }}></div>
                             </div>
                           </div>
@@ -133,12 +160,12 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                         {/* Details */}
                         <div className="p-2 flex flex-col justify-between flex-1">
                           <div>
-                            <div className="text-blue-700 font-black text-[9px] leading-none mb-1 uppercase bg-blue-50 px-1 py-0.5 rounded-full inline-block">玄関収納</div>
+                            <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">玄関</div>
                             <h3 className="font-black text-black text-[11px] leading-tight truncate">{storage.type}</h3>
                             <div className="flex items-center justify-between mt-0.5">
                               <div className="text-[9px] font-black text-black truncate">{storage.size} / {storage.filler}</div>
                               <div className="flex items-center gap-1">
-                                <span className="text-[7px] font-black">{storage.color.split('(')[1]?.replace(')', '') || storage.color}</span>
+                                <span className="text-[7px] font-black text-black">{storage.color.split('(')[1]?.replace(')', '') || storage.color}</span>
                                 <div className="w-3 h-3 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[storage.color] || '#555' }}></div>
                               </div>
                             </div>
@@ -151,22 +178,30 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                         </div>
                     </div>
                   );
-                } else {
+                } else if (item.type === 'baseboard') {
                   const baseboard = item.data as any;
+                  const record = baseboardMaster.find(b => b.product === baseboard.product);
                   return (
                     <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
                       <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
-                        <div className="w-12 h-12 rounded border border-black shadow-inner" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#666' }}></div>
+                        {record?.pbImageUrl ? (
+                          <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
+                        ) : (
+                          <div className="w-12 h-12 rounded border border-black shadow-inner" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#666' }}></div>
+                        )}
                         <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
                           BB-{idx}
                         </div>
                       </div>
                       <div className="p-2 flex flex-col justify-between flex-1">
                         <div>
-                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 uppercase bg-blue-50 px-1 py-0.5 rounded-full inline-block">巾木・造作</div>
+                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">造作・収納部材</div>
                           <h3 className="font-black text-black text-[11px] leading-tight truncate">{baseboard.product}</h3>
                           <div className="text-[9px] font-black text-black mt-0.5 truncate flex items-center justify-between">
-                            <span>{baseboard.color}</span>
+                            <span className="flex items-center gap-1.5 font-black text-black">
+                              {baseboard.color.split('(')[1]?.replace(')', '') || baseboard.color}
+                              <div className="w-3 h-3 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#555' }}></div>
+                            </span>
                           </div>
                         </div>
                         <div className="mt-1 flex justify-between items-end">
@@ -174,6 +209,33 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                            {showPrices && (
                              <span className="font-black text-black font-['Inter'] text-[11px]">¥{(baseboard.unitPrice * baseboard.quantity).toLocaleString()}</span>
                            )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  // Handle item
+                  const handleName = item.data as string;
+                  const record = handleMaster.find(h => h.name === handleName);
+                  return (
+                    <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
+                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
+                        {record?.pbImageUrl ? (
+                          <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
+                        ) : (
+                          <div className="text-[9px] text-black font-black">HANDLE</div>
+                        )}
+                        <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
+                          HD-1
+                        </div>
+                      </div>
+                      <div className="p-2 flex flex-col justify-between flex-1">
+                        <div>
+                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">把手部材</div>
+                          <h3 className="font-black text-black text-[11px] leading-tight truncate">{handleName}</h3>
+                        </div>
+                        <div className="mt-1 text-right">
+                          <span className="text-[9px] font-black text-black font-['Inter']">標準採用</span>
                         </div>
                       </div>
                     </div>

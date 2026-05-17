@@ -192,6 +192,8 @@ const App: React.FC = () => {
   const [priceList, setPriceList] = useState<PriceRecord[]>([]);
   const [storageTypes, setStorageTypes] = useState<StorageTypeRecord[]>([]);
   const [shippingFees, setShippingFees] = useState<ShippingFeeRecord[]>([]);
+  const [handleMaster, setHandleMaster] = useState<HandleRecord[]>([]);
+  const [baseboardMaster, setBaseboardMaster] = useState<BaseboardItem[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -329,6 +331,64 @@ const App: React.FC = () => {
         const { data: shippingData, error: shippingError } = await supabase.from('shipping_fees').select('*').order('id');
         if (shippingError) throw shippingError;
         setShippingFees(shippingData as ShippingFeeRecord[]);
+
+        try {
+          const { data: hData } = await supabase.from('handle_master').select('*');
+          if (hData && hData.length > 0) {
+            setHandleMaster(hData.map(h => ({ id: h.id, name: h.name, pbImageUrl: h.pb_image_url })));
+          } else {
+            // Default from constants
+            setHandleMaster([
+              "セラミックホワイト(PC-422-001)",
+              "マットブラック(PC-422-003)",
+              "サテンニッケル(PC-422-XN)",
+              "セラミックホワイト(丁番・戸当りサテンニッケル色)",
+              "マットブラック(丁番・戸当りブラック色)",
+              "サテンニッケル(丁番・戸当りサテンニッケル色)",
+              "J型取手"
+            ].map(name => ({ id: name, name })));
+          }
+        } catch (e) {
+          console.warn('handle_master not available yet');
+          setHandleMaster([
+            "セラミックホワイト(PC-422-001)",
+            "マットブラック(PC-422-003)",
+            "サテンニッケル(PC-422-XN)",
+            "セラミックホワイト(丁番・戸当りサテンニッケル色)",
+            "マットブラック(丁番・戸当りブラック色)",
+            "サテンニッケル(丁番・戸当りサテンニッケル色)",
+            "J型取手"
+          ].map(name => ({ id: name, name })));
+        }
+
+        try {
+          const { data: bData } = await supabase.from('baseboard_master').select('*');
+          if (bData && bData.length > 0) {
+            setBaseboardMaster(bData.map(b => ({ 
+              product: b.product, 
+              color: '', 
+              unitPrice: 0, 
+              quantity: 0, 
+              unit: '', 
+              pbImageUrl: b.pb_image_url 
+            })));
+          } else {
+            setBaseboardMaster([
+              'スリム巾木(t5.5×H23×L3960)',
+              'スリムコーナー巾木',
+              'マグネット式ドアストッパー(サテンニッケル)',
+              'マグネット式ドアストッパー(マットブラック)'
+            ].map(p => ({ product: p, color: '', unitPrice: 0, quantity: 0, unit: '' })));
+          }
+        } catch (e) {
+          console.warn('baseboard_master not available yet');
+          setBaseboardMaster([
+            'スリム巾木(t5.5×H23×L3960)',
+            'スリムコーナー巾木',
+            'マグネット式ドアストッパー(サテンニッケル)',
+            'マグネット式ドアストッパー(マットブラック)'
+          ].map(p => ({ product: p, color: '', unitPrice: 0, quantity: 0, unit: '' })));
+        }
 
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -945,6 +1005,8 @@ ${order.memo}
           order={order}
           priceList={priceList}
           storageTypes={storageTypes}
+          handleMaster={handleMaster}
+          baseboardMaster={baseboardMaster}
           showPrices={showPbPrices}
           setShowPrices={setShowPbPrices}
           onClose={() => setIsPbModalOpen(false)}
@@ -957,9 +1019,13 @@ ${order.memo}
           priceList={priceList}
           storageTypes={storageTypes}
           shippingFees={shippingFees}
+          handleMaster={handleMaster}
+          baseboardRecordMaster={baseboardMaster}
           onUpdateShipping={handleUpdateShipping}
           setPriceList={setPriceList}
           setStorageTypes={setStorageTypes}
+          setHandleMaster={setHandleMaster}
+          setBaseboardMaster={setBaseboardMaster}
         />
       )}
 

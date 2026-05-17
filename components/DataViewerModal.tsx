@@ -9,9 +9,13 @@ interface DataViewerModalProps {
   priceList: PriceRecord[];
   storageTypes: StorageTypeRecord[];
   shippingFees: ShippingFeeRecord[];
+  handleMaster: HandleRecord[];
+  baseboardRecordMaster: BaseboardItem[];
   onUpdateShipping: (id: number, price: number) => void;
   setPriceList: React.Dispatch<React.SetStateAction<PriceRecord[]>>;
   setStorageTypes: React.Dispatch<React.SetStateAction<StorageTypeRecord[]>>;
+  setHandleMaster: React.Dispatch<React.SetStateAction<HandleRecord[]>>;
+  setBaseboardMaster: React.Dispatch<React.SetStateAction<BaseboardItem[]>>;
 }
 
 export const DataViewerModal: React.FC<DataViewerModalProps> = ({ 
@@ -19,11 +23,15 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
   priceList, 
   storageTypes, 
   shippingFees, 
+  handleMaster,
+  baseboardRecordMaster,
   onUpdateShipping,
   setPriceList,
-  setStorageTypes
+  setStorageTypes,
+  setHandleMaster,
+  setBaseboardMaster
 }) => {
-  const [activeTab, setActiveTab] = useState<'door' | 'storage' | 'shipping'>('door');
+  const [activeTab, setActiveTab] = useState<'door' | 'storage' | 'shipping' | 'handle' | 'baseboard'>('door');
   const [isAdding, setIsAdding] = useState(false);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const pbFileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
@@ -102,12 +110,12 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     }
   };
 
-  const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false, isPB: boolean = false) => {
+  const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door') => {
     try {
       setUploadingId(recordId + (isPB ? '_pb' : '_detail'));
       const fileExt = file.name.split('.').pop();
       const prefix = isPB ? 'pb_' : '';
-      const fileName = `${prefix}${isStorage ? 'storage' : 'door'}_${recordId}_${Date.now()}.${fileExt}`;
+      const fileName = `${prefix}${type}_${recordId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage.from('door-images').upload(filePath, file);
@@ -115,15 +123,30 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
       const { data: { publicUrl } } = supabase.storage.from('door-images').getPublicUrl(filePath);
       
-      const tableName = isStorage ? 'entrance_storages' : 'internal_doors';
-      const fieldName = isPB ? 'pb_image_url' : 'image_url';
-      const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq('id', recordId);
-      if (dbError) throw new Error(`データベースの更新に失敗しました: ${dbError.message}`);
+      let tableName = 'internal_doors';
+      if (type === 'storage') tableName = 'entrance_storages';
+      if (type === 'handle') tableName = 'handle_master';
+      if (type === 'baseboard') tableName = 'baseboard_master';
 
-      if (isStorage) {
+      const fieldName = isPB ? 'pb_image_url' : 'image_url';
+      
+      // Use name/product as ID for baseboard/handle if they are strings
+      const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
+
+      const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
+      if (dbError) {
+         // If update fails because table doesn't exist, we just update local state
+         console.warn(`Database update failed for ${tableName}: ${dbError.message}`);
+      }
+
+      if (type === 'storage') {
         setStorageTypes(prev => prev.map(item => item.id === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
-      } else {
+      } else if (type === 'door') {
         setPriceList(prev => prev.map(item => item.id === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
+      } else if (type === 'handle') {
+        setHandleMaster(prev => prev.map(item => item.name === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
+      } else if (type === 'baseboard') {
+        setBaseboardMaster(prev => prev.map(item => item.product === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
       }
     } catch (error: any) {
       alert('アップロード失敗:\n' + error.message);
@@ -132,8 +155,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false) => {
-    if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0], recordId, isStorage, isPB);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door') => {
+    if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0], recordId, isStorage, isPB, type);
     e.target.value = '';
   };
 
@@ -144,18 +167,28 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); };
 
-  const handleDeleteImage = async (recordId: string, isStorage: boolean = false, isPB: boolean = false) => {
+  const handleDeleteImage = async (recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door') => {
       if(!confirm(`登録済みの${isPB ? 'プレゼン用画像' : '詳細図PDF/画像'}を解除し、初期状態に戻しますか？`)) return;
       try {
-          const tableName = isStorage ? 'entrance_storages' : 'internal_doors';
+          let tableName = 'internal_doors';
+          if (type === 'storage') tableName = 'entrance_storages';
+          if (type === 'handle') tableName = 'handle_master';
+          if (type === 'baseboard') tableName = 'baseboard_master';
+
           const fieldName = isPB ? 'pb_image_url' : 'image_url';
-          const { error } = await supabase.from(tableName).update({ [fieldName]: null }).eq('id', recordId);
-          if (error) throw error;
+          const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
+
+          const { error } = await supabase.from(tableName).update({ [fieldName]: null }).eq(idField, recordId);
+          if (error) console.warn('Database delete image failed:', error.message);
           
-          if (isStorage) {
+          if (type === 'storage') {
             setStorageTypes(prev => prev.map(s => s.id === recordId ? {...s, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : s));
-          } else {
+          } else if (type === 'door') {
             setPriceList(prev => prev.map(p => p.id === recordId ? {...p, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : p));
+          } else if (type === 'handle') {
+            setHandleMaster(prev => prev.map(h => h.name === recordId ? {...h, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : h));
+          } else if (type === 'baseboard') {
+            setBaseboardMaster(prev => prev.map(b => b.product === recordId ? {...b, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : b));
           }
       } catch(e: any) { alert('削除に失敗しました: ' + e.message); }
   };
@@ -360,6 +393,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
         <div className="flex border-b border-gray-200 bg-gray-50 select-none">
           <button onClick={() => setActiveTab('door')} className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'door' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>内部建具 価格・PDF一覧</button>
           <button onClick={() => setActiveTab('storage')} className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'storage' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>玄関収納 価格一覧</button>
+          <button onClick={() => setActiveTab('handle')} className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'handle' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>取手マスター</button>
+          <button onClick={() => setActiveTab('baseboard')} className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'baseboard' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>巾木・ストッパー</button>
           <button onClick={() => setActiveTab('shipping')} className={`px-4 py-2 text-xs font-bold transition-colors ${activeTab === 'shipping' ? 'bg-white border-b-2 border-blue-600 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>送料一覧</button>
         </div>
 
@@ -542,6 +577,62 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                 </table>
               </div>
             </div>
+          ) : activeTab === 'handle' ? (
+            <div className="p-4">
+              <h3 className="font-bold mb-4">取手マスター（プレゼン画像登録）</h3>
+              <table className="w-full text-xs text-left border-collapse border">
+                <thead className="bg-gray-100 font-bold">
+                   <tr><th className="p-2 border">名称</th><th className="p-2 border text-center">プレゼン画像</th></tr>
+                </thead>
+                <tbody>
+                  {handleMaster.map(h => (
+                    <tr key={h.name}>
+                      <td className="p-2 border font-bold">{h.name}</td>
+                      <td className="p-2 border">
+                        <div className="flex flex-col gap-1 items-center">
+                          {h.pbImageUrl ? (
+                            <div className="flex items-center gap-2">
+                              <img src={h.pbImageUrl} className="w-12 h-12 object-contain border" />
+                              <button onClick={() => handleDeleteImage(h.name, false, true, 'handle')} className="text-red-500">×</button>
+                            </div>
+                          ) : <span className="text-gray-300 italic">未登録</span>}
+                          <button onClick={() => fileInputRefs.current[h.name]?.click()} className="text-[10px] text-blue-600 border border-dashed p-1">画像登録</button>
+                          <input type="file" className="hidden" ref={el => fileInputRefs.current[h.name] = el} onChange={e => handleFileSelect(e, h.name, false, true, 'handle')}/>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : activeTab === 'baseboard' ? (
+             <div className="p-4">
+               <h3 className="font-bold mb-4">巾木・ストッパーマスター（プレゼン画像登録）</h3>
+               <table className="w-full text-xs text-left border-collapse border">
+                 <thead className="bg-gray-100 font-bold">
+                    <tr><th className="p-2 border">商品名</th><th className="p-2 border text-center">プレゼン画像</th></tr>
+                 </thead>
+                 <tbody>
+                   {baseboardRecordMaster.map(b => (
+                     <tr key={b.product}>
+                       <td className="p-2 border font-bold">{b.product}</td>
+                       <td className="p-2 border">
+                         <div className="flex flex-col gap-1 items-center">
+                           {b.pbImageUrl ? (
+                             <div className="flex items-center gap-2">
+                               <img src={b.pbImageUrl} className="w-12 h-12 object-contain border" />
+                               <button onClick={() => handleDeleteImage(b.product, false, true, 'baseboard')} className="text-red-500">×</button>
+                             </div>
+                           ) : <span className="text-gray-300 italic">未登録</span>}
+                           <button onClick={() => fileInputRefs.current[b.product]?.click()} className="text-[10px] text-blue-600 border border-dashed p-1">画像登録</button>
+                           <input type="file" className="hidden" ref={el => fileInputRefs.current[b.product] = el} onChange={e => handleFileSelect(e, b.product, false, true, 'baseboard')}/>
+                         </div>
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+             </div>
           ) : (
             <div className="flex justify-center">
               <table className="w-full max-w-3xl text-xs text-left border-collapse shadow-sm my-4 border">

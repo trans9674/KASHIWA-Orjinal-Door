@@ -99,6 +99,15 @@ export interface BaseboardItem {
   unitPrice: number;
   quantity: number;
   unit: string;
+  imageUrl?: string;
+  pbImageUrl?: string;
+}
+
+export interface HandleRecord {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  pbImageUrl?: string;
 }
 
 export interface OrderState {
