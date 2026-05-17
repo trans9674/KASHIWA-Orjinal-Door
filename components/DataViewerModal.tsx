@@ -26,6 +26,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
   const [activeTab, setActiveTab] = useState<'door' | 'storage' | 'shipping'>('door');
   const [isAdding, setIsAdding] = useState(false);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
+  const pbFileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   // Resize Logic
@@ -101,11 +102,12 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     }
   };
 
-  const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false) => {
+  const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false, isPB: boolean = false) => {
     try {
-      setUploadingId(recordId);
+      setUploadingId(recordId + (isPB ? '_pb' : '_detail'));
       const fileExt = file.name.split('.').pop();
-      const fileName = `${isStorage ? 'storage' : 'door'}_${recordId}_${Date.now()}.${fileExt}`;
+      const prefix = isPB ? 'pb_' : '';
+      const fileName = `${prefix}${isStorage ? 'storage' : 'door'}_${recordId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage.from('door-images').upload(filePath, file);
@@ -114,13 +116,14 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       const { data: { publicUrl } } = supabase.storage.from('door-images').getPublicUrl(filePath);
       
       const tableName = isStorage ? 'entrance_storages' : 'internal_doors';
-      const { error: dbError } = await supabase.from(tableName).update({ image_url: publicUrl }).eq('id', recordId);
+      const fieldName = isPB ? 'pb_image_url' : 'image_url';
+      const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq('id', recordId);
       if (dbError) throw new Error(`データベースの更新に失敗しました: ${dbError.message}`);
 
       if (isStorage) {
-        setStorageTypes(prev => prev.map(item => item.id === recordId ? { ...item, imageUrl: publicUrl } : item));
+        setStorageTypes(prev => prev.map(item => item.id === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
       } else {
-        setPriceList(prev => prev.map(item => item.id === recordId ? { ...item, imageUrl: publicUrl } : item));
+        setPriceList(prev => prev.map(item => item.id === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
       }
     } catch (error: any) {
       alert('アップロード失敗:\n' + error.message);
@@ -129,29 +132,30 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, recordId: string, isStorage: boolean = false) => {
-    if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0], recordId, isStorage);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false) => {
+    if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0], recordId, isStorage, isPB);
     e.target.value = '';
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, recordId: string, isStorage: boolean = false) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false) => {
     e.preventDefault(); e.stopPropagation();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], recordId, isStorage);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], recordId, isStorage, isPB);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); };
 
-  const handleDeleteImage = async (recordId: string, isStorage: boolean = false) => {
-      if(!confirm('登録済みの画像を解除し、デフォルト表示に戻しますか？')) return;
+  const handleDeleteImage = async (recordId: string, isStorage: boolean = false, isPB: boolean = false) => {
+      if(!confirm(`登録済みの${isPB ? 'プレゼン用画像' : '詳細図PDF/画像'}を解除し、初期状態に戻しますか？`)) return;
       try {
           const tableName = isStorage ? 'entrance_storages' : 'internal_doors';
-          const { error } = await supabase.from(tableName).update({ image_url: null }).eq('id', recordId);
+          const fieldName = isPB ? 'pb_image_url' : 'image_url';
+          const { error } = await supabase.from(tableName).update({ [fieldName]: null }).eq('id', recordId);
           if (error) throw error;
           
           if (isStorage) {
-            setStorageTypes(prev => prev.map(s => s.id === recordId ? {...s, imageUrl: undefined} : s));
+            setStorageTypes(prev => prev.map(s => s.id === recordId ? {...s, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : s));
           } else {
-            setPriceList(prev => prev.map(p => p.id === recordId ? {...p, imageUrl: undefined} : p));
+            setPriceList(prev => prev.map(p => p.id === recordId ? {...p, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : p));
           }
       } catch(e: any) { alert('削除に失敗しました: ' + e.message); }
   };
@@ -255,14 +259,17 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
         frame_price: newDoor.framePrice || 0, 
         door_price: newDoor.doorPrice || 0, 
         set_price: newDoor.setPrice || ((newDoor.framePrice || 0) + (newDoor.doorPrice || 0)),
-        image_url: newDoor.imageUrl || null
+        image_url: newDoor.imageUrl || null,
+        pb_image_url: null
       };
       const { data, error } = await supabase.from('internal_doors').insert([doorData]).select();
       if (error) throw error;
       if (data) {
         const addedRecord: PriceRecord = {
           id: data[0].id, type: data[0].type, location: data[0].location as UsageLocation, design: data[0].design,
-          notes: '', height: data[0].height, framePrice: data[0].frame_price, doorPrice: data[0].door_price, setPrice: data[0].set_price, imageUrl: data[0].image_url
+          notes: '', height: data[0].height, framePrice: data[0].frame_price, doorPrice: data[0].door_price, setPrice: data[0].set_price, 
+          imageUrl: data[0].image_url,
+          pbImageUrl: data[0].pb_image_url
         };
         setPriceList(prev => [...prev, addedRecord]);
         setNewDoor(initialDoorState);
@@ -292,7 +299,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
         category: newStorage.category, 
         width: newStorage.width || 0, 
         price: newStorage.price || 0, 
-        image_url: newStorage.imageUrl || null 
+        image_url: newStorage.imageUrl || null,
+        pb_image_url: null 
       };
       
       const { data, error } = await supabase.from('entrance_storages').insert([storageData]).select();
@@ -310,7 +318,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           category: data[0].category, 
           width: data[0].width, 
           price: data[0].price, 
-          imageUrl: data[0].image_url 
+          imageUrl: data[0].image_url,
+          pbImageUrl: data[0].pb_image_url
         };
         setStorageTypes(prev => [...prev, addedRecord]);
         setNewStorage(initialStorageState);
@@ -336,10 +345,16 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
         <div className="bg-gray-800 text-white px-4 py-2 flex justify-between items-center shrink-0">
           <h2 className="text-lg font-bold flex items-center gap-2 select-none">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
-            登録データ確認・編集
+            管理者メニュー（商品・画像・送料管理）
             <span className="text-[10px] font-normal text-gray-400 ml-2">(右端をドラッグで幅調整可能)</span>
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+          <div className="flex items-center gap-4">
+             <div className="hidden lg:flex items-center gap-2 bg-gray-700 px-3 py-1 rounded text-[10px] text-gray-300">
+               <svg className="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" /></svg>
+               プレゼンボード用：デザイン画像を登録すると、色はカラーパレットで補完されます
+             </div>
+             <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+          </div>
         </div>
 
         <div className="flex border-b border-gray-200 bg-gray-50 select-none">
@@ -376,7 +391,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                       <th className="p-2 border-b text-right">枠価格</th>
                       <th className="p-2 border-b text-right">扉価格</th>
                       <th className="p-2 border-b text-right bg-blue-50">セット価格</th>
-                      <th className="p-2 border-b w-40">画像/PDF</th>
+                      <th className="p-2 border-b w-40 text-center">詳細図/PDF</th>
+                      <th className="p-2 border-b w-40 text-center">プレゼン画像</th>
                       <th className="p-2 border-b text-center w-24">操作</th>
                     </tr>
                   </thead>
@@ -391,8 +407,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                           <td className="p-1.5 text-right font-mono">{isEditing ? <input type="number" className="w-20 text-right border p-0.5" value={editValues.framePrice} onChange={e => { const v = parseInt(e.target.value)||0; setEditValues(p=>({...p, framePrice:v, setPrice: v + (p.doorPrice||0) })) }}/> : `¥${row.framePrice.toLocaleString()}`}</td>
                           <td className="p-1.5 text-right font-mono">{isEditing ? <input type="number" className="w-20 text-right border p-0.5" value={editValues.doorPrice} onChange={e => { const v = parseInt(e.target.value)||0; setEditValues(p=>({...p, doorPrice:v, setPrice: (p.framePrice||0) + v })) }}/> : `¥${row.doorPrice.toLocaleString()}`}</td>
                           <td className="p-1.5 text-right font-mono font-bold text-blue-600 bg-blue-50/20">{isEditing ? <input type="number" className="w-20 text-right border p-0.5 font-bold" value={editValues.setPrice} onChange={e => setEditValues(p=>({...p, setPrice:parseInt(e.target.value)||0}))}/> : `¥${row.setPrice.toLocaleString()}`}</td>
-                          <td className="p-1.5">
-                            {uploadingId === row.id ? "アップ中..." : (
+                          <td className="p-1.5 border-r border-gray-100">
+                            {uploadingId === (row.id + '_detail') ? "UP中..." : (
                               <div className="flex flex-col gap-1">
                                 {row.imageUrl ? (
                                   <div className="flex items-center gap-1 bg-blue-50 p-1 border rounded">
@@ -402,11 +418,31 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                     <button onClick={()=>handleDeleteImage(row.id!)} className="text-red-500">×</button>
                                   </div>
                                 ) : (
-                                  <span className="text-gray-300 text-[10px] truncate" title={getFileName(getDoorDetailPdfUrl(row as unknown as DoorItem))}>
-                                    {getFileName(getDoorDetailPdfUrl(row as unknown as DoorItem))}
+                                  <span className="text-gray-300 text-[10px] truncate block text-center italic" title={getFileName(getDoorDetailPdfUrl(row as unknown as DoorItem))}>
+                                    未登録(自動割当済)
                                   </span>
                                 )}
-                                <div className="border border-dashed p-1 text-center cursor-pointer hover:bg-gray-100" onClick={() => row.id && fileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id)}/><span className="text-[9px] text-gray-500">変更</span></div>
+                                <div className="border border-dashed p-1 text-center cursor-pointer hover:bg-gray-100" onClick={() => row.id && fileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id)}/><span className="text-[9px] text-gray-400">PDF/詳細図登録</span></div>
+                              </div>
+                            )}
+                          </td>
+                          <td className="p-1.5">
+                            {uploadingId === (row.id + '_pb') ? "UP中..." : (
+                              <div className="flex flex-col gap-1">
+                                {row.pbImageUrl ? (
+                                  <div className="flex items-center gap-1 bg-emerald-50 p-1 border border-emerald-200 rounded">
+                                    <img src={row.pbImageUrl} className="w-6 h-6 object-cover rounded" referrerPolicy="no-referrer" />
+                                    <a href={row.pbImageUrl} target="_blank" className="truncate flex-1 text-emerald-700 text-[10px]" title={getFileName(row.pbImageUrl)}>
+                                      {getFileName(row.pbImageUrl)}
+                                    </a>
+                                    <button onClick={()=>handleDeleteImage(row.id!, false, true)} className="text-red-500">×</button>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-300 text-[10px] block text-center italic">
+                                    未登録
+                                  </span>
+                                )}
+                                <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={() => row.id && pbFileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id, false, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true)}/><span className="text-[9px] text-emerald-600 font-bold">プレゼン用画像</span></div>
                               </div>
                             )}
                           </td>
@@ -444,7 +480,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                       <th className="p-2 border-b">名称</th>
                       <th className="p-2 border-b text-right">幅(mm)</th>
                       <th className="p-2 border-b text-right bg-blue-50">本体価格</th>
-                      <th className="p-2 border-b w-32">画像</th>
+                      <th className="p-2 border-b w-36 text-center">詳細図/PDF</th>
+                      <th className="p-2 border-b w-36 text-center">プレゼン画像</th>
                       <th className="p-2 border-b text-center w-24">操作</th>
                     </tr>
                   </thead>
@@ -458,8 +495,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                           <td className="p-1.5">{isEditing ? <input className="w-full border p-0.5" value={editStorageValues.name} onChange={e=>setEditStorageValues(p=>({...p, name:e.target.value}))}/> : row.name}</td>
                           <td className="p-1.5 text-right font-mono">{isEditing ? <input type="number" className="w-16 text-right border p-0.5" value={editStorageValues.width} onChange={e=>setEditStorageValues(p=>({...p, width:parseInt(e.target.value)||0}))}/> : row.width}</td>
                           <td className="p-1.5 text-right font-mono font-bold text-blue-600 bg-blue-50/20">{isEditing ? <input type="number" className="w-20 text-right border p-0.5 font-bold" value={editStorageValues.price} onChange={e=>setEditStorageValues(p=>({...p, price:parseInt(e.target.value)||0}))}/> : `¥${row.price.toLocaleString()}`}</td>
-                          <td className="p-1.5">
-                             {uploadingId === row.id ? "up..." : (
+                          <td className="p-1.5 border-r border-gray-100">
+                             {uploadingId === (row.id + '_detail') ? "up..." : (
                                <div className="flex flex-col gap-1">
                                  {row.imageUrl ? (
                                    <div className="flex items-center bg-blue-50 border rounded p-1 text-[9px]">
@@ -469,11 +506,29 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                      <button onClick={()=>handleDeleteImage(row.id, true)}>×</button>
                                    </div>
                                  ) : (
-                                   <span className="text-gray-300 text-[9px] truncate" title={getFileName(getStorageDetailPdfUrl(row.id))}>
-                                     {getFileName(getStorageDetailPdfUrl(row.id))}
+                                   <span className="text-gray-300 text-[9px] truncate block text-center italic" title={getFileName(getStorageDetailPdfUrl(row.id))}>
+                                     未登録(割当済)
                                    </span>
                                  )}
-                                 <div className="border border-dashed p-1 text-center cursor-pointer" onClick={()=>fileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true)}/><span className="text-[8px] text-gray-400">画像登録</span></div>
+                                 <div className="border border-dashed p-1 text-center cursor-pointer" onClick={()=>fileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true)}/><span className="text-[8px] text-gray-400">図面PDF登録</span></div>
+                               </div>
+                             )}
+                          </td>
+                          <td className="p-1.5">
+                             {uploadingId === (row.id + '_pb') ? "up..." : (
+                               <div className="flex flex-col gap-1">
+                                 {row.pbImageUrl ? (
+                                   <div className="flex items-center bg-emerald-50 border border-emerald-200 rounded p-1 text-[9px]">
+                                     <img src={row.pbImageUrl} className="w-4 h-4 object-cover mr-1 rounded-sm" referrerPolicy="no-referrer" />
+                                     <a href={row.pbImageUrl} target="_blank" className="truncate flex-1 text-emerald-700" title={getFileName(row.pbImageUrl)}>
+                                       {getFileName(row.pbImageUrl)}
+                                     </a>
+                                     <button onClick={()=>handleDeleteImage(row.id, true, true)}>×</button>
+                                   </div>
+                                 ) : (
+                                   <span className="text-gray-300 text-[9px] block text-center italic">未登録</span>
+                                 )}
+                                 <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={()=>pbFileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true, true)}/><span className="text-[8px] text-emerald-600 font-bold">プレゼン用画像</span></div>
                                </div>
                              )}
                           </td>

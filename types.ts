@@ -35,7 +35,8 @@ export interface PriceRecord {
   framePrice: number;
   doorPrice: number;
   setPrice: number;
-  imageUrl?: string; // Supabaseからの画像URL
+  imageUrl?: string; // Supabaseからの詳細図PDF/画像URL
+  pbImageUrl?: string; // プレゼンボード用画像URL
 }
 
 export interface DoorItem {
@@ -69,6 +70,7 @@ export interface StorageTypeRecord {
   width: number;
   price: number;
   imageUrl?: string;
+  pbImageUrl?: string;
 }
 
 export interface ShippingFeeRecord {

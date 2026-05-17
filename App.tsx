@@ -6,6 +6,7 @@ import { DoorRow } from './components/DoorRow';
 import { EntranceStorageSection } from './components/EntranceStorageSection';
 import { BusinessDatePicker } from './components/BusinessDatePicker';
 import { DataViewerModal } from './components/DataViewerModal';
+import { PresentationBoard } from './components/PresentationBoard';
 import { COLORS, HANDLE_COLORS, DOOR_SPEC_MASTER, getFrameType, HINGED_HANDLES, SLIDING_HANDLES, DOOR_POINTS, getStoragePoints, getBaseboardPoints, resolveDoorDrawingUrl, getStorageDetailPdfUrl } from './constants';
 import { supabase } from './supabase';
 import { PDFDocument, degrees } from 'pdf-lib';
@@ -303,7 +304,8 @@ const App: React.FC = () => {
           framePrice: d.frame_price,
           doorPrice: d.door_price,
           setPrice: d.set_price,
-          imageUrl: d.image_url
+          imageUrl: d.image_url,
+          pbImageUrl: d.pb_image_url
         }));
         setPriceList(mappedDoors);
 
@@ -315,7 +317,8 @@ const App: React.FC = () => {
           category: s.category,
           width: s.width,
           price: s.price,
-          imageUrl: s.image_url
+          imageUrl: s.image_url,
+          pbImageUrl: s.pb_image_url
         }));
         if (!mappedStorage.find(s => s.id === 'NONE')) {
           mappedStorage.unshift({ id: "NONE", name: "なし", category: "なし", width: 0, price: 0 });
@@ -876,6 +879,18 @@ ${order.memo}
   return (
     <div className="min-h-screen bg-slate-100 font-['Noto_Sans_JP']">
       
+      {/* Admin Toggle / Management Link */}
+      <div className="fixed top-4 right-4 z-40 flex items-center gap-2 no-print">
+        <button 
+          onClick={() => setIsPasswordModalOpen(true)}
+          className="bg-white/90 backdrop-blur-sm border border-slate-200 hover:border-slate-300 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md active:scale-95"
+          title="管理者メニュー（商品・画像登録）"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+          管理者メニュー
+        </button>
+      </div>
+
       {isPasswordModalOpen && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in zoom-in">
@@ -922,6 +937,15 @@ ${order.memo}
             </form>
           </div>
         </div>
+      )}
+
+      {isPbModalOpen && (
+        <PresentationBoard 
+          order={order}
+          priceList={priceList}
+          storageTypes={storageTypes}
+          onClose={() => setIsPbModalOpen(false)}
+        />
       )}
 
       {isDataViewerOpen && (
@@ -1175,6 +1199,13 @@ ${order.memo}
                 <button onClick={handlePrintPdf} className="bg-gray-800 hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                   PDF保存
+                </button>
+                <button 
+                  onClick={() => setIsPbModalOpen(true)}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  プレゼンボード
                 </button>
                 <button onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
@@ -1538,10 +1569,11 @@ ${order.memo}
               </div>
               <button 
                 onClick={() => setIsPasswordModalOpen(true)}
-                className="bg-gray-700 hover:bg-gray-600 text-white p-2.5 rounded-lg flex items-center transition-colors shadow-sm"
-                title="データ確認（価格表・送料等）"
+                className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm group"
+                title="商品データの管理・画像の登録"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                <span className="text-xs font-bold text-gray-300 group-hover:text-white">管理者メニュー</span>
               </button>
             </div>
             <div className="p-6 overflow-y-auto custom-scrollbar">
@@ -1698,6 +1730,13 @@ ${order.memo}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               見積書作成
+            </button>
+            <button 
+              onClick={() => setIsPbModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              プレゼンボード
             </button>
             <button 
               onClick={handleBatchExport}
@@ -2116,6 +2155,16 @@ ${order.memo}
             <div className="flex justify-between items-end mt-4 pt-4 border-t border-gray-200">
                 <p className="text-gray-400 font-bold uppercase tracking-widest text-base font-['Inter'] mb-2">合計金額（税込）</p>
                 <p className="text-4xl xl:text-5xl font-black font-['Inter'] tracking-tighter leading-none text-blue-700">¥{totals.total.toLocaleString()}</p>
+            </div>
+            
+            <div className="mt-8 flex gap-4 no-print">
+               <button 
+                onClick={() => setIsPbModalOpen(true)}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 text-lg"
+              >
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                プレゼンボードを作成する
+              </button>
             </div>
           </div>
         </div>
