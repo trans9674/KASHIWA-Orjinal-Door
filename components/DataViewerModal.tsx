@@ -137,21 +137,30 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       if (type === 'handle' || type === 'baseboard') {
         const payload = { [idField]: recordId, [fieldName]: publicUrl };
         
-        // Try to find if record exists
-        const { data: existingRecord } = await supabase.from(tableName).select('id').eq(idField, recordId).maybeSingle();
+        console.log(`Saving to ${tableName}:`, payload);
         
+        // Try to find if record exists by name/product
+        const { data: existingRecord, error: findError } = await supabase.from(tableName).select('id').eq(idField, recordId).maybeSingle();
+        
+        if (findError) {
+          console.warn(`Error finding record in ${tableName}:`, findError.message);
+        }
+
         if (existingRecord) {
+          console.log(`Found existing record with ID ${existingRecord.id} in ${tableName}, updating...`);
           const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq('id', existingRecord.id);
-          if (dbError) console.warn(`Update failed for ${tableName}: ${dbError.message}`);
+          if (dbError) throw new Error(`Update failed: ${dbError.message}`);
         } else {
-          // Record doesn't exist in DB, need to insert.
-          // We let the Database handle the 'id' (identity column)
+          console.log(`Record not found in ${tableName}, inserting new entry...`);
           const { error: dbError } = await supabase.from(tableName).insert([payload]);
-          if (dbError) console.warn(`Insert failed for ${tableName}: ${dbError.message}`);
+          if (dbError) {
+            console.error(`Insert failed for ${tableName}:`, dbError);
+            throw new Error(`Insert failed: ${dbError.message}`);
+          }
         }
       } else {
         const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
-        if (dbError) console.warn(`Database update failed for ${tableName}: ${dbError.message}`);
+        if (dbError) throw new Error(`Database update failed: ${dbError.message}`);
       }
 
       if (type === 'storage') {
