@@ -115,7 +115,11 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       setUploadingId(recordId + (isPB ? '_pb' : '_detail'));
       const fileExt = file.name.split('.').pop();
       const prefix = isPB ? 'pb_' : '';
-      const fileName = `${prefix}${type}_${recordId}_${Date.now()}.${fileExt}`;
+      
+      // recordId contains Japanese/brackets which can cause "Invalid key" errors in storage
+      // Use a safe timestamp and hash-like string or just clean it up
+      const safeRecordId = btoa(encodeURIComponent(recordId)).substring(0, 10).replace(/[/+=]/g, '');
+      const fileName = `${prefix}${type}_${safeRecordId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage.from('door-images').upload(filePath, file);
