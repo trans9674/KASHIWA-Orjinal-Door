@@ -8,6 +8,7 @@ interface PresentationBoardProps {
   priceList: PriceRecord[];
   storageTypes: StorageTypeRecord[];
   showPrices: boolean;
+  setShowPrices: (show: boolean) => void;
   onClose: () => void;
 }
 
@@ -20,17 +21,32 @@ const COLOR_MAP: Record<string, string> = {
   "プレシャスウォールナット(PW)": "#523a2d",
 };
 
-export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, priceList, storageTypes, showPrices, onClose }) => {
+export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, priceList, storageTypes, showPrices, setShowPrices, onClose }) => {
   return (
     <div className="fixed inset-0 z-[600] bg-gray-900/90 backdrop-blur-md overflow-y-auto p-4 md:p-8 no-print">
       <div className="max-w-[1400px] mx-auto relative">
-        <button 
-          onClick={onClose}
-          className="absolute -top-12 right-0 text-white flex items-center gap-2 hover:text-gray-300 transition-colors font-bold"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-          閉じる
-        </button>
+        <div className="absolute -top-12 left-0 right-0 flex justify-between items-center no-print">
+          <label className="flex items-center gap-3 cursor-pointer group bg-white/10 hover:bg-white/20 transition-colors px-4 py-2 rounded-full border border-white/20 text-white">
+            <div className="relative flex items-center">
+              <input 
+                type="checkbox" 
+                checked={showPrices} 
+                onChange={(e) => setShowPrices(e.target.checked)}
+                className="peer h-5 w-5 cursor-pointer appearance-none rounded border border-white/40 transition-all checked:bg-blue-500 checked:border-blue-500"
+              />
+              <svg className="absolute h-3.5 w-3.5 text-white opacity-0 peer-checked:opacity-100 left-[3px] pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <span className="text-sm font-bold">金額を表示する</span>
+          </label>
+
+          <button 
+            onClick={onClose}
+            className="text-white flex items-center gap-2 hover:text-gray-300 transition-colors font-bold bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full border border-white/20"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            閉じる
+          </button>
+        </div>
 
         {/* A3 Presentation Sheet (Landscape) */}
         <div className="bg-white shadow-2xl mx-auto print:shadow-none print:m-0 overflow-hidden rounded-sm flex flex-col print-area" 
@@ -52,7 +68,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
           <div className="px-10 mb-8 shrink-0">
              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-r border-slate-300 pr-4 mr-2">Color Palette<br/>(色見本)</div>
+                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-r border-slate-300 pr-4 mr-2">Color Palette</div>
                    <div className="flex flex-wrap gap-6">
                       {Array.from(new Set([
                         ...order.doors.map(d => d.doorColor),
@@ -66,10 +82,6 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                         </div>
                       ))}
                    </div>
-                </div>
-                <div className="text-[9px] text-slate-400 font-bold italic text-right leading-tight">
-                  ※ 印刷時の色味はディスプレイの設定、<br/>
-                  プリンターの性能により実際とは異なる場合があります。
                 </div>
              </div>
           </div>

@@ -946,6 +946,7 @@ ${order.memo}
           priceList={priceList}
           storageTypes={storageTypes}
           showPrices={showPbPrices}
+          setShowPrices={setShowPbPrices}
           onClose={() => setIsPbModalOpen(false)}
         />
       )}
@@ -1712,7 +1713,7 @@ ${order.memo}
         </div>
       )}
       
-       <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen || isValidationModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+       <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen || isValidationModalOpen || isPbModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-8 border-b-2 border-gray-900 pb-4">
           <div>
             <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">柏木工 オリジナルドア 発注書</h1>
@@ -2160,18 +2161,21 @@ ${order.memo}
             </div>
             
             <div className="mt-8 flex flex-col gap-4 no-print">
-               <div className="flex items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-inner">
-                  <label className="flex items-center gap-2 cursor-pointer select-none group w-full">
+               <div className="flex items-center gap-3 bg-white p-5 rounded-2xl border-2 border-indigo-100 shadow-sm">
+                  <label className="flex items-center gap-3 cursor-pointer select-none group w-full">
                     <div className="relative flex items-center">
                       <input 
                         type="checkbox" 
                         checked={showPbPrices} 
                         onChange={(e) => setShowPbPrices(e.target.checked)}
-                        className="peer h-6 w-6 cursor-pointer appearance-none rounded-md border border-slate-300 transition-all checked:bg-indigo-600 checked:border-indigo-600"
+                        className="peer h-7 w-7 cursor-pointer appearance-none rounded-lg border-2 border-indigo-200 transition-all checked:bg-indigo-600 checked:border-indigo-600 hover:border-indigo-400"
                       />
-                      <svg className="absolute h-4 w-4 text-white opacity-0 peer-checked:opacity-100 left-1 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      <svg className="absolute h-4.5 w-4.5 text-white opacity-0 peer-checked:opacity-100 left-[5px] pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </div>
-                    <span className="text-slate-700 font-bold group-hover:text-indigo-700 transition-colors">プレゼンボードに金額を表示する</span>
+                    <div className="flex flex-col">
+                      <span className="text-slate-800 font-black text-lg group-hover:text-indigo-700 transition-colors">プレゼンボードに金額を表示する</span>
+                      <span className="text-slate-400 text-xs font-bold">チェックを入れると各商品の金額と合計金額が表示されます</span>
+                    </div>
                   </label>
                </div>
                <button 
