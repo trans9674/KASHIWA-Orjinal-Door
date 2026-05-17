@@ -27,8 +27,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
   };
 
   return (
-    <div className="fixed inset-0 z-[600] bg-gray-900/95 backdrop-blur-md overflow-y-auto p-4 md:p-12 no-print">
-      <div className="max-w-[1400px] mx-auto relative pb-24">
+    <div className="fixed inset-0 z-[600] bg-gray-900/95 backdrop-blur-md overflow-y-auto p-4 md:p-12 print:static print:p-0 print:bg-white print:overflow-visible">
+      <div className="max-w-[1400px] mx-auto relative pb-24 print:pb-0">
         {/* A3 Presentation Sheet (Landscape) */}
         <div className="bg-white shadow-2xl mx-auto print:shadow-none print:m-0 overflow-hidden rounded-sm flex flex-col print-area" 
              style={{ width: '100%', maxWidth: '420mm', minHeight: '297mm', margin: '0 auto' }}>
@@ -37,11 +37,11 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
           <div className="bg-black text-white p-8 mb-4 flex justify-between items-end shrink-0">
             <div>
               <h1 className="text-4xl font-black tracking-tighter mb-2">PRESENTATION BOARD</h1>
-              <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Custom Door & Storage Solution</p>
+              <p className="text-white font-black uppercase tracking-widest text-xs">Custom Door & Storage Solution</p>
             </div>
             <div className="text-right">
-              <p className="text-xl font-bold">{order.customerInfo.siteName} 様邸 新築工事</p>
-              <p className="text-sm opacity-60 font-['Inter']">{new Date().toLocaleDateString('ja-JP')} 発行</p>
+              <p className="text-xl font-black">{order.customerInfo.siteName} 様邸 新築工事</p>
+              <p className="text-sm font-black opacity-90 font-['Inter']">{new Date().toLocaleDateString('ja-JP')} 発行</p>
             </div>
           </div>
 
@@ -98,20 +98,20 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                       {/* Details */}
                       <div className="p-2 flex flex-col justify-between flex-1">
                         <div>
-                          <div className="text-blue-700 font-black text-[7px] leading-none mb-1 truncate">{door.roomName}</div>
+                          <div className="text-black font-black text-[7px] leading-none mb-1 truncate">{door.roomName}</div>
                           <h3 className="font-black text-black text-[9px] leading-tight mb-0.5 truncate">{door.type}</h3>
-                          <p className="font-extrabold text-black text-[8px] leading-tight mb-1 truncate">{door.design}</p>
-                          <div className="grid grid-cols-2 gap-y-0.5 text-[7px] font-bold text-black">
-                            <div className="truncate opacity-50">サイズ</div>
+                          <p className="font-black text-black text-[8px] leading-tight mb-1 truncate">{door.design}</p>
+                          <div className="grid grid-cols-2 gap-y-0.5 text-[7px] font-black text-black">
+                            <div className="truncate">サイズ</div>
                             <div className="text-right truncate">{door.width}×{door.height}</div>
-                            <div className="truncate opacity-50">Color</div>
+                            <div className="truncate">カラー</div>
                             <div className="flex items-center justify-end gap-1">
-                              <div className="w-2.5 h-2.5 rounded border border-gray-300 shadow-sm" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#ccc' }}></div>
+                              <div className="w-2.5 h-2.5 rounded border border-gray-400 shadow-sm" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#ccc' }}></div>
                             </div>
                           </div>
                         </div>
                         {showPrices && (
-                          <div className="pt-1 mt-1 border-t border-gray-200 text-right">
+                          <div className="pt-1 mt-1 border-t border-gray-300 text-right">
                             <span className="font-black text-black font-['Inter'] text-[9px]">¥{door.price.toLocaleString()}</span>
                           </div>
                         )}
@@ -134,18 +134,19 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                           ST-1
                         </div>
                       </div>
-                      <div className="p-2 flex flex-col justify-between flex-1">
-                        <div>
-                          <div className="text-emerald-700 font-black text-[7px] leading-none mb-1 uppercase bg-emerald-50 px-1 py-0.5 rounded-full inline-block">玄関収納</div>
-                          <h3 className="font-black text-black text-[9px] leading-tight truncate">{storage.type}</h3>
-                          <div className="text-[7px] font-bold text-black opacity-60 mt-0.5 truncate">{storage.size} / {storage.filler}</div>
-                        </div>
-                        {showPrices && (
-                          <div className="pt-1 mt-1 border-t border-gray-200 text-right">
-                            <span className="font-black text-black font-['Inter'] text-[9px]">¥{storage.basePrice.toLocaleString()}</span>
+                        {/* Details */}
+                        <div className="p-2 flex flex-col justify-between flex-1">
+                          <div>
+                            <div className="text-black font-black text-[7px] leading-none mb-1 uppercase bg-gray-200 px-1 py-0.5 rounded-full inline-block">玄関収納</div>
+                            <h3 className="font-black text-black text-[9px] leading-tight truncate">{storage.type}</h3>
+                            <div className="text-[7px] font-black text-black mt-0.5 truncate">{storage.size} / {storage.filler}</div>
                           </div>
-                        )}
-                      </div>
+                          {showPrices && (
+                            <div className="pt-1 mt-1 border-t border-gray-300 text-right">
+                              <span className="font-black text-black font-['Inter'] text-[9px]">¥{storage.basePrice.toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
                     </div>
                   );
                 } else {
@@ -160,12 +161,12 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                       </div>
                       <div className="p-2 flex flex-col justify-between flex-1">
                         <div>
-                          <div className="text-amber-700 font-black text-[7px] leading-none mb-1 uppercase bg-amber-50 px-1 py-0.5 rounded-full inline-block">巾木・造作</div>
+                          <div className="text-black font-black text-[7px] leading-none mb-1 uppercase bg-gray-200 px-1 py-0.5 rounded-full inline-block">巾木・造作</div>
                           <h3 className="font-black text-black text-[9px] leading-tight truncate">{baseboard.product}</h3>
-                          <div className="text-[7px] font-bold text-black opacity-60 mt-0.5 truncate">{baseboard.color}</div>
+                          <div className="text-[7px] font-black text-black mt-0.5 truncate">{baseboard.color}</div>
                         </div>
                         <div className="mt-1 flex justify-between items-end">
-                           <div className="text-[7px] font-black text-blue-600">Qty: {baseboard.quantity}</div>
+                           <div className="text-[7px] font-black text-black">数量: {baseboard.quantity}</div>
                            {showPrices && (
                              <span className="font-black text-black font-['Inter'] text-[9px]">¥{(baseboard.unitPrice * baseboard.quantity).toLocaleString()}</span>
                            )}
@@ -185,18 +186,18 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
             <div className={`mt-12 pt-8 border-t-2 border-black flex justify-between items-start`}>
               <div className="flex gap-12">
                 <div>
-                   <p className="text-[10px] font-black text-black opacity-40 uppercase tracking-widest mb-1">Contractor</p>
+                   <p className="text-[10px] font-black text-black uppercase tracking-widest mb-1">Contractor</p>
                    <p className="font-black text-black text-lg">{order.customerInfo.company}</p>
                 </div>
                 <div>
-                   <p className="text-[10px] font-black text-black opacity-40 uppercase tracking-widest mb-1">Representative</p>
+                   <p className="text-[10px] font-black text-black uppercase tracking-widest mb-1">Representative</p>
                    <p className="font-black text-black text-lg">{order.customerInfo.contactName}</p>
                 </div>
               </div>
               <div className="flex flex-col items-end">
                 {showPrices && (
                   <div className="mb-6 text-right">
-                     <p className="text-[10px] font-black text-black opacity-40 uppercase tracking-widest mb-1">Total Estimated Amount</p>
+                     <p className="text-[10px] font-black text-black uppercase tracking-widest mb-1">Total Estimated Amount</p>
                      <p className="text-4xl font-black text-black font-['Inter'] tracking-tighter italic">¥{(
                        order.doors.reduce((sum, d) => sum + d.price, 0) + 
                        (order.storage.type !== 'NONE' ? order.storage.basePrice : 0) + 
@@ -205,8 +206,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                   </div>
                 )}
                 <div className="text-right">
-                  <p className="text-xl font-black tracking-tighter italic text-black">KASHIWA MOKKO CO.,LTD.</p>
-                  <div className="text-[10px] font-black text-black opacity-60 mt-1">
+                  <p className="text-xl font-black tracking-tighter italic text-black font-['Inter']">KASHIWA MOKKO CO.,LTD.</p>
+                  <div className="text-[10px] font-black text-black mt-1">
                      Head Office: Takayama, Gifu / Representative: Takashita<br/>
                      TEL: 0577-32-3050 / URL: www.kashiwa.gr.jp
                   </div>
@@ -255,18 +256,27 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
 
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
-          body * { visibility: hidden; }
+          body * { visibility: hidden !important; }
+          .print-area, .print-area * { visibility: visible !important; }
           .no-print { display: none !important; }
-          .print-area, .print-area * { visibility: visible; }
           .print-area { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            width: 420mm !important; 
-            height: 297mm !important; 
+            position: fixed !important; 
+            left: 0 !important; 
+            top: 0 !important; 
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
             border: none !important;
+            box-shadow: none !important;
+            z-index: 9999 !important;
+            background: white !important;
           }
-          @page { size: A3 landscape; margin: 0; }
+          @page { 
+            size: A3 landscape; 
+            margin: 0; 
+          }
         }
       `}} />
     </div>
