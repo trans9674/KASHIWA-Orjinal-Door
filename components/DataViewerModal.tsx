@@ -136,10 +136,25 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       // Use upsert for masters to ensure entry exists, update for others
       if (type === 'handle' || type === 'baseboard') {
         const payload = { [idField]: recordId, [fieldName]: publicUrl };
-        const { error: dbError } = await supabase.from(tableName).upsert(payload, { onConflict: idField });
-        if (dbError) {
-           console.warn(`Upsert failed for ${tableName}: ${dbError.message}. Trying update...`);
-           await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
+        
+        // Try to find if record exists
+        const { data: existingRecord } = await supabase.from(tableName).select('id').eq(idField, recordId).maybeSingle();
+        
+        if (existingRecord) {
+          const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq('id', existingRecord.id);
+          if (dbError) console.warn(`Update failed for ${tableName}: ${dbError.message}`);
+        } else {
+          // Record doesn't exist in DB, need to insert.
+          // We generate a UUID for the id column to satisfy not-null constraints if it's a new row.
+          const insertPayload = { 
+            ...payload, 
+            id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)
+          };
+          const { error: dbError } = await supabase.from(tableName).insert([insertPayload]);
+          if (dbError) {
+             console.warn(`Insert failed for ${tableName}: ${dbError.message}. Trying upsert as fallback...`);
+             await supabase.from(tableName).upsert(payload, { onConflict: idField });
+          }
         }
       } else {
         const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
@@ -186,7 +201,13 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
 
           if (type === 'handle' || type === 'baseboard') {
-             await supabase.from(tableName).upsert({ [idField]: recordId, [fieldName]: null }, { onConflict: idField });
+             const { data: existingRecord } = await supabase.from(tableName).select('id').eq(idField, recordId).maybeSingle();
+             if (existingRecord) {
+                await supabase.from(tableName).update({ [fieldName]: null }).eq('id', existingRecord.id);
+             } else {
+                // If it doesn't exist in DB, nothing to delete from DB
+                console.log(`Record ${recordId} not in DB, skipping DB delete`);
+             }
           } else {
              await supabase.from(tableName).update({ [fieldName]: null }).eq(idField, recordId);
           }
