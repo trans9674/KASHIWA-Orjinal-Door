@@ -145,16 +145,9 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           if (dbError) console.warn(`Update failed for ${tableName}: ${dbError.message}`);
         } else {
           // Record doesn't exist in DB, need to insert.
-          // We generate a UUID for the id column to satisfy not-null constraints if it's a new row.
-          const insertPayload = { 
-            ...payload, 
-            id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)
-          };
-          const { error: dbError } = await supabase.from(tableName).insert([insertPayload]);
-          if (dbError) {
-             console.warn(`Insert failed for ${tableName}: ${dbError.message}. Trying upsert as fallback...`);
-             await supabase.from(tableName).upsert(payload, { onConflict: idField });
-          }
+          // We let the Database handle the 'id' (identity column)
+          const { error: dbError } = await supabase.from(tableName).insert([payload]);
+          if (dbError) console.warn(`Insert failed for ${tableName}: ${dbError.message}`);
         }
       } else {
         const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
