@@ -164,9 +164,9 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     e.target.value = '';
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door') => {
     e.preventDefault(); e.stopPropagation();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], recordId, isStorage, isPB);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], recordId, isStorage, isPB, type);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); };
@@ -542,14 +542,14 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                      <a href={row.imageUrl} target="_blank" className="truncate flex-1 text-blue-600" title={getFileName(row.imageUrl)}>
                                        {getFileName(row.imageUrl)}
                                      </a>
-                                     <button onClick={()=>handleDeleteImage(row.id, true)}>×</button>
+                                     <button onClick={()=>handleDeleteImage(row.id, true, false, 'storage')}>×</button>
                                    </div>
                                  ) : (
                                    <span className="text-gray-300 text-[9px] truncate block text-center italic" title={getFileName(getStorageDetailPdfUrl(row.id))}>
                                      未登録(割当済)
                                    </span>
                                  )}
-                                 <div className="border border-dashed p-1 text-center cursor-pointer" onClick={()=>fileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true)}/><span className="text-[8px] text-gray-400">図面PDF登録</span></div>
+                                 <div className="border border-dashed p-1 text-center cursor-pointer" onClick={()=>fileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true, false, 'storage')} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true, false, 'storage')}/><span className="text-[8px] text-gray-400">図面PDF登録</span></div>
                                </div>
                              )}
                           </td>
@@ -562,12 +562,12 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                      <a href={row.pbImageUrl} target="_blank" className="truncate flex-1 text-emerald-700" title={getFileName(row.pbImageUrl)}>
                                        {getFileName(row.pbImageUrl)}
                                      </a>
-                                     <button onClick={()=>handleDeleteImage(row.id, true, true)}>×</button>
+                                     <button onClick={()=>handleDeleteImage(row.id, true, true, 'storage')}>×</button>
                                    </div>
                                  ) : (
                                    <span className="text-gray-300 text-[9px] block text-center italic">未登録</span>
                                  )}
-                                 <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={()=>pbFileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true, true)}/><span className="text-[8px] text-emerald-600 font-bold">プレゼン用画像</span></div>
+                                 <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={()=>pbFileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true, true, 'storage')} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true, true, 'storage')}/><span className="text-[8px] text-emerald-600 font-bold">プレゼン用画像</span></div>
                                </div>
                              )}
                           </td>
