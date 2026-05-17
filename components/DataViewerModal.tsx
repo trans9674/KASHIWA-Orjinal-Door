@@ -133,7 +133,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       const fieldName = isPB ? 'pb_image_url' : 'image_url';
       const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
 
-      // Use upsert for masters to ensure entry exists, update for others
+      // Use upsert/insert logic for masters, update for others
       if (type === 'handle' || type === 'baseboard') {
         const payload = { [idField]: recordId, [fieldName]: publicUrl };
         
@@ -149,18 +149,21 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
         if (existingRecord) {
           console.log(`Found existing record with ID ${existingRecord.id} in ${tableName}, updating...`);
           const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq('id', existingRecord.id);
-          if (dbError) throw new Error(`Update failed: ${dbError.message}`);
+          if (dbError) {
+            console.error('Update failed:', dbError);
+            throw new Error(`更新に失敗しました。Supabaseのポリシー(RLS)を確認してください: ${dbError.message}`);
+          }
         } else {
           console.log(`Record not found in ${tableName}, inserting new entry...`);
           const { error: dbError } = await supabase.from(tableName).insert([payload]);
           if (dbError) {
             console.error(`Insert failed for ${tableName}:`, dbError);
-            throw new Error(`Insert failed: ${dbError.message}`);
+            throw new Error(`新規登録に失敗しました。Supabaseの管理画面で[handle_master/baseboard_master]テーブルのINSERT権限(RLS)が許可されているか確認してください。\n詳細: ${dbError.message}`);
           }
         }
       } else {
         const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
-        if (dbError) throw new Error(`Database update failed: ${dbError.message}`);
+        if (dbError) throw new Error(`データベースの更新に失敗しました: ${dbError.message}`);
       }
 
       if (type === 'storage') {
