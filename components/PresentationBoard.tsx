@@ -50,19 +50,14 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
              <div className="bg-gray-50 border border-black rounded-xl p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                    <div className="text-[11px] font-black text-black uppercase tracking-widest border-r border-black pr-4 mr-2">Color Palette</div>
-                   <div className="flex flex-wrap gap-6">
-                      {Array.from(new Set([
-                        ...order.doors.map(d => d.doorColor),
-                        ...order.doors.map(d => d.frameColor),
-                        order.storage.type !== 'NONE' ? order.storage.color : null,
-                        ...order.baseboards.filter(b => b.quantity > 0).map(b => b.color)
-                      ])).filter(Boolean).map((color, cIdx) => (
-                        <div key={cIdx} className="flex items-center gap-2">
-                           <div className="w-6 h-6 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[color!] || '#666' }}></div>
-                           <span className="text-[11px] font-black text-black">{color}</span>
-                        </div>
-                      ))}
-                   </div>
+                    <div className="flex flex-wrap gap-6">
+                       {Object.entries(COLOR_MAP).map(([color, hex], cIdx) => (
+                         <div key={cIdx} className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded border border-black shadow-sm" style={{ backgroundColor: hex }}></div>
+                            <span className="text-[11px] font-black text-black">{color}</span>
+                         </div>
+                       ))}
+                    </div>
                 </div>
              </div>
           </div>
@@ -98,15 +93,16 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                       {/* Details */}
                       <div className="p-2 flex flex-col justify-between flex-1">
                         <div>
-                          <div className="text-black font-black text-[9px] leading-none mb-1 truncate">{door.roomName}</div>
+                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">{door.roomName}</div>
                           <h3 className="font-black text-black text-[11px] leading-tight mb-0.5 truncate">{door.type}</h3>
                           <p className="font-black text-black text-[10px] leading-tight mb-1 truncate">{door.design}</p>
                           <div className="grid grid-cols-2 gap-y-0.5 text-[9px] font-black text-black">
                             <div className="truncate">サイズ</div>
                             <div className="text-right truncate">{door.width}×{door.height}</div>
                             <div className="truncate">カラー</div>
-                            <div className="flex items-center justify-end gap-1">
-                              <div className="w-4 h-4 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#555' }}></div>
+                            <div className="flex items-center justify-end gap-1.5 overflow-hidden">
+                              <span className="text-[7px] truncate">{door.doorColor.split('(')[1]?.replace(')', '') || door.doorColor}</span>
+                              <div className="w-4 h-4 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#555' }}></div>
                             </div>
                           </div>
                         </div>
@@ -137,9 +133,15 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                         {/* Details */}
                         <div className="p-2 flex flex-col justify-between flex-1">
                           <div>
-                            <div className="text-black font-black text-[9px] leading-none mb-1 uppercase bg-gray-200 px-1 py-0.5 rounded-full inline-block">玄関収納</div>
+                            <div className="text-blue-700 font-black text-[9px] leading-none mb-1 uppercase bg-blue-50 px-1 py-0.5 rounded-full inline-block">玄関収納</div>
                             <h3 className="font-black text-black text-[11px] leading-tight truncate">{storage.type}</h3>
-                            <div className="text-[9px] font-black text-black mt-0.5 truncate">{storage.size} / {storage.filler}</div>
+                            <div className="flex items-center justify-between mt-0.5">
+                              <div className="text-[9px] font-black text-black truncate">{storage.size} / {storage.filler}</div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-[7px] font-black">{storage.color.split('(')[1]?.replace(')', '') || storage.color}</span>
+                                <div className="w-3 h-3 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[storage.color] || '#555' }}></div>
+                              </div>
+                            </div>
                           </div>
                           {showPrices && (
                             <div className="pt-1 mt-1 border-t border-black text-right">
@@ -161,9 +163,11 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
                       </div>
                       <div className="p-2 flex flex-col justify-between flex-1">
                         <div>
-                          <div className="text-black font-black text-[9px] leading-none mb-1 uppercase bg-gray-200 px-1 py-0.5 rounded-full inline-block">巾木・造作</div>
+                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 uppercase bg-blue-50 px-1 py-0.5 rounded-full inline-block">巾木・造作</div>
                           <h3 className="font-black text-black text-[11px] leading-tight truncate">{baseboard.product}</h3>
-                          <div className="text-[9px] font-black text-black mt-0.5 truncate">{baseboard.color}</div>
+                          <div className="text-[9px] font-black text-black mt-0.5 truncate flex items-center justify-between">
+                            <span>{baseboard.color}</span>
+                          </div>
                         </div>
                         <div className="mt-1 flex justify-between items-end">
                            <div className="text-[9px] font-black text-black">数量: {baseboard.quantity}</div>
