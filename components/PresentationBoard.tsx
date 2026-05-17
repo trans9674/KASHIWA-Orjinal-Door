@@ -128,7 +128,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                             <div className="text-right truncate">{door.width}×{door.height}</div>
                             <div className="truncate">カラー</div>
                             <div className="flex items-center justify-end gap-1.5 overflow-hidden">
-                              <span className="text-[7px] truncate font-black text-black">{door.doorColor.split('(')[1]?.replace(')', '') || door.doorColor}</span>
+                              <span className="text-[8px] truncate font-black text-black">{door.doorColor}</span>
                               <div className="w-4 h-4 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#555' }}></div>
                             </div>
                           </div>
@@ -160,14 +160,18 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         {/* Details */}
                         <div className="p-2 flex flex-col justify-between flex-1">
                           <div>
-                            <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">玄関</div>
+                            <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">玄関収納</div>
                             <h3 className="font-black text-black text-[11px] leading-tight truncate">{storage.type}</h3>
                             <div className="flex items-center justify-between mt-0.5">
                               <div className="text-[9px] font-black text-black truncate">{storage.size} / {storage.filler}</div>
                               <div className="flex items-center gap-1">
-                                <span className="text-[7px] font-black text-black">{storage.color.split('(')[1]?.replace(')', '') || storage.color}</span>
+                                <span className="text-[8px] font-black text-black">{storage.color}</span>
                                 <div className="w-3 h-3 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[storage.color] || '#555' }}></div>
                               </div>
+                            </div>
+                            <div className="text-[8px] font-black text-black mt-1 flex gap-2">
+                              <span>台輪: {storage.baseRing === 'none' ? 'なし' : 'あり'}</span>
+                              <span>ミラー: {storage.mirror === 'none' ? 'なし' : 'あり'}</span>
                             </div>
                           </div>
                           {showPrices && (
@@ -195,11 +199,10 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                       </div>
                       <div className="p-2 flex flex-col justify-between flex-1">
                         <div>
-                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">造作・収納部材</div>
                           <h3 className="font-black text-black text-[11px] leading-tight truncate">{baseboard.product}</h3>
                           <div className="text-[9px] font-black text-black mt-0.5 truncate flex items-center justify-between">
                             <span className="flex items-center gap-1.5 font-black text-black">
-                              {baseboard.color.split('(')[1]?.replace(')', '') || baseboard.color}
+                              <span className="text-[8px]">{baseboard.color}</span>
                               <div className="w-3 h-3 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#555' }}></div>
                             </span>
                           </div>
@@ -217,6 +220,24 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                   // Handle item
                   const handleName = item.data as string;
                   const record = handleMaster.find(h => h.name === handleName);
+                  
+                  // Label determination logic
+                  let handleLabel = "把手部材";
+                  const leverHandles = [
+                    "セラミックホワイト(PC-422-001)",
+                    "マットブラック(PC-422-003)",
+                    "サテンニッケル(PC-422-XN)"
+                  ];
+                  const pullHandles = [
+                    "セラミックホワイト(丁番・戸当りサテンニッケル色)",
+                    "マットブラック(丁番・戸当りブラック色)",
+                    "サテンニッケル(丁番・戸当りサテンニッケル色)"
+                  ];
+                  
+                  if (leverHandles.includes(handleName)) handleLabel = "レバーハンドル";
+                  else if (pullHandles.includes(handleName)) handleLabel = "引手";
+                  else if (handleName === "J型取手") handleLabel = "J型取手";
+
                   return (
                     <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
                       <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
@@ -231,11 +252,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                       </div>
                       <div className="p-2 flex flex-col justify-between flex-1">
                         <div>
-                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">把手部材</div>
+                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">{handleLabel}</div>
                           <h3 className="font-black text-black text-[11px] leading-tight truncate">{handleName}</h3>
-                        </div>
-                        <div className="mt-1 text-right">
-                          <span className="text-[9px] font-black text-black font-['Inter']">標準採用</span>
                         </div>
                       </div>
                     </div>
