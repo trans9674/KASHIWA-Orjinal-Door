@@ -86,168 +86,117 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({ order, pri
              </div>
           </div>
 
-          <div className="px-10 pb-12 overflow-y-auto flex-1">
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-2 gap-8 border-t border-slate-100 pt-8">
-              
-              {/* Doors Section */}
-              <div className="col-span-2">
-                <h2 className="text-2xl font-black border-l-8 border-slate-800 pl-4 mb-6 flex items-center gap-3">
-                  <span className="bg-slate-800 text-white text-xs px-2 py-1 rounded">01</span>
-                  内部建具・仕様
-                </h2>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  {order.doors.map((door, idx) => {
-                    const master = priceList.find(p => p.type === door.type && p.design === door.design);
-                    return (
-                      <div key={door.id} className="bg-slate-50 rounded-xl overflow-hidden border border-slate-200 flex h-52">
-                        {/* Image Area */}
-                        <div className="w-1/3 bg-white p-2 relative flex items-center justify-center overflow-hidden border-r border-slate-200">
-                          {master?.pbImageUrl ? (
-                            <img src={master.pbImageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
-                          ) : master?.imageUrl ? (
-                            <img src={master.imageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
-                          ) : (
-                            <div className="text-[10px] text-gray-300 text-center font-bold px-2">
-                              {door.design}<br/>IMAGE
-                            </div>
-                          )}
-                          {/* Color Badge */}
-                          <div className="absolute top-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded shadow-sm text-[8px] font-black border border-slate-200">
-                            WD-{idx+1}
+          <div className="px-8 pb-8 overflow-y-auto flex-1">
+            {/* 6x4 Grid Layout */}
+            <div className="grid grid-cols-6 grid-rows-4 gap-3">
+              {[
+                ...order.doors.map((door, idx) => ({ type: 'door' as const, data: door, index: idx })),
+                ...(order.storage.type !== 'NONE' ? [{ type: 'storage' as const, data: order.storage }] : []),
+                ...order.baseboards.filter(b => b.quantity > 0).map(b => ({ type: 'baseboard' as const, data: b }))
+              ].slice(0, 24).map((item, idx) => {
+                if (item.type === 'door') {
+                  const door = item.data as DoorItem;
+                  const master = priceList.find(p => p.type === door.type && p.design === door.design);
+                  return (
+                    <div key={`door-${door.id}`} className="bg-slate-50 rounded-lg overflow-hidden border border-slate-200 flex flex-col h-full min-h-[140px]">
+                      {/* Image Area */}
+                      <div className="h-24 bg-white p-1 relative flex items-center justify-center overflow-hidden border-b border-slate-200">
+                        {master?.pbImageUrl ? (
+                          <img src={master.pbImageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
+                        ) : master?.imageUrl ? (
+                          <img src={master.imageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
+                        ) : (
+                          <div className="text-[8px] text-gray-300 text-center font-bold px-1">
+                            {door.design}<br/>IMAGE
                           </div>
-                        </div>
-
-                        {/* Details Area */}
-                        <div className="w-2/3 p-4 flex flex-col justify-between">
-                          <div>
-                            <div className="text-blue-700 font-black text-[10px] mb-1 uppercase bg-blue-50 px-2 py-0.5 rounded-full inline-block">{door.roomName}</div>
-                            <h3 className="font-black text-slate-800 text-lg leading-tight mb-2">{door.type} / {door.design}</h3>
-                            
-                            <div className="grid grid-cols-2 gap-y-1 text-[10px] text-slate-600">
-                              <div className="font-bold text-slate-400">サイズ</div>
-                              <div className="font-['Inter']">{door.width} × {door.height}</div>
-                              <div className="font-bold text-slate-400">カラー（建具）</div>
-                              <div className="flex items-center gap-1">
-                                <div className="w-4 h-4 rounded border border-slate-300 shadow-sm" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#ccc' }}></div>
-                                {door.doorColor}
-                              </div>
-                              <div className="font-bold text-slate-400">カラー（枠）</div>
-                              <div className="flex items-center gap-1">
-                                <div className="w-4 h-4 rounded border border-slate-300 shadow-sm" style={{ backgroundColor: COLOR_MAP[door.frameColor] || '#ccc' }}></div>
-                                {door.frameColor}
-                              </div>
-                              <div className="font-bold text-slate-400">ハンドル</div>
-                              <div className="truncate">{door.handleColor}</div>
-                            </div>
-                          </div>
-
-                          {showPrices && (
-                            <div className="pt-2 border-t border-slate-200 flex justify-end items-center">
-                              <span className="font-black text-slate-800 font-['Inter'] text-sm italic">¥{door.price.toLocaleString()}</span>
-                            </div>
-                          )}
+                        )}
+                        <div className="absolute top-1 left-1 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded shadow-sm text-[7px] font-black border border-slate-200">
+                          WD-{item.index! + 1}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Entrance Storage Section */}
-              {order.storage.type !== 'NONE' && (
-                <div className="col-span-2 mt-8">
-                  <h2 className="text-2xl font-black border-l-8 border-slate-800 pl-4 mb-6 flex items-center gap-3">
-                    <span className="bg-slate-800 text-white text-xs px-2 py-1 rounded">02</span>
-                    玄関収納
-                  </h2>
-                  <div className="bg-slate-50 rounded-xl overflow-hidden border border-slate-200 p-6 flex gap-8">
-                    <div className="w-1/4 bg-white rounded-lg p-4 flex items-center justify-center border border-slate-200 relative aspect-square overflow-hidden">
-                      {(() => {
-                        const storageMaster = storageTypes.find(s => s.id === order.storage.type);
-                        const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
-                        if (imgUrl) {
-                          return (
-                            <img 
-                              src={imgUrl} 
-                              className="max-h-full max-w-full object-contain" 
-                              referrerPolicy="no-referrer" 
-                              alt={order.storage.type}
-                            />
-                          );
-                        }
-                        return (
-                          <div className="text-center">
-                            <div className="text-slate-300 text-[10px] font-bold mb-2">STORAGE IMAGE</div>
-                            <div className="w-8 h-8 rounded-full border-2 border-slate-300 mx-auto" style={{ backgroundColor: COLOR_MAP[order.storage.color] || '#eee' }}></div>
-                            <div className="text-[10px] text-slate-400 mt-2">{order.storage.color}</div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                    <div className="w-3/4">
-                       <div className="flex justify-between items-start mb-4">
-                         <div>
-                            <h3 className="text-2xl font-black text-slate-800">{order.storage.type}</h3>
-                            <p className="text-slate-500 font-bold">Category: {order.storage.size} / Filler: {order.storage.filler}</p>
-                         </div>
-                         {showPrices && (
-                           <div className="text-right">
-                             <div className="text-xs text-slate-400 font-bold uppercase tracking-widest">Base Price</div>
-                             <div className="text-2xl font-black text-slate-800">¥{order.storage.basePrice.toLocaleString()}</div>
-                           </div>
-                         )}
-                       </div>
-                       <div className="grid grid-cols-3 gap-4 text-xs">
-                          <div className="bg-white p-3 rounded-lg border border-slate-200">
-                             <div className="text-slate-400 font-bold mb-1">台輪</div>
-                             <div className="font-black">{order.storage.baseRing || 'なし'}</div>
-                          </div>
-                          <div className="bg-white p-3 rounded-lg border border-slate-200">
-                             <div className="text-slate-400 font-bold mb-1">ミラー</div>
-                             <div className="font-black">{order.storage.mirror || 'なし'}</div>
-                          </div>
-                          <div className="bg-white p-3 rounded-lg border border-slate-200">
-                             <div className="text-slate-400 font-bold mb-1">フィラー数</div>
-                             <div className="font-black">{order.storage.fillerCount} 枚</div>
-                          </div>
-                       </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Baseboard Section */}
-              <div className="col-span-2 mt-8">
-                <h2 className="text-2xl font-black border-l-8 border-slate-800 pl-4 mb-6 flex items-center gap-3">
-                  <span className="bg-slate-800 text-white text-xs px-2 py-1 rounded">03</span>
-                  巾木・造作部材
-                </h2>
-                <div className="grid grid-cols-3 gap-4">
-                  {order.baseboards.map((item, idx) => (
-                    item.quantity > 0 && (
-                      <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
-                         <div>
-                            <div className="flex items-center gap-2 mb-2">
-                               <div className="w-6 h-6 rounded border border-slate-300 shadow-sm" style={{ backgroundColor: COLOR_MAP[item.color] || '#ccc' }}></div>
-                               <div className="font-black text-slate-800">{item.product}</div>
+                      {/* Details */}
+                      <div className="p-2 flex flex-col justify-between flex-1">
+                        <div>
+                          <div className="text-blue-700 font-black text-[7px] leading-none mb-1 truncate">{door.roomName}</div>
+                          <h3 className="font-black text-slate-800 text-[9px] leading-tight mb-1 truncate">{door.design}</h3>
+                          <div className="grid grid-cols-2 gap-y-0.5 text-[7px] text-slate-600">
+                            <div className="truncate text-slate-400">サイズ</div>
+                            <div className="text-right truncate">{door.width}×{door.height}</div>
+                            <div className="truncate text-slate-400">Color</div>
+                            <div className="flex items-center justify-end gap-1">
+                              <div className="w-2 h-2 rounded border border-slate-300" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#ccc' }}></div>
                             </div>
-                            <div className="text-[10px] text-slate-500 font-bold">
-                              カラー: {item.color}
-                            </div>
-                         </div>
-                         <div className="mt-4 flex justify-between items-end border-t border-slate-200 pt-2">
-                            <div className="text-xs font-black text-blue-600 tracking-tighter">Qty: {item.quantity} {item.unit}</div>
-                            {showPrices && (
-                              <div className="text-sm font-black text-slate-800">¥{(item.unitPrice * item.quantity).toLocaleString()}</div>
-                            )}
-                         </div>
+                          </div>
+                        </div>
+                        {showPrices && (
+                          <div className="pt-1 mt-1 border-t border-slate-200 text-right">
+                            <span className="font-black text-slate-800 font-['Inter'] text-[9px]">¥{door.price.toLocaleString()}</span>
+                          </div>
+                        )}
                       </div>
-                    )
-                  ))}
-                </div>
-              </div>
+                    </div>
+                  );
+                } else if (item.type === 'storage') {
+                  const storage = item.data as OrderState['storage'];
+                  const storageMaster = storageTypes.find(s => s.id === storage.type);
+                  const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
+                  return (
+                    <div key="storage-item" className="bg-slate-50 rounded-lg overflow-hidden border border-slate-200 flex flex-col h-full min-h-[140px]">
+                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-slate-200">
+                        {imgUrl ? (
+                          <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
+                        ) : (
+                          <div className="text-[8px] text-slate-300 font-bold">STORAGE</div>
+                        )}
+                        <div className="absolute top-1 left-1 bg-slate-800 text-white px-1.5 py-0.5 rounded shadow-sm text-[7px] font-black">
+                          ST-1
+                        </div>
+                      </div>
+                      <div className="p-2 flex flex-col justify-between flex-1">
+                        <div>
+                          <div className="text-emerald-700 font-black text-[7px] leading-none mb-1 uppercase bg-emerald-50 px-1 py-0.5 rounded-full inline-block">玄関収納</div>
+                          <h3 className="font-black text-slate-800 text-[9px] leading-tight truncate">{storage.type}</h3>
+                          <div className="text-[7px] text-slate-500 mt-0.5 truncate">{storage.size} / {storage.filler}</div>
+                        </div>
+                        {showPrices && (
+                          <div className="pt-1 mt-1 border-t border-slate-200 text-right">
+                            <span className="font-black text-slate-800 font-['Inter'] text-[9px]">¥{storage.basePrice.toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                } else {
+                  const baseboard = item.data as any;
+                  return (
+                    <div key={`baseboard-${idx}`} className="bg-slate-50 rounded-lg overflow-hidden border border-slate-200 flex flex-col h-full min-h-[140px]">
+                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-slate-200">
+                        <div className="w-12 h-12 rounded border border-slate-200 shadow-inner" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#eee' }}></div>
+                        <div className="absolute top-1 left-1 bg-amber-600 text-white px-1.5 py-0.5 rounded shadow-sm text-[7px] font-black">
+                          BB-{idx}
+                        </div>
+                      </div>
+                      <div className="p-2 flex flex-col justify-between flex-1">
+                        <div>
+                          <div className="text-amber-700 font-black text-[7px] leading-none mb-1 uppercase bg-amber-50 px-1 py-0.5 rounded-full inline-block">巾木・造作</div>
+                          <h3 className="font-black text-slate-800 text-[9px] leading-tight truncate">{baseboard.product}</h3>
+                          <div className="text-[7px] text-slate-500 mt-0.5 truncate">{baseboard.color}</div>
+                        </div>
+                        <div className="mt-1 flex justify-between items-end">
+                           <div className="text-[7px] font-black text-blue-600">Qty: {baseboard.quantity}</div>
+                           {showPrices && (
+                             <span className="font-black text-slate-800 font-['Inter'] text-[9px]">¥{(baseboard.unitPrice * baseboard.quantity).toLocaleString()}</span>
+                           )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+              })}
+              {/* Fill remaining slots if necessary */}
+              {Array.from({ length: Math.max(0, 24 - (order.doors.length + (order.storage.type !== 'NONE' ? 1 : 0) + order.baseboards.filter(b => b.quantity > 0).length)) }).map((_, i) => (
+                <div key={`empty-${i}`} className="bg-slate-50/30 rounded-lg border border-dashed border-slate-200 min-h-[140px]"></div>
+              ))}
             </div>
 
             {/* Footer Area */}
