@@ -940,18 +940,6 @@ ${order.memo}
   return (
     <div className="min-h-screen bg-slate-100 font-['Noto_Sans_JP']">
       
-      {/* Admin Toggle / Management Link */}
-      <div className="fixed top-4 right-4 z-40 flex items-center gap-2 no-print">
-        <button 
-          onClick={() => setIsPasswordModalOpen(true)}
-          className="bg-white/90 backdrop-blur-sm border border-slate-200 hover:border-slate-300 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md active:scale-95"
-          title="管理者メニュー（商品・画像登録）"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-          管理者メニュー
-        </button>
-      </div>
-
       {isPasswordModalOpen && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in zoom-in">
@@ -2224,33 +2212,6 @@ ${order.memo}
             <div className="flex justify-between items-end mt-4 pt-4 border-t border-gray-200">
                 <p className="text-gray-400 font-bold uppercase tracking-widest text-base font-['Inter'] mb-2">合計金額（税込）</p>
                 <p className="text-4xl xl:text-5xl font-black font-['Inter'] tracking-tighter leading-none text-blue-700">¥{totals.total.toLocaleString()}</p>
-            </div>
-            
-            <div className="mt-8 flex flex-col gap-4 no-print">
-               <div className="flex items-center gap-3 bg-white p-5 rounded-2xl border-2 border-indigo-100 shadow-sm">
-                  <label className="flex items-center gap-3 cursor-pointer select-none group w-full">
-                    <div className="relative flex items-center">
-                      <input 
-                        type="checkbox" 
-                        checked={showPbPrices} 
-                        onChange={(e) => setShowPbPrices(e.target.checked)}
-                        className="peer h-7 w-7 cursor-pointer appearance-none rounded-lg border-2 border-indigo-200 transition-all checked:bg-indigo-600 checked:border-indigo-600 hover:border-indigo-400"
-                      />
-                      <svg className="absolute h-4.5 w-4.5 text-white opacity-0 peer-checked:opacity-100 left-[5px] pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-slate-800 font-black text-lg group-hover:text-indigo-700 transition-colors">プレゼンボードに金額を表示する</span>
-                      <span className="text-slate-400 text-xs font-bold">チェックを入れると各商品の金額と合計金額が表示されます</span>
-                    </div>
-                  </label>
-               </div>
-               <button 
-                onClick={() => setIsPbModalOpen(true)}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 text-lg"
-              >
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                プレゼンボードを作成する
-              </button>
             </div>
           </div>
         </div>
