@@ -116,8 +116,6 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       const fileExt = file.name.split('.').pop();
       const prefix = isPB ? 'pb_' : '';
       
-      // recordId contains Japanese/brackets which can cause "Invalid key" errors in storage
-      // Use a safe timestamp and hash-like string or just clean it up
       const safeRecordId = btoa(encodeURIComponent(recordId)).substring(0, 10).replace(/[/+=]/g, '');
       const fileName = `${prefix}${type}_${safeRecordId}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
@@ -133,14 +131,19 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       if (type === 'baseboard') tableName = 'baseboard_master';
 
       const fieldName = isPB ? 'pb_image_url' : 'image_url';
-      
-      // Use name/product as ID for baseboard/handle if they are strings
       const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
 
-      const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
-      if (dbError) {
-         // If update fails because table doesn't exist, we just update local state
-         console.warn(`Database update failed for ${tableName}: ${dbError.message}`);
+      // Use upsert for masters to ensure entry exists, update for others
+      if (type === 'handle' || type === 'baseboard') {
+        const payload = { [idField]: recordId, [fieldName]: publicUrl };
+        const { error: dbError } = await supabase.from(tableName).upsert(payload, { onConflict: idField });
+        if (dbError) {
+           console.warn(`Upsert failed for ${tableName}: ${dbError.message}. Trying update...`);
+           await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
+        }
+      } else {
+        const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
+        if (dbError) console.warn(`Database update failed for ${tableName}: ${dbError.message}`);
       }
 
       if (type === 'storage') {
@@ -182,8 +185,11 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           const fieldName = isPB ? 'pb_image_url' : 'image_url';
           const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
 
-          const { error } = await supabase.from(tableName).update({ [fieldName]: null }).eq(idField, recordId);
-          if (error) console.warn('Database delete image failed:', error.message);
+          if (type === 'handle' || type === 'baseboard') {
+             await supabase.from(tableName).upsert({ [idField]: recordId, [fieldName]: null }, { onConflict: idField });
+          } else {
+             await supabase.from(tableName).update({ [fieldName]: null }).eq(idField, recordId);
+          }
           
           if (type === 'storage') {
             setStorageTypes(prev => prev.map(s => s.id === recordId ? {...s, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : s));

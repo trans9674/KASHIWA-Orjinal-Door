@@ -539,8 +539,14 @@ const App: React.FC = () => {
     });
   };
 
-  const handleUpdateShipping = (id: number, newPrice: number) => {
+  const handleUpdateShipping = async (id: number, newPrice: number) => {
     setShippingFees(prev => prev.map(item => item.id === id ? { ...item, price: newPrice } : item));
+    try {
+      const { error } = await supabase.from('shipping_fees').update({ price: newPrice }).eq('id', id);
+      if (error) console.warn('Failed to update shipping fee in DB:', error.message);
+    } catch (e) {
+      console.error('Error updating shipping fee:', e);
+    }
   };
 
   const handleDeliveryItemChange = (dateNum: 1 | 2, item: 'baseboard' | 'storage', checked: boolean) => {
