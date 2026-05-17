@@ -208,6 +208,7 @@ const App: React.FC = () => {
   const [isMailModalOpen, setIsMailModalOpen] = useState(false);
   const [isEstimateSaved, setIsEstimateSaved] = useState(false);
   const [isPbModalOpen, setIsPbModalOpen] = useState(false);
+  const [showPbPrices, setShowPbPrices] = useState(false);
   const [isDataViewerOpen, setIsDataViewerOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -944,6 +945,7 @@ ${order.memo}
           order={order}
           priceList={priceList}
           storageTypes={storageTypes}
+          showPrices={showPbPrices}
           onClose={() => setIsPbModalOpen(false)}
         />
       )}
@@ -2157,7 +2159,21 @@ ${order.memo}
                 <p className="text-4xl xl:text-5xl font-black font-['Inter'] tracking-tighter leading-none text-blue-700">¥{totals.total.toLocaleString()}</p>
             </div>
             
-            <div className="mt-8 flex gap-4 no-print">
+            <div className="mt-8 flex flex-col gap-4 no-print">
+               <div className="flex items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-inner">
+                  <label className="flex items-center gap-2 cursor-pointer select-none group w-full">
+                    <div className="relative flex items-center">
+                      <input 
+                        type="checkbox" 
+                        checked={showPbPrices} 
+                        onChange={(e) => setShowPbPrices(e.target.checked)}
+                        className="peer h-6 w-6 cursor-pointer appearance-none rounded-md border border-slate-300 transition-all checked:bg-indigo-600 checked:border-indigo-600"
+                      />
+                      <svg className="absolute h-4 w-4 text-white opacity-0 peer-checked:opacity-100 left-1 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span className="text-slate-700 font-bold group-hover:text-indigo-700 transition-colors">プレゼンボードに金額を表示する</span>
+                  </label>
+               </div>
                <button 
                 onClick={() => setIsPbModalOpen(true)}
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 transition-all shadow-xl active:scale-95 text-lg"
