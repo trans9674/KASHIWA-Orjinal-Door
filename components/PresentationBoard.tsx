@@ -91,180 +91,189 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
           <div className="px-8 pb-8 flex-1">
             {/* 6x4 Grid Layout */}
             <div className="grid grid-cols-6 grid-rows-4 gap-3 h-full">
-              {[
-                ...order.doors.map((door, idx) => ({ type: 'door' as const, data: door, index: idx })),
-                ...(order.storage.type !== 'NONE' ? [{ type: 'storage' as const, data: order.storage }] : []),
-                ...order.baseboards.filter(b => b.quantity > 0).map(b => ({ type: 'baseboard' as const, data: b })),
-                ...usedHandles.map(h => ({ type: 'handle' as const, data: h }))
-              ].slice(0, 24).map((item, idx) => {
-                if (item.type === 'door') {
-                  const door = item.data as DoorItem;
-                  const master = priceList.find(p => p.type === door.type && p.design === door.design);
-                  return (
-                    <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
-                      {/* Image Area */}
-                      <div className="h-24 bg-white p-1 relative flex items-center justify-center overflow-hidden border-b border-black">
-                        {master?.pbImageUrl ? (
-                          <img src={master.pbImageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
-                        ) : master?.imageUrl ? (
-                          <img src={master.imageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
-                        ) : (
-                          <div className="text-[9px] text-black text-center font-black px-1">
-                            {door.design}<br/>IMAGE
-                          </div>
-                        )}
-                        <div className="absolute top-1 left-1 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded shadow-sm text-[9px] font-black border border-black text-black">
-                          WD-{item.index! + 1}
-                        </div>
-                      </div>
-                      {/* Details */}
-                      <div className="p-2 flex flex-col justify-between flex-1">
-                        <div>
-                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">{door.roomName}</div>
-                          <h3 className="font-black text-black text-[11px] leading-tight mb-0.5 truncate">{door.type}</h3>
-                          <p className="font-black text-black text-[10px] leading-tight mb-1 truncate">{door.design}</p>
-                          <div className="grid grid-cols-2 gap-y-0.5 text-[9px] font-black text-black">
-                            <div className="truncate">サイズ</div>
-                            <div className="text-right truncate">{door.width}×{door.height}</div>
-                            <div className="truncate">カラー</div>
-                            <div className="flex items-center justify-end gap-1.5 overflow-hidden">
-                              <span className="text-[8px] truncate font-black text-black">{door.doorColor}</span>
-                              <div className="w-4 h-4 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#555' }}></div>
-                            </div>
-                          </div>
-                        </div>
-                        {showPrices && (
-                          <div className="pt-1 mt-1 border-t border-black text-right">
-                            <span className="font-black text-black font-['Inter'] text-[11px]">¥{door.price.toLocaleString()}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                } else if (item.type === 'storage') {
-                  const storage = item.data as OrderState['storage'];
-                  const storageMaster = storageTypes.find(s => s.id === storage.type);
-                  const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
-                  return (
-                    <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
-                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
-                        {imgUrl ? (
-                          <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
-                        ) : (
-                          <div className="text-[9px] text-black font-black">STORAGE</div>
-                        )}
-                        <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
-                          ST-1
-                        </div>
-                      </div>
-                        {/* Details */}
-                        <div className="p-2 flex flex-col justify-between flex-1">
-                          <div>
-                            <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">玄関収納</div>
-                            <h3 className="font-black text-black text-[11px] leading-tight truncate">{storage.type}</h3>
-                            <div className="flex items-center justify-between mt-0.5">
-                              <div className="text-[9px] font-black text-black truncate">{storage.size} / {storage.filler}</div>
-                              <div className="flex items-center gap-1">
-                                <span className="text-[8px] font-black text-black">{storage.color}</span>
-                                <div className="w-3 h-3 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[storage.color] || '#555' }}></div>
+              {(() => {
+                const items = [
+                  ...order.doors.map((door, idx) => ({ type: 'door' as const, data: door, index: idx })),
+                  ...(order.storage.type !== 'NONE' ? [{ type: 'storage' as const, data: order.storage }] : []),
+                  ...order.baseboards.filter(b => b.quantity > 0).map(b => ({ type: 'baseboard' as const, data: b })),
+                  ...usedHandles.map(h => ({ type: 'handle' as const, data: h }))
+                ].slice(0, 24);
+
+                return (
+                  <>
+                    {items.map((item, idx) => {
+                      if (item.type === 'door') {
+                        const door = item.data as DoorItem;
+                        const master = priceList.find(p => p.type === door.type && p.design === door.design);
+                        return (
+                          <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
+                            {/* Image Area */}
+                            <div className="h-24 bg-white p-1 relative flex items-center justify-center overflow-hidden border-b border-black">
+                              {master?.pbImageUrl ? (
+                                <img src={master.pbImageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
+                              ) : master?.imageUrl ? (
+                                <img src={master.imageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
+                              ) : (
+                                <div className="text-[9px] text-black text-center font-black px-1">
+                                  {door.design}<br/>IMAGE
+                                </div>
+                              )}
+                              <div className="absolute top-1 left-1 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded shadow-sm text-[9px] font-black border border-black text-black">
+                                WD-{item.index! + 1}
                               </div>
                             </div>
-                            <div className="text-[8px] font-black text-black mt-1 flex gap-2">
-                              <span>台輪: {storage.baseRing === 'none' ? 'なし' : 'あり'}</span>
-                              <span>ミラー: {storage.mirror === 'none' ? 'なし' : 'あり'}</span>
+                            {/* Details */}
+                            <div className="p-2 flex flex-col justify-between flex-1">
+                              <div>
+                                <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">{door.roomName}</div>
+                                <h3 className="font-black text-black text-[11px] leading-tight mb-0.5 truncate">{door.type}</h3>
+                                <p className="font-black text-black text-[10px] leading-tight mb-1 truncate">{door.design}</p>
+                                <div className="grid grid-cols-2 gap-y-0.5 text-[9px] font-black text-black">
+                                  <div className="truncate">サイズ</div>
+                                  <div className="text-right truncate">{door.width}×{door.height}</div>
+                                  <div className="truncate">カラー</div>
+                                  <div className="flex items-center justify-end gap-1.5 overflow-hidden">
+                                    <span className="text-[8px] truncate font-black text-black">{door.doorColor}</span>
+                                    <div className="w-4 h-4 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#555' }}></div>
+                                  </div>
+                                </div>
+                              </div>
+                              {showPrices && (
+                                <div className="pt-1 mt-1 border-t border-black text-right">
+                                  <span className="font-black text-black font-['Inter'] text-[11px]">¥{door.price.toLocaleString()}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
-                          {showPrices && (
-                            <div className="pt-1 mt-1 border-t border-black text-right">
-                              <span className="font-black text-black font-['Inter'] text-[11px]">¥{storage.basePrice.toLocaleString()}</span>
+                        );
+                      } else if (item.type === 'storage') {
+                        const storage = item.data as OrderState['storage'];
+                        const storageMaster = storageTypes.find(s => s.id === storage.type);
+                        const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
+                        return (
+                          <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
+                            <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
+                              {imgUrl ? (
+                                <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
+                              ) : (
+                                <div className="text-[9px] text-black font-black">STORAGE</div>
+                              )}
+                              <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
+                                ST-1
+                              </div>
                             </div>
-                          )}
-                        </div>
-                    </div>
-                  );
-                } else if (item.type === 'baseboard') {
-                  const baseboard = item.data as any;
-                  const record = baseboardMaster.find(b => b.product === baseboard.product);
-                  return (
-                    <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
-                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
-                        {record?.pbImageUrl ? (
-                          <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
-                        ) : (
-                          <div className="w-12 h-12 rounded border border-black shadow-inner" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#666' }}></div>
-                        )}
-                        <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
-                          BB-{idx}
-                        </div>
-                      </div>
-                      <div className="p-2 flex flex-col justify-between flex-1">
-                        <div>
-                          <h3 className="font-black text-black text-[11px] leading-tight truncate">{baseboard.product}</h3>
-                          <div className="text-[9px] font-black text-black mt-0.5 truncate flex items-center justify-between">
-                            <span className="flex items-center gap-1.5 font-black text-black">
-                              <span className="text-[8px]">{baseboard.color}</span>
-                              <div className="w-3 h-3 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#555' }}></div>
-                            </span>
+                              {/* Details */}
+                              <div className="p-2 flex flex-col justify-between flex-1">
+                                <div>
+                                  <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">玄関収納</div>
+                                  <h3 className="font-black text-black text-[11px] leading-tight truncate">{storage.type}</h3>
+                                  <div className="flex items-center justify-between mt-0.5">
+                                    <div className="text-[9px] font-black text-black truncate">{storage.size} / {storage.filler}</div>
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-[8px] font-black text-black">{storage.color}</span>
+                                      <div className="w-3 h-3 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[storage.color] || '#555' }}></div>
+                                    </div>
+                                  </div>
+                                  <div className="text-[8px] font-black text-black mt-1 flex gap-2">
+                                    <span>台輪: {storage.baseRing === 'none' ? 'なし' : 'あり'}</span>
+                                    <span>ミラー: {storage.mirror === 'none' ? 'なし' : 'あり'}</span>
+                                  </div>
+                                </div>
+                                {showPrices && (
+                                  <div className="pt-1 mt-1 border-t border-black text-right">
+                                    <span className="font-black text-black font-['Inter'] text-[11px]">¥{storage.basePrice.toLocaleString()}</span>
+                                  </div>
+                                )}
+                              </div>
                           </div>
-                        </div>
-                        <div className="mt-1 flex justify-between items-end">
-                           <div className="text-[9px] font-black text-black">数量: {baseboard.quantity}</div>
-                           {showPrices && (
-                             <span className="font-black text-black font-['Inter'] text-[11px]">¥{(baseboard.unitPrice * baseboard.quantity).toLocaleString()}</span>
-                           )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                } else {
-                  // Handle item
-                  const handleName = item.data as string;
-                  const record = handleMaster.find(h => h.name === handleName);
-                  
-                  // Label determination logic
-                  let handleLabel = "把手部材";
-                  const leverHandles = [
-                    "セラミックホワイト(PC-422-001)",
-                    "マットブラック(PC-422-003)",
-                    "サテンニッケル(PC-422-XN)"
-                  ];
-                  const pullHandles = [
-                    "セラミックホワイト(丁番・戸当りサテンニッケル色)",
-                    "マットブラック(丁番・戸当りブラック色)",
-                    "サテンニッケル(丁番・戸当りサテンニッケル色)"
-                  ];
-                  
-                  if (leverHandles.includes(handleName)) handleLabel = "レバーハンドル";
-                  else if (pullHandles.includes(handleName)) handleLabel = "引手";
-                  else if (handleName === "J型取手") handleLabel = "J型取手";
+                        );
+                      } else if (item.type === 'baseboard') {
+                        const baseboard = item.data as any;
+                        const record = baseboardMaster.find(b => b.product === baseboard.product);
+                        return (
+                          <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
+                            <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
+                              {record?.pbImageUrl ? (
+                                <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
+                              ) : (
+                                <div className="w-12 h-12 rounded border border-black shadow-inner" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#666' }}></div>
+                              )}
+                              <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
+                                BB-{idx}
+                              </div>
+                            </div>
+                            <div className="p-2 flex flex-col justify-between flex-1">
+                              <div>
+                                <h3 className="font-black text-black text-[11px] leading-tight truncate">{baseboard.product}</h3>
+                                <div className="text-[9px] font-black text-black mt-0.5 truncate flex items-center justify-between">
+                                  <span className="flex items-center gap-1.5 font-black text-black">
+                                    <span className="text-[8px]">{baseboard.color}</span>
+                                    <div className="w-3 h-3 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#555' }}></div>
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="mt-1 flex justify-between items-end">
+                                 <div className="text-[9px] font-black text-black">数量: {baseboard.quantity}</div>
+                                 {showPrices && (
+                                   <span className="font-black text-black font-['Inter'] text-[11px]">¥{(baseboard.unitPrice * baseboard.quantity).toLocaleString()}</span>
+                                 )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        // Handle item
+                        const handleName = item.data as string;
+                        const record = handleMaster.find(h => h.name === handleName);
+                        
+                        // Label determination logic
+                        let handleLabel = "把手部材";
+                        const leverHandles = [
+                          "セラミックホワイト(PC-422-001)",
+                          "マットブラック(PC-422-003)",
+                          "サテンニッケル(PC-422-XN)"
+                        ];
+                        const pullHandles = [
+                          "セラミックホワイト(丁番・戸当りサテンニッケル色)",
+                          "マットブラック(丁番・戸当りブラック色)",
+                          "サテンニッケル(丁番・戸当りサテンニッケル色)"
+                        ];
+                        
+                        if (leverHandles.includes(handleName)) handleLabel = "レバーハンドル";
+                        else if (pullHandles.includes(handleName)) handleLabel = "引手";
+                        else if (handleName === "J型取手") handleLabel = "J型取手";
 
-                  return (
-                    <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
-                      <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
-                        {record?.pbImageUrl ? (
-                          <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
-                        ) : (
-                          <div className="text-[9px] text-black font-black">HANDLE</div>
-                        )}
-                        <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
-                          HD-1
-                        </div>
-                      </div>
-                      <div className="p-2 flex flex-col justify-between flex-1">
-                        <div>
-                          <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">{handleLabel}</div>
-                          <h3 className="font-black text-black text-[11px] leading-tight truncate">{handleName}</h3>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-              })}
-              {/* Fill remaining slots if necessary */}
-              {Array.from({ length: Math.max(0, 24 - (order.doors.length + (order.storage.type !== 'NONE' ? 1 : 0) + order.baseboards.filter(b => b.quantity > 0).length)) }).map((_, i) => (
-                <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-black min-h-[140px]"></div>
-              ))}
+                        return (
+                          <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
+                            <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
+                              {record?.pbImageUrl ? (
+                                <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
+                              ) : (
+                                <div className="text-[9px] text-black font-black">HANDLE</div>
+                              )}
+                              <div className="absolute top-1 left-1 bg-black text-white px-1.5 py-0.5 rounded shadow-sm text-[8px] font-black">
+                                HD-1
+                              </div>
+                            </div>
+                            <div className="p-2 flex flex-col justify-between flex-1">
+                              <div>
+                                <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">{handleLabel}</div>
+                                <h3 className="font-black text-black text-[11px] leading-tight truncate">{handleName}</h3>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })}
+                    {/* Fill remaining slots to make exactly 24 slots (4 rows) */}
+                    {Array.from({ length: Math.max(0, 24 - items.length) }).map((_, i) => (
+                      <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-black min-h-[140px]"></div>
+                    ))}
+                  </>
+                );
+              })()}
             </div>
+
 
             {/* Footer Area */}
             <div className={`mt-6 pt-4 border-t-2 border-black flex justify-between items-start`}>
