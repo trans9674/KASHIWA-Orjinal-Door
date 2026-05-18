@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { getDoorDetailPdfUrl, getStorageDetailPdfUrl, DOOR_GROUPS, STORAGE_CATEGORIES } from '../constants';
+import { getDoorDetailPdfUrl, getStorageDetailPdfUrl, DOOR_GROUPS, STORAGE_CATEGORIES, DOOR_SPEC_MASTER } from '../constants';
 import { DoorItem, PriceRecord, StorageTypeRecord, ShippingFeeRecord, UsageLocation, DoorType } from '../types';
 import { supabase } from '../supabase';
 
@@ -110,11 +110,12 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     }
   };
 
-  const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door') => {
+  const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door', pbSide?: 'L' | 'R') => {
     try {
-      setUploadingId(recordId + (isPB ? '_pb' : '_detail'));
+      const suffix = pbSide ? `_${pbSide}` : '';
+      setUploadingId(recordId + (isPB ? `_pb${suffix}` : '_detail'));
       const fileExt = file.name.split('.').pop();
-      const prefix = isPB ? 'pb_' : '';
+      const prefix = isPB ? `pb${suffix.toLowerCase()}_` : '';
       
       const safeRecordId = btoa(encodeURIComponent(recordId)).substring(0, 10).replace(/[/+=]/g, '');
       const fileName = `${prefix}${type}_${safeRecordId}_${Date.now()}.${fileExt}`;
@@ -130,7 +131,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       if (type === 'handle') tableName = 'handle_master';
       if (type === 'baseboard') tableName = 'baseboard_master';
 
-      const fieldName = isPB ? 'pb_image_url' : 'image_url';
+      const fieldName = isPB ? (pbSide ? `pb_image_url_${pbSide.toLowerCase()}` : 'pb_image_url') : 'image_url';
       const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
 
       // Use upsert/insert logic for masters, update for others
@@ -169,7 +170,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       if (type === 'storage') {
         setStorageTypes(prev => prev.map(item => item.id === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
       } else if (type === 'door') {
-        setPriceList(prev => prev.map(item => item.id === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
+        const fieldKey = isPB ? (pbSide ? (pbSide === 'L' ? 'pbImageUrlL' : 'pbImageUrlR') : 'pbImageUrl') : 'imageUrl';
+        setPriceList(prev => prev.map(item => item.id === recordId ? { ...item, [fieldKey]: publicUrl } : item));
       } else if (type === 'handle') {
         setHandleMaster(prev => prev.map(item => item.name === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
       } else if (type === 'baseboard') {
@@ -182,27 +184,28 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door') => {
-    if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0], recordId, isStorage, isPB, type);
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door', pbSide?: 'L' | 'R') => {
+    if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0], recordId, isStorage, isPB, type, pbSide);
     e.target.value = '';
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door') => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door', pbSide?: 'L' | 'R') => {
     e.preventDefault(); e.stopPropagation();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], recordId, isStorage, isPB, type);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], recordId, isStorage, isPB, type, pbSide);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); };
 
-  const handleDeleteImage = async (recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door') => {
-      if(!confirm(`登録済みの${isPB ? 'プレゼン用画像' : '詳細図PDF/画像'}を解除し、初期状態に戻しますか？`)) return;
+  const handleDeleteImage = async (recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door', pbSide?: 'L' | 'R') => {
+      const suffixText = pbSide ? (pbSide === 'L' ? '(左/勝手)' : '(右/勝手)') : '';
+      if(!confirm(`登録済みの${isPB ? 'プレゼン用画像' + suffixText : '詳細図PDF/画像'}を解除し、初期状態に戻しますか？`)) return;
       try {
           let tableName = 'internal_doors';
           if (type === 'storage') tableName = 'entrance_storages';
           if (type === 'handle') tableName = 'handle_master';
           if (type === 'baseboard') tableName = 'baseboard_master';
 
-          const fieldName = isPB ? 'pb_image_url' : 'image_url';
+          const fieldName = isPB ? (pbSide ? `pb_image_url_${pbSide.toLowerCase()}` : 'pb_image_url') : 'image_url';
           const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
 
           if (type === 'handle' || type === 'baseboard') {
@@ -220,7 +223,8 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           if (type === 'storage') {
             setStorageTypes(prev => prev.map(s => s.id === recordId ? {...s, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : s));
           } else if (type === 'door') {
-            setPriceList(prev => prev.map(p => p.id === recordId ? {...p, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : p));
+            const fieldKey = isPB ? (pbSide ? (pbSide === 'L' ? 'pbImageUrlL' : 'pbImageUrlR') : 'pbImageUrl') : 'imageUrl';
+            setPriceList(prev => prev.map(p => p.id === recordId ? {...p, [fieldKey]: undefined} : p));
           } else if (type === 'handle') {
             setHandleMaster(prev => prev.map(h => h.name === recordId ? {...h, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : h));
           } else if (type === 'baseboard') {
@@ -329,7 +333,9 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
         door_price: newDoor.doorPrice || 0, 
         set_price: newDoor.setPrice || ((newDoor.framePrice || 0) + (newDoor.doorPrice || 0)),
         image_url: newDoor.imageUrl || null,
-        pb_image_url: null
+        pb_image_url: null,
+        pb_image_url_l: null,
+        pb_image_url_r: null
       };
       const { data, error } = await supabase.from('internal_doors').insert([doorData]).select();
       if (error) throw error;
@@ -338,7 +344,9 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           id: data[0].id, type: data[0].type, location: data[0].location as UsageLocation, design: data[0].design,
           notes: '', height: data[0].height, framePrice: data[0].frame_price, doorPrice: data[0].door_price, setPrice: data[0].set_price, 
           imageUrl: data[0].image_url,
-          pbImageUrl: data[0].pb_image_url
+          pbImageUrl: data[0].pb_image_url,
+          pbImageUrlL: data[0].pb_image_url_l,
+          pbImageUrlR: data[0].pb_image_url_r
         };
         setPriceList(prev => [...prev, addedRecord]);
         setNewDoor(initialDoorState);
@@ -498,24 +506,86 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                             )}
                           </td>
                           <td className="p-1.5">
-                            {uploadingId === (row.id + '_pb') ? "UP中..." : (
-                              <div className="flex flex-col gap-1">
-                                {row.pbImageUrl ? (
-                                  <div className="flex items-center gap-1 bg-emerald-50 p-1 border border-emerald-200 rounded">
-                                    <img src={row.pbImageUrl} className="w-6 h-6 object-cover rounded" referrerPolicy="no-referrer" />
-                                    <a href={row.pbImageUrl} target="_blank" className="truncate flex-1 text-emerald-700 text-[10px]" title={getFileName(row.pbImageUrl)}>
-                                      {getFileName(row.pbImageUrl)}
-                                    </a>
-                                    <button onClick={()=>handleDeleteImage(row.id!, false, true)} className="text-red-500">×</button>
+                            {(() => {
+                              const spec = DOOR_SPEC_MASTER[row.type];
+                              const hasHanging = spec && spec.hangingSides && spec.hangingSides.length > 1 && !spec.hangingSides.includes('なし') && !spec.hangingSides.includes('―');
+                              
+                              if (hasHanging) {
+                                return (
+                                  <div className="flex flex-col gap-2">
+                                    {/* Left Side */}
+                                    <div className="flex flex-col gap-1 border-b border-gray-100 pb-1">
+                                      <div className="text-[8px] font-bold text-gray-400">左(勝手/吊元)</div>
+                                      {uploadingId === (row.id + '_pb_L') ? "UP中..." : (
+                                        <div className="flex flex-col gap-1">
+                                          {row.pbImageUrlL ? (
+                                            <div className="flex items-center gap-1 bg-emerald-50 p-1 border border-emerald-200 rounded">
+                                              <img src={row.pbImageUrlL} className="w-6 h-6 object-cover rounded" referrerPolicy="no-referrer" />
+                                              <a href={row.pbImageUrlL} target="_blank" className="truncate flex-1 text-emerald-700 text-[10px]" title={getFileName(row.pbImageUrlL)}>
+                                                {getFileName(row.pbImageUrlL)}
+                                              </a>
+                                              <button onClick={()=>handleDeleteImage(row.id!, false, true, 'door', 'L')} className="text-red-500">×</button>
+                                            </div>
+                                          ) : (
+                                            <span className="text-gray-300 text-[9px] block text-center italic">未登録</span>
+                                          )}
+                                          <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={() => row.id && pbFileInputRefs.current[row.id + '_L']?.click()} onDrop={(e) => row.id && handleDrop(e, row.id, false, true, 'door', 'L')} onDragOver={handleDragOver}>
+                                            <input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id + '_L'] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true, 'door', 'L')}/>
+                                            <span className="text-[9px] text-emerald-600 font-bold">左画像UP</span>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {/* Right Side */}
+                                    <div className="flex flex-col gap-1">
+                                      <div className="text-[8px] font-bold text-gray-400">右(勝手/吊元)</div>
+                                      {uploadingId === (row.id + '_pb_R') ? "UP中..." : (
+                                        <div className="flex flex-col gap-1">
+                                          {row.pbImageUrlR ? (
+                                            <div className="flex items-center gap-1 bg-emerald-50 p-1 border border-emerald-200 rounded">
+                                              <img src={row.pbImageUrlR} className="w-6 h-6 object-cover rounded" referrerPolicy="no-referrer" />
+                                              <a href={row.pbImageUrlR} target="_blank" className="truncate flex-1 text-emerald-700 text-[10px]" title={getFileName(row.pbImageUrlR)}>
+                                                {getFileName(row.pbImageUrlR)}
+                                              </a>
+                                              <button onClick={()=>handleDeleteImage(row.id!, false, true, 'door', 'R')} className="text-red-500">×</button>
+                                            </div>
+                                          ) : (
+                                            <span className="text-gray-300 text-[9px] block text-center italic">未登録</span>
+                                          )}
+                                          <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={() => row.id && pbFileInputRefs.current[row.id + '_R']?.click()} onDrop={(e) => row.id && handleDrop(e, row.id, false, true, 'door', 'R')} onDragOver={handleDragOver}>
+                                            <input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id + '_R'] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true, 'door', 'R')}/>
+                                            <span className="text-[9px] text-emerald-600 font-bold">右画像UP</span>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                ) : (
-                                  <span className="text-gray-300 text-[10px] block text-center italic">
-                                    未登録
-                                  </span>
-                                )}
-                                <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={() => row.id && pbFileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id, false, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true)}/><span className="text-[9px] text-emerald-600 font-bold">プレゼン用画像</span></div>
-                              </div>
-                            )}
+                                );
+                              }
+
+                              return (
+                                <div className="flex flex-col gap-1">
+                                  {uploadingId === (row.id + '_pb') ? "UP中..." : (
+                                    <div className="flex flex-col gap-1">
+                                      {row.pbImageUrl ? (
+                                        <div className="flex items-center gap-1 bg-emerald-50 p-1 border border-emerald-200 rounded">
+                                          <img src={row.pbImageUrl} className="w-6 h-6 object-cover rounded" referrerPolicy="no-referrer" />
+                                          <a href={row.pbImageUrl} target="_blank" className="truncate flex-1 text-emerald-700 text-[10px]" title={getFileName(row.pbImageUrl)}>
+                                            {getFileName(row.pbImageUrl)}
+                                          </a>
+                                          <button onClick={()=>handleDeleteImage(row.id!, false, true)} className="text-red-500">×</button>
+                                        </div>
+                                      ) : (
+                                        <span className="text-gray-300 text-[9px] block text-center italic">
+                                          未登録
+                                        </span>
+                                      )}
+                                      <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={() => row.id && pbFileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id, false, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true)}/><span className="text-[9px] text-emerald-600 font-bold">プレゼン用画像</span></div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td className="p-1.5 text-center">
                             {isEditing ? <><button onClick={handleSaveEdit} className="text-blue-600 mr-2">保</button><button onClick={handleCancelEdit}>消</button></> : <><button onClick={()=>handleStartEdit(row)} className="text-emerald-600 mr-2">編</button><button onClick={()=>handleDeleteRecord(row.id!)} className="text-red-500">削</button></>}

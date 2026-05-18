@@ -309,7 +309,9 @@ const App: React.FC = () => {
           doorPrice: d.door_price,
           setPrice: d.set_price,
           imageUrl: d.image_url,
-          pbImageUrl: d.pb_image_url
+          pbImageUrl: d.pb_image_url,
+          pbImageUrlL: d.pb_image_url_l,
+          pbImageUrlR: d.pb_image_url_r
         }));
         setPriceList(mappedDoors);
 
@@ -625,15 +627,15 @@ const App: React.FC = () => {
     basicFields.forEach(f => { if (!order.customerInfo[f.key as keyof typeof order.customerInfo]) errors.push(`${f.label}が入力されていません。`); });
 
     if (!order.customerInfo.deliveryDate1 && !order.customerInfo.deliveryDate2) {
-      errors.push('納品希望日が入力されていません。');
+      warnings.push('納品希望日が入力されていません。');
     }
     
     if (hasBaseboard && !order.customerInfo.delivery1Selection.baseboard && !order.customerInfo.delivery2Selection.baseboard) {
-      errors.push('巾木の納品希望日（①または②）が選択されていません。');
+      warnings.push('巾木の納品希望日（①または②）が選択されていません。');
       setIsBaseboardGuideOpen(true);
     }
     if (hasStorage && !order.customerInfo.delivery1Selection.storage && !order.customerInfo.delivery2Selection.storage) {
-      errors.push('玄関収納の納品希望日（①または②）が選択されていません。');
+      warnings.push('玄関収納の納品希望日（①または②）が選択されていません。');
       setIsStorageGuideOpen(true);
     }
 
@@ -648,7 +650,7 @@ const App: React.FC = () => {
 
   const handleOpenEstimate = () => {
     const { errors, warnings } = validateOrder();
-    if (errors.length > 0 || warnings.length > 0) {
+    if (errors.length > 0) {
       setValidationData({ errors, warnings });
       setIsValidationModalOpen(true);
       return;

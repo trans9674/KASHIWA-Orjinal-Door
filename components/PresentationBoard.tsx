@@ -23,6 +23,15 @@ const COLOR_MAP: Record<string, string> = {
   "プレシャスウォールナット(PW)": "#523a2d",
 };
 
+const COLOR_IMAGES: Record<string, string> = {
+  "ピュアホワイト(WW)": "http://25663cc9bda9549d.main.jp/aistudio/door/WW.jpg",
+  "ライトグレー(LG)": "http://25663cc9bda9549d.main.jp/aistudio/door/LG.jpg",
+  "ダークグレー(DG)": "http://25663cc9bda9549d.main.jp/aistudio/door/DG.jpg",
+  "コンフォートオーク(CO)": "http://25663cc9bda9549d.main.jp/aistudio/door/CO.jpg",
+  "グレージュアッシュ(GA)": "http://25663cc9bda9549d.main.jp/aistudio/door/GA.jpg",
+  "プレシャスウォールナット(PW)": "http://25663cc9bda9549d.main.jp/aistudio/door/PW.jpg",
+};
+
 export const PresentationBoard: React.FC<PresentationBoardProps> = ({ 
   order, priceList, storageTypes, handleMaster, baseboardMaster, showPrices, setShowPrices, onClose 
 }) => {
@@ -67,7 +76,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
             </div>
             <div className="text-right">
               <p className="text-xl font-black">{order.customerInfo.siteName} 様邸 新築工事</p>
-              <p className="text-sm font-black font-['Inter']">{new Date().toLocaleDateString('ja-JP')} 発行</p>
+              <p className="text-sm font-black font-['Inter']">{new Date().toLocaleDateString('ja-JP')}</p>
             </div>
           </div>
 
@@ -79,7 +88,13 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                     <div className="flex flex-wrap gap-6">
                        {Object.entries(COLOR_MAP).map(([color, hex], cIdx) => (
                          <div key={cIdx} className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded border border-black shadow-sm" style={{ backgroundColor: hex }}></div>
+                            <div className="w-8 h-8 rounded border border-black shadow-sm overflow-hidden flex items-center justify-center bg-white">
+                                {COLOR_IMAGES[color] ? (
+                                  <img src={COLOR_IMAGES[color]} alt={color} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                ) : (
+                                  <div className="w-full h-full" style={{ backgroundColor: hex }}></div>
+                                )}
+                            </div>
                             <span className="text-[11px] font-black text-black">{color}</span>
                          </div>
                        ))}
@@ -105,12 +120,19 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                       if (item.type === 'door') {
                         const door = item.data as DoorItem;
                         const master = priceList.find(p => p.type === door.type && p.design === door.design);
+                        
+                        const isLeft = door.hangingSide?.includes('左');
+                        const isRight = door.hangingSide?.includes('右');
+                        let pbUrl = master?.pbImageUrl;
+                        if (isLeft && master?.pbImageUrlL) pbUrl = master.pbImageUrlL;
+                        else if (isRight && master?.pbImageUrlR) pbUrl = master.pbImageUrlR;
+
                         return (
                           <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[140px]">
                             {/* Image Area */}
                             <div className="h-24 bg-white p-1 relative flex items-center justify-center overflow-hidden border-b border-black">
-                              {master?.pbImageUrl ? (
-                                <img src={master.pbImageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
+                              {pbUrl ? (
+                                <img src={pbUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : master?.imageUrl ? (
                                 <img src={master.imageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : (
@@ -125,16 +147,35 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                             {/* Details */}
                             <div className="p-2 flex flex-col justify-between flex-1">
                               <div>
-                                <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">{door.roomName}</div>
-                                <h3 className="font-black text-black text-[11px] leading-tight mb-0.5 truncate">{door.type}</h3>
-                                <p className="font-black text-black text-[10px] leading-tight mb-1 truncate">{door.design}</p>
-                                <div className="grid grid-cols-2 gap-y-0.5 text-[9px] font-black text-black">
-                                  <div className="truncate">サイズ</div>
-                                  <div className="text-right truncate">{door.width}×{door.height}</div>
-                                  <div className="truncate">カラー</div>
+                                <div className="text-blue-700 font-black text-[9px] leading-none mb-1 tracking-wider">{door.roomName}</div>
+                                <h3 className="font-black text-black text-[11px] leading-tight mb-0.5 whitespace-nowrap tracking-wider">{door.type}{door.hangingSide && door.hangingSide !== 'なし' ? `　　${door.hangingSide}` : ''}</h3>
+                                <p className="font-black text-black text-[10px] leading-tight mb-1 tracking-wide">{door.design}</p>
+                                <div className="grid grid-cols-[38px_1fr] gap-y-0.5 text-[9px] font-black text-black tracking-wide">
+                                  <div>サイズ</div>
+                                  <div className="text-right">{door.width}×{door.height}</div>
+                                  
+                                  <div>扉カラー</div>
                                   <div className="flex items-center justify-end gap-1.5 overflow-hidden">
-                                    <span className="text-[8px] truncate font-black text-black">{door.doorColor}</span>
-                                    <div className="w-4 h-4 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#555' }}></div>
+                                    <span className="text-[8px] font-black text-black leading-tight">{door.doorColor}</span>
+                                    <div className="w-4 h-4 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                      {COLOR_IMAGES[door.doorColor] ? (
+                                        <img src={COLOR_IMAGES[door.doorColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                      ) : (
+                                        <div className="w-full h-full" style={{ backgroundColor: COLOR_MAP[door.doorColor] || '#555' }}></div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div>枠カラー</div>
+                                  <div className="flex items-center justify-end gap-1.5 overflow-hidden">
+                                    <span className="text-[8px] font-black text-black leading-tight">{door.frameColor}</span>
+                                    <div className="w-4 h-4 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                      {COLOR_IMAGES[door.frameColor] ? (
+                                        <img src={COLOR_IMAGES[door.frameColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                      ) : (
+                                        <div className="w-full h-full" style={{ backgroundColor: COLOR_MAP[door.frameColor] || '#555' }}></div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -165,13 +206,19 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                               {/* Details */}
                               <div className="p-2 flex flex-col justify-between flex-1">
                                 <div>
-                                  <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">玄関収納</div>
-                                  <h3 className="font-black text-black text-[11px] leading-tight truncate">{storage.type}</h3>
-                                  <div className="flex items-center justify-between mt-0.5">
-                                    <div className="text-[9px] font-black text-black truncate">{storage.size} / {storage.filler}</div>
+                                  <div className="text-blue-700 font-black text-[9px] leading-none mb-1">玄関収納</div>
+                                  <h3 className="font-black text-black text-[11px] leading-tight">{storage.type}</h3>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <div className="text-[9px] font-black text-black">{storage.size} / {storage.filler}</div>
                                     <div className="flex items-center gap-1">
-                                      <span className="text-[8px] font-black text-black">{storage.color}</span>
-                                      <div className="w-3 h-3 rounded border border-black shadow-sm" style={{ backgroundColor: COLOR_MAP[storage.color] || '#555' }}></div>
+                                      <span className="text-[8px] font-black text-black leading-tight">{storage.color}</span>
+                                      <div className="w-3 h-3 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                        {COLOR_IMAGES[storage.color] ? (
+                                          <img src={COLOR_IMAGES[storage.color]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                        ) : (
+                                          <div className="w-full h-full" style={{ backgroundColor: COLOR_MAP[storage.color] || '#555' }}></div>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                   <div className="text-[8px] font-black text-black mt-1 flex gap-2">
@@ -195,6 +242,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                             <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
+                              ) : COLOR_IMAGES[baseboard.color] ? (
+                                <img src={COLOR_IMAGES[baseboard.color]} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : (
                                 <div className="w-12 h-12 rounded border border-black shadow-inner" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#666' }}></div>
                               )}
@@ -204,11 +253,17 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                             </div>
                             <div className="p-2 flex flex-col justify-between flex-1">
                               <div>
-                                <h3 className="font-black text-black text-[11px] leading-tight truncate">{baseboard.product}</h3>
-                                <div className="text-[9px] font-black text-black mt-0.5 truncate flex items-center justify-between">
+                                <h3 className="font-black text-black text-[11px] leading-tight">{baseboard.product}</h3>
+                                <div className="text-[9px] font-black text-black mt-1 flex items-center justify-between">
                                   <span className="flex items-center gap-1.5 font-black text-black">
-                                    <span className="text-[8px]">{baseboard.color}</span>
-                                    <div className="w-3 h-3 rounded border border-black shadow-sm shrink-0" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#555' }}></div>
+                                    <span className="text-[8px] leading-tight">{baseboard.color}</span>
+                                    <div className="w-3 h-3 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                      {COLOR_IMAGES[baseboard.color] ? (
+                                        <img src={COLOR_IMAGES[baseboard.color]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                      ) : (
+                                        <div className="w-full h-full" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#555' }}></div>
+                                      )}
+                                    </div>
                                   </span>
                                 </div>
                               </div>
@@ -257,8 +312,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                             </div>
                             <div className="p-2 flex flex-col justify-between flex-1">
                               <div>
-                                <div className="text-blue-700 font-black text-[9px] leading-none mb-1 truncate">{handleLabel}</div>
-                                <h3 className="font-black text-black text-[11px] leading-tight truncate">{handleName}</h3>
+                                <div className="text-blue-700 font-black text-[9px] leading-none mb-1">{handleLabel}</div>
+                                <h3 className="font-black text-black text-[11px] leading-tight">{handleName}</h3>
                               </div>
                             </div>
                           </div>

@@ -37,6 +37,8 @@ export interface PriceRecord {
   setPrice: number;
   imageUrl?: string; // Supabaseからの詳細図PDF/画像URL
   pbImageUrl?: string; // プレゼンボード用画像URL
+  pbImageUrlL?: string; // 左(勝手/吊元)用 プレゼン画像
+  pbImageUrlR?: string; // 右(勝手/吊元)用 プレゼン画像
 }
 
 export interface DoorItem {
