@@ -279,12 +279,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
             <div className={`mt-6 pt-4 border-t-2 border-black flex justify-between items-start`}>
               <div className="flex gap-12">
                 <div>
-                   <p className="text-[11px] font-black text-black uppercase tracking-widest mb-1">Contractor</p>
                    <p className="font-black text-black text-lg">{order.customerInfo.company}</p>
-                </div>
-                <div>
-                   <p className="text-[11px] font-black text-black uppercase tracking-widest mb-1">Representative</p>
-                   <p className="font-black text-black text-lg">{order.customerInfo.contactName}</p>
                 </div>
               </div>
               <div className="flex flex-col items-end">
@@ -300,10 +295,6 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                 )}
                 <div className="text-right">
                   <p className="text-xl font-black tracking-tighter italic text-black font-['Inter']">KASHIWA MOKKO CO.,LTD.</p>
-                  <div className="text-[10px] font-black text-black mt-1">
-                     Head Office: Takayama, Gifu / Representative: Takashita<br/>
-                     TEL: 0577-32-3050 / URL: www.kashiwa.gr.jp
-                  </div>
                 </div>
               </div>
             </div>

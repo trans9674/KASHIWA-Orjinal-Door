@@ -239,7 +239,7 @@ const App: React.FC = () => {
   const [order, setOrder] = useState<OrderState>({
     customerInfo: {
       company: localStorage.getItem('order_company') || '',
-      address: '',
+      address: localStorage.getItem('order_address_pref') || '',
       siteName: '',
       contactName: localStorage.getItem('order_contactName') || '',
       phone: localStorage.getItem('order_phone') || '',
@@ -274,7 +274,7 @@ const App: React.FC = () => {
   });
 
   const [addressPart, setAddressPart] = useState({
-    prefecture: '',
+    prefecture: localStorage.getItem('order_address_pref') || '',
     detail: ''
   });
 
@@ -283,7 +283,8 @@ const App: React.FC = () => {
     localStorage.setItem('order_company', info.company);
     localStorage.setItem('order_contactName', info.contactName);
     localStorage.setItem('order_phone', info.phone);
-  }, [order.customerInfo.company, order.customerInfo.contactName, order.customerInfo.phone]);
+    localStorage.setItem('order_address_pref', addressPart.prefecture);
+  }, [order.customerInfo.company, order.customerInfo.contactName, order.customerInfo.phone, addressPart.prefecture]);
 
   useEffect(() => {
     localStorage.setItem('order_company', initialSettings.company);
