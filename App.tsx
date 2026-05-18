@@ -910,6 +910,65 @@ ${order.memo}
     setIsMailModalOpen(false);
   };
 
+  const handleSaveJson = () => {
+    const siteName = order.customerInfo.siteName || '無題';
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `${siteName}_${date}.json`;
+    
+    const jsonStr = JSON.stringify(order, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleLoadJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (json && typeof json === 'object' && json.customerInfo && json.doors) {
+          setOrder(json as OrderState);
+          
+          // Restore addressPart (prefecture/detail)
+          if (json.customerInfo.address) {
+             let longestMatch = -1;
+             let matchedPref = '';
+             shippingFees.forEach(fee => {
+               if (json.customerInfo.address.startsWith(fee.prefecture)) {
+                 if (fee.prefecture.length > longestMatch) {
+                   longestMatch = fee.prefecture.length;
+                   matchedPref = fee.prefecture;
+                 }
+               }
+             });
+             setAddressPart({
+               prefecture: matchedPref,
+               detail: json.customerInfo.address.slice(matchedPref.length)
+             });
+          }
+          alert('データを読み込みました。');
+        } else {
+          alert('無効なファイル形式です。');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('ファイルの読み込みに失敗しました。');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const handleCeilingPbChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setOrder(p => ({ ...p, customerInfo: { ...p.customerInfo, ceilingPB: value } }));
@@ -1775,39 +1834,52 @@ ${order.memo}
       
        <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen || isValidationModalOpen || isPbModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-8 border-b-2 border-gray-900 pb-4">
-          <div>
-            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">柏木工 オリジナルドア 発注書</h1>
+          <div className="shrink-0 mr-4">
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight whitespace-nowrap">柏木工 オリジナルドア 発注書</h1>
             <p className="text-lg text-gray-500 mt-1 font-['Inter']">Ordering System v1.0</p>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-4 shrink-0">
             <button 
               onClick={() => setIsOrderFlowModalOpen(true)}
-              className="bg-white text-blue-700 border-2 border-blue-600 hover:bg-blue-50 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95"
+              className="bg-white text-blue-700 border-2 border-blue-600 hover:bg-blue-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18l-6-6m0 0l6-6m-6 6h18" /></svg>
               注文フロー確認
             </button>
             <button 
               onClick={handleOpenEstimate} 
-              className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95"
+              className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95 whitespace-nowrap shrink-0"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               見積書作成
             </button>
             <button 
               onClick={() => setIsPbModalOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95 whitespace-nowrap shrink-0"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               プレゼンボード
             </button>
             <button 
               onClick={handleBatchExport}
-              className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95"
+              className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95 whitespace-nowrap shrink-0"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
               詳細図一括出力
             </button>
+            <div className="h-10 w-px bg-gray-300 mx-1 self-center shrink-0"></div>
+            <button 
+              onClick={handleSaveJson}
+              className="bg-white text-gray-700 border-2 border-gray-200 hover:bg-gray-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0"
+            >
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+              保存
+            </button>
+            <label className="bg-white text-gray-700 border-2 border-gray-200 hover:bg-gray-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap shrink-0">
+              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+              読込
+              <input type="file" accept=".json" onChange={handleLoadJson} className="hidden" />
+            </label>
           </div>
         </div>
 
