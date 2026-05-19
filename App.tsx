@@ -188,6 +188,31 @@ const createStorageOverlayImage = async (storage: EntranceStorage, category: str
 
 
 const App: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      alert('インストールは既に行われているか、お使いの環境では直接インストールできません。ブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」を選択してください。');
+    }
+    setIsMenuOpen(false);
+  };
+
   const [loading, setLoading] = useState(true);
   const [priceList, setPriceList] = useState<PriceRecord[]>([]);
   const [storageTypes, setStorageTypes] = useState<StorageTypeRecord[]>([]);
@@ -1870,44 +1895,72 @@ ${order.memo}
             <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight whitespace-nowrap">柏木工 オリジナルドア 発注書</h1>
             <p className="text-lg text-gray-500 mt-1 font-['Inter']">Ordering System v1.0</p>
           </div>
-          <div className="flex gap-4 shrink-0">
-            <button 
-              onClick={() => setIsOrderFlowModalOpen(true)}
-              className="bg-white text-blue-700 border-2 border-blue-600 hover:bg-blue-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18l-6-6m0 0l6-6m-6 6h18" /></svg>
-              注文フロー確認
-            </button>
-            <button 
-              onClick={handleOpenEstimate} 
-              className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95 whitespace-nowrap shrink-0"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              見積書作成
-            </button>
-            <button 
-              onClick={() => setIsPbModalOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95 whitespace-nowrap shrink-0"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              プレゼンボード
-            </button>
-            <button 
-              onClick={handleBatchExport}
-              className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-xl active:scale-95 whitespace-nowrap shrink-0"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
-              詳細図一括出力
-            </button>
-            <div className="h-10 w-px bg-gray-300 mx-1 self-center shrink-0"></div>
+          <div className="flex gap-4 shrink-0 relative">
+            <div className="relative">
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 whitespace-nowrap shrink-0"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                メニュー
+                <svg className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+              </button>
+
+              {isMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
+                  <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden py-2 animate-in fade-in zoom-in duration-200">
+                    <button 
+                      onClick={() => { setIsOrderFlowModalOpen(true); setIsMenuOpen(false); }}
+                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-gray-700 font-bold flex items-center gap-3 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18l-6-6m0 0l6-6m-6 6h18" /></svg>
+                      注文フロー確認
+                    </button>
+                    <button 
+                      onClick={() => { handleOpenEstimate(); setIsMenuOpen(false); }}
+                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-gray-700 font-bold flex items-center gap-3 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      見積書作成
+                    </button>
+                    <button 
+                      onClick={() => { setIsPbModalOpen(true); setIsMenuOpen(false); }}
+                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-gray-700 font-bold flex items-center gap-3 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      プレゼンボード
+                    </button>
+                    <button 
+                      onClick={() => { handleBatchExport(); setIsMenuOpen(false); }}
+                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-gray-700 font-bold flex items-center gap-3 transition-colors"
+                    >
+                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                      詳細図一括出力
+                    </button>
+                    <div className="h-px bg-gray-100 my-1"></div>
+                    <button 
+                      onClick={handleInstallApp}
+                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-blue-700 font-bold flex items-center gap-3 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                      アプリをインストール
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="h-10 w-px bg-gray-200 mx-1 self-center shrink-0"></div>
+            
             <button 
               onClick={handleSaveJson}
-              className="bg-white text-gray-700 border-2 border-gray-200 hover:bg-gray-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0"
+              className="bg-white text-gray-700 border-2 border-gray-100 hover:bg-gray-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0"
             >
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
               保存
             </button>
-            <label className="bg-white text-gray-700 border-2 border-gray-200 hover:bg-gray-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap shrink-0">
+            <label className="bg-white text-gray-700 border-2 border-gray-100 hover:bg-gray-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap shrink-0">
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               読込
               <input type="file" accept=".json,.kashiwa" onChange={handleLoadJson} className="hidden" />
