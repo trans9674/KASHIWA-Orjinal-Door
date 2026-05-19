@@ -423,7 +423,11 @@ const App: React.FC = () => {
         try {
           const { data: hData } = await supabase.from('handle_master').select('*');
           if (hData && hData.length > 0) {
-            setHandleMaster(hData.map(h => ({ id: h.id, name: h.name, pbImageUrl: h.pb_image_url })));
+            setHandleMaster(hData.map(h => ({ 
+              id: h.id, 
+              name: h.name.replace('・戸当り', ''), 
+              pbImageUrl: h.pb_image_url 
+            })));
           } else {
             // Default from constants
             setHandleMaster([
