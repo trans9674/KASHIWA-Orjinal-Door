@@ -139,16 +139,31 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         
                         const effHeight = getEffectiveHeight(door);
                         
-                        // Find matching master, prioritizing options like undercut or frame extension
-                        const masters = priceList.filter(p => p.type === door.type && p.design === door.design && p.height === effHeight);
-                        let master = masters[0];
-                        
+                        let searchDesign = door.design;
                         if (door.isUndercut) {
-                          const ucMaster = masters.find(m => m.notes?.includes('アンダーカット'));
-                          if (ucMaster) master = ucMaster;
-                        } else if (door.isFrameExtended || (door.domaExtensionType && door.domaExtensionType !== 'none')) {
-                          const feMaster = masters.find(m => m.notes?.includes('枠伸長') || m.notes?.includes('建具伸長') || m.notes?.includes('土間'));
-                          if (feMaster) master = feMaster;
+                          searchDesign = "アンダーカット";
+                        } else if (door.isFrameExtended) {
+                          if (door.domaExtensionType === 'none') searchDesign = "土間納まり（伸長なし）";
+                          else if (door.domaExtensionType === 'frame') searchDesign = "土間納まり（枠伸長）";
+                          else if (door.domaExtensionType === 'door') searchDesign = "土間納まり（建具伸長）";
+                        }
+
+                        // Try finding by searchDesign (special design or explicit design)
+                        let master = priceList.find(p => p.type === door.type && p.design === searchDesign && p.height === effHeight);
+                        
+                        // Fallback: If special searchDesign didn't match anything, look for notes in standard design
+                        if (!master && searchDesign !== door.design) {
+                          const standardMasters = priceList.filter(p => p.type === door.type && p.design === door.design && p.height === effHeight);
+                          if (door.isUndercut) {
+                            master = standardMasters.find(m => m.notes?.includes('アンダーカット'));
+                          } else if (door.isFrameExtended) {
+                            master = standardMasters.find(m => m.notes?.includes('枠伸長') || m.notes?.includes('建具伸長') || m.notes?.includes('土間'));
+                          }
+                        }
+
+                        // Final Fallback: just use the standard design record if still not found
+                        if (!master) {
+                          master = priceList.find(p => p.type === door.type && p.design === door.design && p.height === effHeight);
                         }
 
                         const isLeft = door.hangingSide?.includes('左') || door.hangingSide?.includes('(L)');
