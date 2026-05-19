@@ -11,6 +11,9 @@ create table if not exists internal_doors (
   door_price integer not null default 0,
   set_price integer not null default 0,
   image_url text, 
+  pb_image_url text,
+  pb_image_url_l text,
+  pb_image_url_r text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -22,10 +25,26 @@ create table if not exists entrance_storages (
   width integer not null default 0,
   price integer not null default 0,
   image_url text,
+  pb_image_url text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 3. 送料テーブル (shipping_fees)
+-- 3. ハンドルマスター (handle_master)
+create table if not exists handle_master (
+  id serial primary key,
+  name text unique not null,
+  pb_image_url text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 4. 巾木マスター (baseboard_master)
+create table if not exists baseboard_master (
+  product text primary key,
+  pb_image_url text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 5. 送料テーブル (shipping_fees)
 create table if not exists shipping_fees (
   id serial primary key,
   prefecture text unique not null,
@@ -37,11 +56,15 @@ create table if not exists shipping_fees (
 
 alter table internal_doors enable row level security;
 alter table entrance_storages enable row level security;
+alter table handle_master enable row level security;
+alter table baseboard_master enable row level security;
 alter table shipping_fees enable row level security;
 
 -- 匿名アクセスを全て許可（開発・運用用）
 create policy "Allow all for anon on internal_doors" on internal_doors for all using (true) with check (true);
 create policy "Allow all for anon on entrance_storages" on entrance_storages for all using (true) with check (true);
+create policy "Allow all for anon on handle_master" on handle_master for all using (true) with check (true);
+create policy "Allow all for anon on baseboard_master" on baseboard_master for all using (true) with check (true);
 create policy "Allow all for anon on shipping_fees" on shipping_fees for all using (true) with check (true);
 
 -- --- ストレージ設定 ---

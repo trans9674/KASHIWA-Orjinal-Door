@@ -54,12 +54,12 @@ export const DOOR_SPEC_MASTER: Record<string, { designs: string[], widths: strin
   [DoorType.Sliding2]: {
     designs: ["フラット", "ガラス戸(透明強化ガラス5mm)"],
     widths: ["2431"],
-    hangingSides: ["勝手(R)", "勝手(L)"]
+    hangingSides: ["右勝手(R)", "左勝手(L)"]
   },
   [DoorType.Sliding3]: {
     designs: ["フラット", "ガラス戸(透明強化ガラス5mm)"],
     widths: ["3215"],
-    hangingSides: ["勝手(R)", "勝手(L)"]
+    hangingSides: ["右勝手(R)", "左勝手(L)"]
   },
   [DoorType.Pocket]: {
     designs: ["フラット", "フラット 表示錠", "ガラス戸(透明強化ガラス5mm)"],

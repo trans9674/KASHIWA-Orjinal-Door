@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { DoorItem, OrderState, PriceRecord, StorageTypeRecord } from '../types';
+import { DoorItem, OrderState, PriceRecord, StorageTypeRecord, HandleRecord, BaseboardItem } from '../types';
 import { COLORS } from '../constants';
 
 interface PresentationBoardProps {
@@ -119,10 +119,29 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                     {items.map((item, idx) => {
                       if (item.type === 'door') {
                         const door = item.data as DoorItem;
-                        const master = priceList.find(p => p.type === door.type && p.design === door.design);
                         
-                        const isLeft = door.hangingSide?.includes('左');
-                        const isRight = door.hangingSide?.includes('右');
+                        const getEffectiveHeight = (d: DoorItem) => {
+                          if (d.height !== '特寸') return d.height;
+                          if (!d.customHeight) return 'H2400';
+                          const isStorageItem = d.type.includes('物入');
+                          if (isStorageItem) {
+                            if (d.customHeight <= 900) return "H900";
+                            if (d.customHeight <= 1200) return "H1200";
+                            if (d.customHeight <= 2000) return "H2000";
+                            if (d.customHeight <= 2200) return "H2200";
+                            return "H2400";
+                          } else {
+                            if (d.customHeight <= 2000) return "H2000";
+                            if (d.customHeight <= 2200) return "H2200";
+                            return "H2400";
+                          }
+                        };
+                        
+                        const effHeight = getEffectiveHeight(door);
+                        const master = priceList.find(p => p.type === door.type && p.design === door.design && p.height === effHeight);
+                        
+                        const isLeft = door.hangingSide?.includes('左') || door.hangingSide?.includes('(L)');
+                        const isRight = door.hangingSide?.includes('右') || door.hangingSide?.includes('(R)');
                         let pbUrl = master?.pbImageUrl;
                         if (isLeft && master?.pbImageUrlL) pbUrl = master.pbImageUrlL;
                         else if (isRight && master?.pbImageUrlR) pbUrl = master.pbImageUrlR;
