@@ -189,13 +189,15 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                               {/* Option Labels */}
                               <div className="absolute bottom-1 right-2 flex flex-col items-end pointer-events-none">
                                 {door.isUndercut && (
-                                  <span className="text-red-500 font-black text-[11px] leading-tight drop-shadow-sm tracking-tight text-right">アンダーカット</span>
+                                  <span className="text-red-500 font-black text-[11px] leading-tight drop-shadow-sm tracking-tight text-right">
+                                    アンダーカット {door.undercutHeight || 0}㎜
+                                  </span>
                                 )}
                                 {door.isFrameExtended && (
                                   <span className="text-red-500 font-black text-[9px] leading-tight drop-shadow-sm tracking-tight text-right">
-                                    {door.domaExtensionType === 'frame' ? '土間納まり(枠伸長)' : 
-                                     door.domaExtensionType === 'door' ? '土間納まり(建具伸長)' :
-                                     door.domaExtensionType === 'none' ? '土間納まり' : '枠伸長'}
+                                    {door.domaExtensionType === 'frame' ? `土間（枠伸長） ${door.frameExtensionHeight || 0}㎜` : 
+                                     door.domaExtensionType === 'door' ? `土間（建具伸長） ${door.frameExtensionHeight || 0}㎜` :
+                                     door.domaExtensionType === 'none' ? '土間納まり' : `枠伸長 ${door.frameExtensionHeight || 0}㎜`}
                                   </span>
                                 )}
                               </div>
