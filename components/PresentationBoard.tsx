@@ -48,9 +48,9 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
       "サテンニッケル(PC-422-XN)"
     ];
     const HINGED = [
-      "セラミックホワイト(丁番・戸当りサテンニッケル色)",
-      "マットブラック(丁番・戸当りブラック色)",
-      "サテンニッケル(丁番・戸当りサテンニッケル色)"
+      "セラミックホワイト(丁番サテンニッケル色)",
+      "マットブラック(丁番ブラック色)",
+      "サテンニッケル(丁番サテンニッケル色)"
     ];
     const list = isSliding ? SLIDING : HINGED;
     return list.find(h => h.startsWith(simpleName)) || list[0];
@@ -366,15 +366,15 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         
                         // Label determination logic
                         let handleLabel = "把手部材";
-                        const leverHandles = [
+                        const pullHandles = [
                           "セラミックホワイト(PC-422-001)",
                           "マットブラック(PC-422-003)",
                           "サテンニッケル(PC-422-XN)"
                         ];
-                        const pullHandles = [
-                          "セラミックホワイト(丁番・戸当りサテンニッケル色)",
-                          "マットブラック(丁番・戸当りブラック色)",
-                          "サテンニッケル(丁番・戸当りサテンニッケル色)"
+                        const leverHandles = [
+                          "セラミックホワイト(丁番サテンニッケル色)",
+                          "マットブラック(丁番ブラック色)",
+                          "サテンニッケル(丁番サテンニッケル色)"
                         ];
                         
                         if (leverHandles.includes(handleName)) handleLabel = "レバーハンドル";
