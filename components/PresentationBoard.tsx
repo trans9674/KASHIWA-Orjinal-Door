@@ -185,6 +185,21 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                   {door.design}<br/>IMAGE
                                 </div>
                               )}
+                              
+                              {/* Option Labels */}
+                              <div className="absolute bottom-1 right-2 flex flex-col items-end pointer-events-none">
+                                {door.isUndercut && (
+                                  <span className="text-red-500 font-black text-[11px] leading-tight drop-shadow-sm tracking-tight text-right">アンダーカット</span>
+                                )}
+                                {door.isFrameExtended && (
+                                  <span className="text-red-500 font-black text-[9px] leading-tight drop-shadow-sm tracking-tight text-right">
+                                    {door.domaExtensionType === 'frame' ? '土間納まり(枠伸長)' : 
+                                     door.domaExtensionType === 'door' ? '土間納まり(建具伸長)' :
+                                     door.domaExtensionType === 'none' ? '土間納まり' : '枠伸長'}
+                                  </span>
+                                )}
+                              </div>
+
                               <div className="absolute top-1 left-1 bg-white/90 backdrop-blur px-1.5 py-0.5 rounded shadow-sm text-[9px] font-black border border-black text-black">
                                 WD-{item.index! + 1}
                               </div>
