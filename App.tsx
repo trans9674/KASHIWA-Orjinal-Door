@@ -303,7 +303,7 @@ const App: React.FC = () => {
           type: d.type,
           location: d.location as UsageLocation,
           design: d.design,
-          notes: '',
+          notes: d.notes || '',
           height: d.height,
           framePrice: d.frame_price,
           doorPrice: d.door_price,

@@ -10,6 +10,7 @@ create table if not exists internal_doors (
   frame_price integer not null default 0,
   door_price integer not null default 0,
   set_price integer not null default 0,
+  notes text,
   image_url text, 
   pb_image_url text,
   pb_image_url_l text,

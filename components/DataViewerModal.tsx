@@ -80,6 +80,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     type: DoorType.Hinged,
     location: UsageLocation.Room,
     design: 'フラット',
+    notes: '',
     height: 'H2000',
     framePrice: 0,
     doorPrice: 0,
@@ -286,7 +287,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     if (!editingId) return;
     try {
       const { error } = await supabase.from('internal_doors').update({
-        design: editValues.design, frame_price: editValues.framePrice, door_price: editValues.doorPrice, set_price: editValues.setPrice,
+        design: editValues.design, notes: editValues.notes, frame_price: editValues.framePrice, door_price: editValues.doorPrice, set_price: editValues.setPrice,
       }).eq('id', editingId);
       if (error) throw error;
       setPriceList(prev => prev.map(p => p.id === editingId ? { ...p, ...editValues } as PriceRecord : p));
@@ -328,6 +329,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
         type: newDoor.type, 
         location: newDoor.location || UsageLocation.Room, 
         design: newDoor.design, 
+        notes: newDoor.notes || '',
         height: newDoor.height,
         frame_price: newDoor.framePrice || 0, 
         door_price: newDoor.doorPrice || 0, 
@@ -342,7 +344,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
       if (data) {
         const addedRecord: PriceRecord = {
           id: data[0].id, type: data[0].type, location: data[0].location as UsageLocation, design: data[0].design,
-          notes: '', height: data[0].height, framePrice: data[0].frame_price, doorPrice: data[0].door_price, setPrice: data[0].set_price, 
+          notes: data[0].notes || '', height: data[0].height, framePrice: data[0].frame_price, doorPrice: data[0].door_price, setPrice: data[0].set_price, 
           imageUrl: data[0].image_url,
           pbImageUrl: data[0].pb_image_url,
           pbImageUrlL: data[0].pb_image_url_l,
@@ -455,6 +457,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                     <div className="col-span-1 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">高さ</label><select className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" value={newDoor.height} onChange={(e) => setNewDoor(p => ({...p, height: e.target.value}))}><option value="H2000">H2000</option><option value="H2200">H2200</option><option value="H2400">H2400</option><option value="H900">H900</option><option value="H1200">H1200</option></select></div>
                     <div className="col-span-1 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">枠価格</label><input type="number" className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0" value={newDoor.framePrice || ''} onChange={(e) => { const frame = parseInt(e.target.value) || 0; setNewDoor(p => ({...p, framePrice: frame, setPrice: frame + (p.doorPrice || 0) })); }}/></div>
                     <div className="col-span-1 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">扉価格</label><input type="number" className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0" value={newDoor.doorPrice || ''} onChange={(e) => { const door = parseInt(e.target.value) || 0; setNewDoor(p => ({...p, doorPrice: door, setPrice: (p.framePrice || 0) + door })); }}/></div>
+                    <div className="col-span-1 lg:col-span-2 space-y-1"><label className="text-[10px] font-bold text-gray-500 block">備考</label><input type="text" className="w-full text-xs border border-blue-300 rounded p-1.5 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="例: アンダーカット" value={newDoor.notes} onChange={(e) => setNewDoor(p => ({...p, notes: e.target.value}))}/></div>
                     <div className="col-span-full mt-2 flex justify-end"><button onClick={handleAddDoor} disabled={isAdding} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-2 rounded-lg shadow-sm transition-all disabled:opacity-50">{isAdding ? '保存中...' : '追加する'}</button></div>
                   </div>
                 </details>
@@ -466,6 +469,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                     <tr>
                       <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleSort('type')}>種別<span className="text-gray-400 ml-1">{sortConfig?.key === 'type' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
                       <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleSort('design')}>デザイン<span className="text-gray-400 ml-1">{sortConfig?.key === 'design' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
+                      <th className="p-2 border-b cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleSort('notes')}>備考<span className="text-gray-400 ml-1">{sortConfig?.key === 'notes' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
                       <th className="p-2 border-b text-center cursor-pointer hover:bg-gray-200 transition-colors group" onClick={() => handleSort('height')}>高さ<span className="text-gray-400 ml-1">{sortConfig?.key === 'height' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '▲▼'}</span></th>
                       <th className="p-2 border-b text-right">枠価格</th>
                       <th className="p-2 border-b text-right">扉価格</th>
@@ -482,6 +486,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                         <tr key={row.id} className={`${isEditing ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
                           <td className="p-1.5">{row.type}</td>
                           <td className="p-1.5">{isEditing ? <input className="w-full border p-0.5" value={editValues.design} onChange={e => setEditValues(p=>({...p, design:e.target.value}))}/> : row.design}</td>
+                          <td className="p-1.5">{isEditing ? <input className="w-full border p-0.5" value={editValues.notes} onChange={e => setEditValues(p=>({...p, notes:e.target.value}))}/> : row.notes}</td>
                           <td className="p-1.5 text-center font-mono">{row.height}</td>
                           <td className="p-1.5 text-right font-mono">{isEditing ? <input type="number" className="w-20 text-right border p-0.5" value={editValues.framePrice} onChange={e => { const v = parseInt(e.target.value)||0; setEditValues(p=>({...p, framePrice:v, setPrice: v + (p.doorPrice||0) })) }}/> : `¥${row.framePrice.toLocaleString()}`}</td>
                           <td className="p-1.5 text-right font-mono">{isEditing ? <input type="number" className="w-20 text-right border p-0.5" value={editValues.doorPrice} onChange={e => { const v = parseInt(e.target.value)||0; setEditValues(p=>({...p, doorPrice:v, setPrice: (p.framePrice||0) + v })) }}/> : `¥${row.doorPrice.toLocaleString()}`}</td>

@@ -138,8 +138,19 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         };
                         
                         const effHeight = getEffectiveHeight(door);
-                        const master = priceList.find(p => p.type === door.type && p.design === door.design && p.height === effHeight);
                         
+                        // Find matching master, prioritizing options like undercut or frame extension
+                        const masters = priceList.filter(p => p.type === door.type && p.design === door.design && p.height === effHeight);
+                        let master = masters[0];
+                        
+                        if (door.isUndercut) {
+                          const ucMaster = masters.find(m => m.notes?.includes('アンダーカット'));
+                          if (ucMaster) master = ucMaster;
+                        } else if (door.isFrameExtended || (door.domaExtensionType && door.domaExtensionType !== 'none')) {
+                          const feMaster = masters.find(m => m.notes?.includes('枠伸長') || m.notes?.includes('建具伸長') || m.notes?.includes('土間'));
+                          if (feMaster) master = feMaster;
+                        }
+
                         const isLeft = door.hangingSide?.includes('左') || door.hangingSide?.includes('(L)');
                         const isRight = door.hangingSide?.includes('右') || door.hangingSide?.includes('(R)');
                         let pbUrl = master?.pbImageUrl;
@@ -171,7 +182,19 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                 <p className="font-black text-black text-[10px] leading-tight mb-1 tracking-wide">{door.design}</p>
                                 <div className="grid grid-cols-[38px_1fr] gap-y-0.5 text-[9px] font-black text-black tracking-wide">
                                   <div>サイズ</div>
-                                  <div className="text-right">{door.width}×{door.height}</div>
+                                  <div className="text-right">
+                                    {door.width === '特寸' ? (
+                                      <span className="text-red-500 font-black">特寸 {door.customWidth}</span>
+                                    ) : (
+                                      door.width
+                                    )}
+                                    ×
+                                    {door.height === '特寸' ? (
+                                      <span className="text-red-500 font-black">特寸 {door.customHeight}</span>
+                                    ) : (
+                                      door.height
+                                    )}
+                                  </div>
                                   
                                   <div>扉カラー</div>
                                   <div className="flex items-center justify-end gap-1.5 overflow-hidden">
