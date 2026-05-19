@@ -190,6 +190,7 @@ const createStorageOverlayImage = async (storage: EntranceStorage, category: str
 const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showUpdate, setShowUpdate] = useState(false);
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -197,8 +198,45 @@ const App: React.FC = () => {
       setDeferredPrompt(e);
     };
     window.addEventListener('beforeinstallprompt', handler);
+
+    // Listen for Service Worker update
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(registration => {
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker?.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              setShowUpdate(true);
+            }
+          });
+        });
+      });
+      
+      // Check already waiting SW
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg?.waiting) {
+          setShowUpdate(true);
+        }
+      });
+    }
+
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
+
+  const handleUpdateApp = () => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg?.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          window.location.reload();
+        } else {
+          window.location.reload();
+        }
+      });
+    } else {
+      window.location.reload();
+    }
+  };
 
   const handleInstallApp = async () => {
     if (deferredPrompt) {
@@ -208,7 +246,23 @@ const App: React.FC = () => {
         setDeferredPrompt(null);
       }
     } else {
-      alert('インストールは既に行われているか、お使いの環境では直接インストールできません。ブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」を選択してください。');
+      if (showUpdate) {
+        handleUpdateApp();
+      } else {
+        // Force check for updates
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistration().then(reg => {
+            if (reg) {
+              reg.update();
+              alert('最新版のチェックを行いました。更新がある場合は自動的に適用されます。反映されない場合は、一度ページを再読み込みしてください。');
+            } else {
+              alert('お使いの環境では直接インストールできません。ブラウザのメニュー等から行ってください。');
+            }
+          });
+        } else {
+          alert('お使いの環境ではPWA機能がサポートされていません。');
+        }
+      }
     }
     setIsMenuOpen(false);
   };
@@ -1944,7 +1998,7 @@ ${order.memo}
                       className="w-full text-left px-5 py-3 hover:bg-blue-50 text-blue-700 font-bold flex items-center gap-3 transition-colors"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-                      アプリをインストール
+                      {showUpdate ? 'アプリを更新する' : 'アプリをインストール'}
                     </button>
                   </div>
                 </>
