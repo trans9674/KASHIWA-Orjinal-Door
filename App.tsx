@@ -913,13 +913,61 @@ ${order.memo}
     setIsMailModalOpen(false);
   };
 
+  const processOrderJson = useCallback((json: any) => {
+    if (json && typeof json === 'object' && json.customerInfo && json.doors) {
+      setOrder(json as OrderState);
+      
+      // Restore addressPart (prefecture/detail)
+      if (json.customerInfo.address) {
+         let longestMatch = -1;
+         let matchedPref = '';
+         shippingFees.forEach(fee => {
+           if (json.customerInfo.address.startsWith(fee.prefecture)) {
+             if (fee.prefecture.length > longestMatch) {
+               longestMatch = fee.prefecture.length;
+               matchedPref = fee.prefecture;
+             }
+           }
+         });
+         setAddressPart({
+           prefecture: matchedPref,
+           detail: json.customerInfo.address.slice(matchedPref.length)
+         });
+      }
+      setIsModalOpen(false); 
+      return true;
+    }
+    return false;
+  }, [shippingFees]);
+
+  // PWA Launch Handler support
+  useEffect(() => {
+    if ('launchQueue' in window) {
+      (window as any).launchQueue.setConsumer(async (launchParams: any) => {
+        if (launchParams.files.length > 0) {
+          const fileHandle = launchParams.files[0];
+          const file = await fileHandle.getFile();
+          const contents = await file.text();
+          try {
+            const json = JSON.parse(contents);
+            if (processOrderJson(json)) {
+              console.log('Successfully launched from file');
+            }
+          } catch (e) {
+            console.error('Launch file error:', e);
+          }
+        }
+      });
+    }
+  }, [processOrderJson]);
+
   const handleSaveJson = () => {
     const siteName = order.customerInfo.siteName || '無題';
     const date = new Date().toISOString().split('T')[0];
-    const filename = `${siteName}_DOOR${date}.json`;
+    const filename = `${siteName}_DOOR${date}.kashiwa`;
     
     const jsonStr = JSON.stringify(order, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const blob = new Blob([jsonStr], { type: 'application/kashiwa' });
     const url = URL.createObjectURL(blob);
     
     const a = document.createElement('a');
@@ -939,26 +987,7 @@ ${order.memo}
     reader.onload = (event) => {
       try {
         const json = JSON.parse(event.target?.result as string);
-        if (json && typeof json === 'object' && json.customerInfo && json.doors) {
-          setOrder(json as OrderState);
-          
-          // Restore addressPart (prefecture/detail)
-          if (json.customerInfo.address) {
-             let longestMatch = -1;
-             let matchedPref = '';
-             shippingFees.forEach(fee => {
-               if (json.customerInfo.address.startsWith(fee.prefecture)) {
-                 if (fee.prefecture.length > longestMatch) {
-                   longestMatch = fee.prefecture.length;
-                   matchedPref = fee.prefecture;
-                 }
-               }
-             });
-             setAddressPart({
-               prefecture: matchedPref,
-               detail: json.customerInfo.address.slice(matchedPref.length)
-             });
-          }
+        if (processOrderJson(json)) {
           alert('データを読み込みました。');
         } else {
           alert('無効なファイル形式です。');
@@ -1881,7 +1910,7 @@ ${order.memo}
             <label className="bg-white text-gray-700 border-2 border-gray-200 hover:bg-gray-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap shrink-0">
               <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               読込
-              <input type="file" accept=".json" onChange={handleLoadJson} className="hidden" />
+              <input type="file" accept=".json,.kashiwa" onChange={handleLoadJson} className="hidden" />
             </label>
           </div>
         </div>

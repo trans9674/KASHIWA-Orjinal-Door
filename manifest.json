@@ -1,0 +1,25 @@
+{
+  "name": "Kashiwa Order System",
+  "short_name": "Kashiwa",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/5968/5968412.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "application/kashiwa": [".kashiwa"],
+        "application/json": [".json"]
+      }
+    }
+  ]
+}
