@@ -249,18 +249,24 @@ const App: React.FC = () => {
       if (showUpdate) {
         handleUpdateApp();
       } else {
-        // Force check for updates
+        // Try to get registration and force update
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistration().then(reg => {
-            if (reg) {
-              reg.update();
-              alert('最新版のチェックを行いました。更新がある場合は自動的に適用されます。反映されない場合は、一度ページを再読み込みしてください。');
+          try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            if (registrations.length > 0) {
+              for (const reg of registrations) {
+                await reg.update();
+              }
+              alert('最新版のチェックを完了しました。\n更新がある場合は次回の起動時に自動で適用されます。\n即座に反映させるには、一度アプリを閉じて再起動してください。');
+              window.location.reload();
             } else {
-              alert('お使いの環境では直接インストールできません。ブラウザのメニュー等から行ってください。');
+              alert('お使いの環境では、ブラウザのメニューからインストールを行ってください。\n\n・iPhone/iPad: 「共有」ボタン＞「ホーム画面に追加」\n・Android: 「⋮」メニュー＞「アプリをインストール」\n・PC: アドレスバー右側の「インストール」アイコン');
             }
-          });
+          } catch (e) {
+            alert('チェック中にエラーが発生しました。ブラウザのリロードをお試しください。');
+          }
         } else {
-          alert('お使いの環境ではPWA機能がサポートされていません。');
+          alert('お使いの環境ではアプリ（PWA）機能がサポートされていません。通常どおりブラウザでご利用ください。');
         }
       }
     }
