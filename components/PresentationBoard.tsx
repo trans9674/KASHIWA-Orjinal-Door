@@ -210,7 +210,16 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                             <div className="p-2 flex flex-col justify-between flex-1">
                               <div>
                                 <div className="text-blue-700 font-black text-[9px] leading-none mb-1 tracking-wider">{door.roomName}</div>
-                                <h3 className="font-black text-black text-[11px] leading-tight mb-0.5 whitespace-nowrap tracking-wider">{door.type}{door.hangingSide && door.hangingSide !== 'なし' ? `　　${door.hangingSide}` : ''}</h3>
+                                <div className="flex items-baseline justify-between gap-0.5 mb-0.5 overflow-hidden">
+                                  <h3 className={`font-black text-black ${ (door.type + (door.hangingSide || '')).length > 15 ? 'text-[10px] tracking-tighter' : 'text-[11px] tracking-tight'} leading-tight whitespace-nowrap`}>
+                                    {door.type}
+                                  </h3>
+                                  {door.hangingSide && door.hangingSide !== 'なし' && (
+                                    <span className={`font-black text-black ${ (door.type + door.hangingSide).length > 15 ? 'text-[9px] tracking-tighter' : 'text-[10px] tracking-tight'} leading-tight whitespace-nowrap ml-1`}>
+                                      {door.hangingSide}
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="font-black text-black text-[10px] leading-tight mb-1 tracking-wide">{door.design}</p>
                                 <div className="grid grid-cols-[38px_1fr] gap-y-0.5 text-[9px] font-black text-black tracking-wide">
                                   <div>サイズ</div>
