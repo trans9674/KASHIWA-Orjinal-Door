@@ -80,7 +80,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
         {/* A3 Presentation Sheet (Landscape) */}
           
           {/* Header Area */}
-          <div className="bg-black text-white p-2 mb-1 flex justify-between items-center shrink-0">
+          <div className="bg-black text-white p-2 mb-1 print:mb-4 flex justify-between items-center shrink-0">
             <div>
               <h1 className="text-xl font-black tracking-tighter">KASHIWA PRESENTATION BOARD</h1>
               <p className="text-white font-black uppercase tracking-widest text-[8px]">Custom Door & Storage Solution</p>
@@ -92,7 +92,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
           </div>
 
           {/* Color Palette Summary */}
-          <div className="px-8 mb-1 shrink-0">
+          <div className="px-8 mb-1 print:mb-5 shrink-0">
              <div className="bg-gray-50 border border-black rounded-lg p-1.5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                    <div className="text-[9px] print:text-[10.5px] font-black text-black uppercase tracking-widest border-r border-black pr-3 mr-1">Color Palette</div>

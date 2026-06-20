@@ -1552,6 +1552,7 @@ ${order.memo}
                                          <span className={isDoorColorRed ? 'text-red-600 font-bold' : ''}>色: {door.doorColor}</span>
                                          <span className={isFrameColorRed ? 'text-red-600 font-bold ml-1' : 'ml-1'}>(枠:{door.frameColor})</span>
                                        </span>
+                                       {door.remarks && <span className="text-red-600 font-bold">備考: {door.remarks}</span>}
                                        {door.specialNotes && <span className="text-red-500 font-bold">特記: {door.specialNotes}</span>}
                                     </div>
                                   </td>
