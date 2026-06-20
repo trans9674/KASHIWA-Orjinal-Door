@@ -173,7 +173,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         else if (isRight && master?.pbImageUrlR) pbUrl = master.pbImageUrlR;
 
                         return (
-                          <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[150px]">
+                          <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[120px]">
                             {/* Image Area */}
                             <div className="h-20 bg-white p-1 relative flex items-center justify-center overflow-hidden border-b border-black">
                               {pbUrl ? (
@@ -280,7 +280,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const storageMaster = storageTypes.find(s => s.id === storage.type);
                         const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
                         return (
-                          <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[150px]">
+                          <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[120px]">
                             <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
                               {imgUrl ? (
                                 <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
@@ -326,7 +326,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const baseboard = item.data as any;
                         const record = baseboardMaster.find(b => b.product === baseboard.product);
                         return (
-                          <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[150px]">
+                          <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[120px]">
                             <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
@@ -387,7 +387,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         else if (handleName === "J型取手") handleLabel = "J型取手";
 
                         return (
-                          <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[150px]">
+                          <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[120px]">
                             <div className="h-24 bg-white p-1 relative flex items-center justify-center border-b border-black">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
@@ -410,7 +410,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                     })}
                     {/* Fill remaining slots to make exactly 18 slots (3 rows) */}
                     {Array.from({ length: Math.max(0, 18 - items.length) }).map((_, i) => (
-                      <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-black min-h-[150px]"></div>
+                      <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-black min-h-[120px]"></div>
                     ))}
                   </>
                 );
