@@ -173,7 +173,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         return (
                           <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
                             {/* Image Area */}
-                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center overflow-hidden border-b border-black">
+                            <div className="h-20 bg-white p-0.5 relative flex items-center justify-center overflow-hidden border-b border-black">
                               {pbUrl ? (
                                 <img src={pbUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : master?.imageUrl ? (
@@ -237,7 +237,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                   
                                   <div>扉カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
-                                    <span className="text-[6px] font-black text-black leading-tight truncate">{door.doorColor}</span>
+                                    <span className="text-[6px] font-black text-black leading-tight whitespace-nowrap">{door.doorColor}</span>
                                     <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.doorColor] ? (
                                         <img src={COLOR_IMAGES[door.doorColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -249,7 +249,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
 
                                   <div>枠カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
-                                    <span className="text-[6px] font-black text-black leading-tight truncate">{door.frameColor}</span>
+                                    <span className="text-[6px] font-black text-black leading-tight whitespace-nowrap">{door.frameColor}</span>
                                     <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.frameColor] ? (
                                         <img src={COLOR_IMAGES[door.frameColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
