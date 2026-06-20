@@ -175,7 +175,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         return (
                           <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
                             {/* Image Area */}
-                            <div className="h-20 bg-white p-0.5 relative flex items-center justify-center overflow-hidden border-b border-black">
+                            <div className="h-[72px] bg-white p-0.5 relative flex items-center justify-center overflow-hidden border-b border-black">
                               {pbUrl ? (
                                 <img src={pbUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : master?.imageUrl ? (
@@ -281,7 +281,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
                         return (
                           <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
-                            <div className="h-20 bg-white p-0.5 relative flex items-center justify-center border-b border-black">
+                            <div className="h-[72px] bg-white p-0.5 relative flex items-center justify-center border-b border-black">
                               {imgUrl ? (
                                 <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
                               ) : (
@@ -323,7 +323,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const record = baseboardMaster.find(b => b.product === baseboard.product);
                         return (
                           <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
-                            <div className="h-20 bg-white p-0.5 relative flex items-center justify-center border-b border-black">
+                            <div className="h-[72px] bg-white p-0.5 relative flex items-center justify-center border-b border-black">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
                               ) : COLOR_IMAGES[baseboard.color] ? (
@@ -387,7 +387,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
 
                         return (
                           <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
-                            <div className="h-20 bg-white p-0.5 relative flex items-center justify-center border-b border-black">
+                            <div className="h-[72px] bg-white p-0.5 relative flex items-center justify-center border-b border-black">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
                               ) : (
