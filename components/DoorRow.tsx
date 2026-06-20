@@ -755,6 +755,16 @@ export const DoorRow: React.FC<DoorRowProps> = ({
           )}
         </div>
       </td>
+      <td className="p-1">
+        <input
+          type="text"
+          name="remarks"
+          value={door.remarks || ''}
+          onChange={handleChange}
+          className="w-full border rounded px-1 py-1 h-8 text-red-600"
+          placeholder="備考"
+        />
+      </td>
       <td className="p-1 text-right font-mono font-bold text-sm pr-2 text-gray-900 border-l border-gray-100">
         {door.price.toLocaleString()}
       </td>

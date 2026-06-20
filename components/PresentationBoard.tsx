@@ -261,6 +261,11 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                     </div>
                                   </div>
                                 </div>
+                                {door.remarks && (
+                                  <p className="text-[8px] font-black text-red-600 leading-tight mt-0.5 border-t border-black pt-0.5">
+                                    備考: {door.remarks}
+                                  </p>
+                                )}
                               </div>
                               {showPrices && (
                                 <div className="pt-0.5 mt-0.5 border-t border-black text-right">

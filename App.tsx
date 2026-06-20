@@ -2207,6 +2207,7 @@ ${order.memo}
                     </button>
                   </div>
                 </th>
+                <th className="w-24">備考</th>
                 <th className="w-[90px]">価格 (円)</th>
                 <th className="w-32">操作</th>
               </tr>

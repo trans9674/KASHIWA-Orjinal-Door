@@ -63,6 +63,7 @@ export interface DoorItem {
   isFrameExtended?: boolean;
   domaExtensionType?: 'none' | 'frame' | 'door';
   frameExtensionHeight?: number; // 枠伸長/建具伸長の数値用
+  remarks?: string;
 }
 
 export interface StorageTypeRecord {
