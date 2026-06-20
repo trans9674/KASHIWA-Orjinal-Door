@@ -65,6 +65,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
     <div className="fixed inset-0 z-[600] bg-gray-900/95 backdrop-blur-md overflow-y-auto p-4 md:p-12 print:static print:p-0 print:bg-white print:overflow-visible">
       <div className="max-w-[1400px] mx-auto relative pb-24 print:pb-0">
         {/* A3 Presentation Sheet (Landscape) */}
+        <div className="bg-white shadow-2xl mx-auto print:shadow-none print:m-0 overflow-hidden rounded-sm flex flex-col print-area" 
+             style={{ width: '100%', maxWidth: '420mm', minHeight: '320mm', height: '320mm', margin: '0 auto' }}>
           
           {/* Header Area */}
           <div className="bg-black text-white p-2 mb-1 flex justify-between items-center shrink-0">
@@ -219,7 +221,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                   )}
                                 </div>
                                 <p className="font-black text-black text-[8px] leading-tight mb-0.5 tracking-wide">{door.design}</p>
-                                <div className="grid grid-cols-[25px_1fr] gap-y-0 text-[7px] font-black text-black tracking-wide">
+                                <div className="grid grid-cols-[38px_1fr] gap-y-0 text-[7px] font-black text-black tracking-wide">
                                   <div>サイズ</div>
                                   <div className="text-right">
                                     {door.width === '特寸' ? (
@@ -279,7 +281,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
                         return (
                           <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
-                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black">
+                            <div className="h-20 bg-white p-0.5 relative flex items-center justify-center border-b border-black">
                               {imgUrl ? (
                                 <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
                               ) : (
@@ -321,7 +323,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const record = baseboardMaster.find(b => b.product === baseboard.product);
                         return (
                           <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
-                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black">
+                            <div className="h-20 bg-white p-0.5 relative flex items-center justify-center border-b border-black">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
                               ) : COLOR_IMAGES[baseboard.color] ? (
@@ -385,7 +387,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
 
                         return (
                           <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
-                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black">
+                            <div className="h-20 bg-white p-0.5 relative flex items-center justify-center border-b border-black">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
                               ) : (
@@ -474,7 +476,43 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
             閉じる
           </button>
         </div>
-      {/* End of content */}
+      </div> {/* Closes max-w-[1400px] */}
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          * { 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+          }
+          body * { 
+            visibility: hidden !important; 
+          }
+          .print-area, .print-area * { 
+            visibility: visible !important; 
+          }
+          .no-print { 
+            display: none !important; 
+          }
+          .print-area { 
+            position: fixed !important; 
+            left: 0 !important; 
+            top: 0 !important; 
+            width: 420mm !important; 
+            height: 320mm !important; 
+            max-width: none !important;
+            margin: 0 !important; 
+            padding: 0 !important; 
+            border: none !important;
+            box-shadow: none !important; 
+            z-index: 9999 !important; 
+            background: white !important;
+          }
+          @page { 
+            size: A3 landscape; 
+            margin: 0; 
+          }
+        }
+      ` }} />
     </div>
   );
 };
