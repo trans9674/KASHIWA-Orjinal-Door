@@ -69,10 +69,10 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
              style={{ width: '100%', maxWidth: '420mm', minHeight: '297mm', margin: '0 auto' }}>
           
           {/* Header Area */}
-          <div className="bg-black text-white p-4 mb-2 flex justify-between items-center shrink-0">
+          <div className="bg-black text-white p-3 mb-1 flex justify-between items-center shrink-0">
             <div>
-              <h1 className="text-3xl font-black tracking-tighter">KASHIWA PRESENTATION BOARD</h1>
-              <p className="text-white font-black uppercase tracking-widest text-[10px]">Custom Door & Storage Solution</p>
+              <h1 className="text-2xl font-black tracking-tighter">KASHIWA PRESENTATION BOARD</h1>
+              <p className="text-white font-black uppercase tracking-widest text-[9px]">Custom Door & Storage Solution</p>
             </div>
             <div className="text-right">
               <p className="text-lg font-black">{order.customerInfo.siteName} 様邸 新築工事</p>
@@ -104,15 +104,15 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
           </div>
 
           <div className="px-8 pb-8 flex-1">
-            {/* 6x4 Grid Layout */}
-            <div className="grid grid-cols-6 grid-rows-4 gap-3 h-full">
+            {/* 6x3 Grid Layout */}
+            <div className="grid grid-cols-6 grid-rows-3 gap-2 h-full">
               {(() => {
                 const items = [
                   ...order.doors.map((door, idx) => ({ type: 'door' as const, data: door, index: idx })),
                   ...(order.storage.type !== 'NONE' ? [{ type: 'storage' as const, data: order.storage }] : []),
                   ...order.baseboards.filter(b => b.quantity > 0).map(b => ({ type: 'baseboard' as const, data: b })),
                   ...usedHandles.map(h => ({ type: 'handle' as const, data: h }))
-                ].slice(0, 24);
+                ].slice(0, 18);
 
                 return (
                   <>
@@ -419,7 +419,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
 
 
             {/* Footer Area */}
-            <div className={`mt-6 pt-4 border-t-2 border-black flex justify-between items-start`}>
+            <div className={`mt-2 pt-1 border-t-2 border-black flex justify-between items-start`}>
               <div className="flex gap-12">
                 <div>
                    <p className="font-black text-black text-lg">{order.customerInfo.company}</p>
@@ -427,9 +427,9 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
               </div>
               <div className="flex flex-col items-end">
                 {showPrices && (
-                  <div className="mb-4 text-right">
-                     <p className="text-[11px] font-black text-black uppercase tracking-widest mb-1">Total Estimated Amount</p>
-                     <p className="text-4xl font-black text-black font-['Inter'] tracking-tighter italic">¥{(
+                  <div className="mb-0 text-right">
+                     <p className="text-[10px] font-black text-black uppercase tracking-widest mb-0">Total Estimated Amount</p>
+                     <p className="text-3xl font-black text-black font-['Inter'] tracking-tighter italic">¥{(
                        order.doors.reduce((sum, d) => sum + d.price, 0) + 
                        (order.storage.type !== 'NONE' ? order.storage.basePrice : 0) + 
                        order.baseboards.reduce((sum, b) => sum + (b.unitPrice * b.quantity), 0)
