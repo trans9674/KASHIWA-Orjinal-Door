@@ -103,9 +103,9 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
              </div>
           </div>
 
-          <div className="px-8 pb-8 flex-1">
+          <div className="px-5 pb-5 flex-1">
             {/* 6x3 Grid Layout */}
-            <div className="grid grid-cols-6 grid-rows-3 gap-2 h-full">
+            <div className="grid grid-cols-6 grid-rows-3 gap-1.5 h-full">
               {(() => {
                 const items = [
                   ...order.doors.map((door, idx) => ({ type: 'door' as const, data: door, index: idx })),
@@ -173,15 +173,15 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         else if (isRight && master?.pbImageUrlR) pbUrl = master.pbImageUrlR;
 
                         return (
-                          <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[120px]">
+                          <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
                             {/* Image Area */}
-                            <div className="h-20 bg-white p-1 relative flex items-center justify-center overflow-hidden border-b border-black">
+                            <div className="h-16 bg-white p-1 relative flex items-center justify-center overflow-hidden border-b border-black">
                               {pbUrl ? (
                                 <img src={pbUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : master?.imageUrl ? (
                                 <img src={master.imageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : (
-                                <div className="text-[8px] text-black text-center font-black px-1">
+                                <div className="text-[7px] text-black text-center font-black px-1">
                                   {door.design}<br/>IMAGE
                                 </div>
                               )}
@@ -189,12 +189,12 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                               {/* Option Labels */}
                               <div className="absolute bottom-0.5 right-1 flex flex-col items-end pointer-events-none">
                                 {door.isUndercut && (
-                                  <span className="text-red-500 font-black text-[9px] leading-tight drop-shadow-sm tracking-tight text-right">
+                                  <span className="text-red-500 font-black text-[8px] leading-tight drop-shadow-sm tracking-tight text-right">
                                     アンダーカット {door.undercutHeight || 0}㎜
                                   </span>
                                 )}
                                 {door.isFrameExtended && (
-                                  <span className="text-red-500 font-black text-[8px] leading-tight drop-shadow-sm tracking-tight text-right">
+                                  <span className="text-red-500 font-black text-[7px] leading-tight drop-shadow-sm tracking-tight text-right">
                                     {door.domaExtensionType === 'frame' ? `土間（枠伸長） ${door.frameExtensionHeight || 0}㎜` : 
                                      door.domaExtensionType === 'door' ? `土間（建具伸長） ${door.frameExtensionHeight || 0}㎜` :
                                      door.domaExtensionType === 'none' ? '土間納まり' : `枠伸長 ${door.frameExtensionHeight || 0}㎜`}
@@ -202,26 +202,26 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                 )}
                               </div>
 
-                              <div className="absolute top-0.5 left-0.5 bg-white/90 backdrop-blur px-1 py-0 rounded shadow-sm text-[8px] font-black border border-black text-black">
+                              <div className="absolute top-0.5 left-0.5 bg-white/90 backdrop-blur px-1 py-0 rounded shadow-sm text-[7px] font-black border border-black text-black">
                                 WD-{item.index! + 1}
                               </div>
                             </div>
                             {/* Details */}
-                            <div className="p-1.5 flex flex-col justify-between flex-1">
+                            <div className="p-1 flex flex-col justify-between flex-1">
                               <div>
-                                <div className="text-blue-700 font-black text-[8px] leading-none mb-0.5 tracking-wider">{door.roomName}</div>
+                                <div className="text-blue-700 font-black text-[7px] leading-none mb-0.5 tracking-wider">{door.roomName}</div>
                                 <div className="flex items-baseline justify-between gap-0.5 mb-0.5 overflow-hidden">
-                                  <h3 className={`font-black text-black ${ (door.type + (door.hangingSide || '')).length > 15 ? 'text-[9px] tracking-tighter' : 'text-[10px] tracking-tight'} leading-tight whitespace-nowrap`}>
+                                  <h3 className={`font-black text-black ${ (door.type + (door.hangingSide || '')).length > 15 ? 'text-[8px] tracking-tighter' : 'text-[9px] tracking-tight'} leading-tight whitespace-nowrap`}>
                                     {door.type}
                                   </h3>
                                   {door.hangingSide && door.hangingSide !== 'なし' && (
-                                    <span className={`font-black text-black ${ (door.type + door.hangingSide).length > 15 ? 'text-[8px] tracking-tighter' : 'text-[9px] tracking-tight'} leading-tight whitespace-nowrap ml-1`}>
+                                    <span className={`font-black text-black ${ (door.type + door.hangingSide).length > 15 ? 'text-[7px] tracking-tighter' : 'text-[8px] tracking-tight'} leading-tight whitespace-nowrap ml-1`}>
                                       {door.hangingSide}
                                     </span>
                                   )}
                                 </div>
-                                <p className="font-black text-black text-[9px] leading-tight mb-0.5 tracking-wide">{door.design}</p>
-                                <div className="grid grid-cols-[30px_1fr] gap-y-0 text-[8px] font-black text-black tracking-wide">
+                                <p className="font-black text-black text-[8px] leading-tight mb-0.5 tracking-wide">{door.design}</p>
+                                <div className="grid grid-cols-[25px_1fr] gap-y-0 text-[7px] font-black text-black tracking-wide">
                                   <div>サイズ</div>
                                   <div className="text-right">
                                     {door.width === '特寸' ? (
@@ -239,8 +239,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                   
                                   <div>扉カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
-                                    <span className="text-[7px] font-black text-black leading-tight truncate">{door.doorColor}</span>
-                                    <div className="w-3 h-3 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                    <span className="text-[6px] font-black text-black leading-tight truncate">{door.doorColor}</span>
+                                    <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.doorColor] ? (
                                         <img src={COLOR_IMAGES[door.doorColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                       ) : (
@@ -251,8 +251,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
 
                                   <div>枠カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
-                                    <span className="text-[7px] font-black text-black leading-tight truncate">{door.frameColor}</span>
-                                    <div className="w-3 h-3 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                    <span className="text-[6px] font-black text-black leading-tight truncate">{door.frameColor}</span>
+                                    <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.frameColor] ? (
                                         <img src={COLOR_IMAGES[door.frameColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                       ) : (
@@ -262,14 +262,14 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                   </div>
                                 </div>
                                 {door.remarks && (
-                                  <p className="text-[8px] font-black text-red-600 leading-tight mt-0.5 border-t border-black pt-0.5">
+                                  <p className="text-[7px] font-black text-red-600 leading-tight mt-0.5 border-t border-black pt-0.5">
                                     備考: {door.remarks}
                                   </p>
                                 )}
                               </div>
                               {showPrices && (
                                 <div className="pt-0.5 mt-0.5 border-t border-black text-right">
-                                  <span className="font-black text-black font-['Inter'] text-[10px]">¥{door.price.toLocaleString()}</span>
+                                  <span className="font-black text-black font-['Inter'] text-[9px]">¥{door.price.toLocaleString()}</span>
                                 </div>
                               )}
                             </div>
