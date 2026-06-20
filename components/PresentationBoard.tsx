@@ -192,7 +192,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                               ) : master?.imageUrl ? (
                                 <img src={master.imageUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : (
-                                <div className="text-[7px] print:text-[8.5px] text-black text-center font-black px-1">
+                                <div className="text-[7px] print:text-[10px] text-black text-center font-black px-1">
                                   {door.design}<br/>IMAGE
                                 </div>
                               )}
@@ -200,12 +200,12 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                               {/* Option Labels */}
                               <div className="absolute bottom-0.5 right-1 flex flex-col items-end pointer-events-none">
                                 {door.isUndercut && (
-                                  <span className="text-red-500 font-black text-[7px] print:text-[8.5px] leading-tight drop-shadow-sm tracking-tight text-right">
+                                  <span className="text-red-500 font-black text-[7px] print:text-[10px] leading-tight drop-shadow-sm tracking-tight text-right">
                                     アンダーカット {door.undercutHeight || 0}㎜
                                   </span>
                                 )}
                                 {door.isFrameExtended && (
-                                  <span className="text-red-500 font-black text-[7px] print:text-[8.5px] leading-tight drop-shadow-sm tracking-tight text-right">
+                                  <span className="text-red-500 font-black text-[7px] print:text-[10px] leading-tight drop-shadow-sm tracking-tight text-right">
                                     {door.domaExtensionType === 'frame' ? `土間（枠伸長） ${door.frameExtensionHeight || 0}㎜` : 
                                      door.domaExtensionType === 'door' ? `土間（建具伸長） ${door.frameExtensionHeight || 0}㎜` :
                                      door.domaExtensionType === 'none' ? '土間納まり' : `枠伸長 ${door.frameExtensionHeight || 0}㎜`}
@@ -213,26 +213,26 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                 )}
                               </div>
 
-                              <div className="absolute top-0.5 left-0.5 bg-white/90 backdrop-blur px-1 py-0 rounded shadow-sm text-[7px] print:text-[8.5px] font-black border border-black text-black">
+                              <div className="absolute top-0.5 left-0.5 bg-white/90 backdrop-blur px-1 py-0 rounded shadow-sm text-[7px] print:text-[10px] font-black border border-black text-black">
                                 WD-{item.index! + 1}
                               </div>
                             </div>
                             {/* Details */}
                             <div className="p-1 flex flex-col justify-between flex-1">
                               <div>
-                                <div className="text-blue-700 font-black text-[7px] print:text-[8.5px] leading-none mb-0.5 tracking-wider">{door.roomName}</div>
+                                <div className="text-blue-700 font-black text-[7px] print:text-[10px] leading-none mb-0.5 tracking-wider">{door.roomName}</div>
                                 <div className="flex items-baseline justify-between gap-0.5 mb-0.5 overflow-hidden">
-                                  <h3 className={`font-black text-black text-[8px] print:text-[9.5px] tracking-tight leading-tight whitespace-nowrap`}>
+                                  <h3 className={`font-black text-black text-[8px] print:text-[11px] tracking-tight leading-tight whitespace-nowrap`}>
                                     {door.type}
                                   </h3>
                                   {door.hangingSide && door.hangingSide !== 'なし' && (
-                                    <span className={`font-black text-black text-[7px] print:text-[8.5px] tracking-tight leading-tight whitespace-nowrap ml-1`}>
+                                    <span className={`font-black text-black text-[7px] print:text-[10px] tracking-tight leading-tight whitespace-nowrap ml-1`}>
                                       {door.hangingSide}
                                     </span>
                                   )}
                                 </div>
-                                <p className="font-black text-black text-[8px] print:text-[9.5px] leading-tight mb-0.5 tracking-wide">{door.design}</p>
-                                <div className="grid grid-cols-[38px_1fr] gap-y-0 text-[7px] print:text-[8.5px] font-black text-black tracking-wide">
+                                <p className="font-black text-black text-[8px] print:text-[11px] leading-tight mb-0.5 tracking-wide">{door.design}</p>
+                                <div className="grid grid-cols-[38px_1fr] gap-y-0 text-[7px] print:text-[10px] font-black text-black tracking-wide">
                                   <div className="whitespace-nowrap">サイズ</div>
                                   <div className="text-right">
                                     {door.width === '特寸' ? (
@@ -250,7 +250,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                   
                                   <div className="whitespace-nowrap">扉カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
-                                    <span className="text-[6px] print:text-[7.5px] font-black text-black leading-tight truncate">{door.doorColor}</span>
+                                    <span className="text-[6px] print:text-[9px] font-black text-black leading-tight truncate">{door.doorColor}</span>
                                     <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.doorColor] ? (
                                         <img src={COLOR_IMAGES[door.doorColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -262,7 +262,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
 
                                   <div className="whitespace-nowrap">枠カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
-                                    <span className="text-[6px] print:text-[7.5px] font-black text-black leading-tight truncate">{door.frameColor}</span>
+                                    <span className="text-[6px] print:text-[9px] font-black text-black leading-tight truncate">{door.frameColor}</span>
                                     <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.frameColor] ? (
                                         <img src={COLOR_IMAGES[door.frameColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -273,14 +273,14 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                   </div>
                                 </div>
                                 {door.remarks && (
-                                  <p className="text-[7px] print:text-[8.5px] font-black text-red-600 leading-tight mt-0.5 border-t border-black pt-0.5">
+                                  <p className="text-[7px] print:text-[10px] font-black text-red-600 leading-tight mt-0.5 border-t border-black pt-0.5">
                                     備考: {door.remarks}
                                   </p>
                                 )}
                               </div>
                               {showPrices && (
                                 <div className="pt-0.5 mt-0.5 border-t border-black text-right">
-                                  <span className="font-black text-black font-['Inter'] text-[8px] print:text-[9.5px]">¥{door.price.toLocaleString()}</span>
+                                  <span className="font-black text-black font-['Inter'] text-[8px] print:text-[11px]">¥{door.price.toLocaleString()}</span>
                                 </div>
                               )}
                             </div>
@@ -296,18 +296,18 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                               {imgUrl ? (
                                 <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
                               ) : (
-                                <div className="text-[7px] print:text-[8.5px] text-black font-black">STORAGE</div>
+                                <div className="text-[7px] print:text-[10px] text-black font-black">STORAGE</div>
                               )}
-                              <div className="absolute top-0.5 left-0.5 bg-black text-white px-1 py-0 rounded shadow-sm text-[7px] print:text-[8.5px] font-black">
+                              <div className="absolute top-0.5 left-0.5 bg-black text-white px-1 py-0 rounded shadow-sm text-[7px] print:text-[10px] font-black">
                                 ST-1
                               </div>
                             </div>
                               {/* Details */}
                               <div className="p-1 flex flex-col justify-between flex-1">
                                 <div>
-                                  <div className="text-blue-700 font-black text-[7px] print:text-[8.5px] leading-none mb-0.5">玄関収納</div>
-                                  <h3 className="font-black text-black text-[8px] print:text-[9.5px] leading-tight">{storage.type}</h3>
-                                  <div className="flex items-center justify-between mt-1 text-[7px] print:text-[8.5px]">
+                                  <div className="text-blue-700 font-black text-[7px] print:text-[10px] leading-none mb-0.5">玄関収納</div>
+                                  <h3 className="font-black text-black text-[8px] print:text-[11px] leading-tight">{storage.type}</h3>
+                                  <div className="flex items-center justify-between mt-1 text-[7px] print:text-[10px]">
                                     <div className="font-black text-black">{storage.size} / {storage.filler}</div>
                                     <div className="flex items-center gap-0.5">
                                       <span className="font-black text-black leading-tight">{storage.color}</span>
@@ -323,7 +323,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                 </div>
                                 {showPrices && (
                                   <div className="pt-0.5 mt-0.5 border-t border-black text-right">
-                                    <span className="font-black text-black font-['Inter'] text-[8px] print:text-[9.5px]">¥{storage.basePrice.toLocaleString()}</span>
+                                    <span className="font-black text-black font-['Inter'] text-[8px] print:text-[11px]">¥{storage.basePrice.toLocaleString()}</span>
                                   </div>
                                 )}
                               </div>
@@ -342,14 +342,14 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                               ) : (
                                 <div className="w-8 h-8 rounded border border-black shadow-inner" style={{ backgroundColor: COLOR_MAP[baseboard.color] || '#666' }}></div>
                               )}
-                              <div className="absolute top-0.5 left-0.5 bg-black text-white px-1 py-0 rounded shadow-sm text-[7px] print:text-[8.5px] font-black">
+                              <div className="absolute top-0.5 left-0.5 bg-black text-white px-1 py-0 rounded shadow-sm text-[7px] print:text-[10px] font-black">
                                 BB
                               </div>
                             </div>
                             <div className="p-1 flex flex-col justify-between flex-1">
                               <div>
-                                <h3 className="font-black text-black text-[8px] print:text-[9.5px] leading-tight">{baseboard.product}</h3>
-                                <div className="text-[7px] print:text-[8.5px] font-black text-black mt-0.5 flex items-center justify-between">
+                                <h3 className="font-black text-black text-[8px] print:text-[11px] leading-tight">{baseboard.product}</h3>
+                                <div className="text-[7px] print:text-[10px] font-black text-black mt-0.5 flex items-center justify-between">
                                   <span className="flex items-center gap-0.5 font-black text-black">
                                     <span className="leading-tight">{baseboard.color}</span>
                                     <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
@@ -363,9 +363,9 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                 </div>
                               </div>
                               <div className="mt-0.5 flex justify-between items-end">
-                                 <div className="text-[7px] print:text-[8.5px] font-black text-black">-{baseboard.quantity}-</div>
+                                 <div className="text-[7px] print:text-[10px] font-black text-black">-{baseboard.quantity}-</div>
                                  {showPrices && (
-                                   <span className="font-black text-black font-['Inter'] text-[8px] print:text-[9.5px]">¥{(baseboard.unitPrice * baseboard.quantity).toLocaleString()}</span>
+                                   <span className="font-black text-black font-['Inter'] text-[8px] print:text-[11px]">¥{(baseboard.unitPrice * baseboard.quantity).toLocaleString()}</span>
                                  )}
                               </div>
                             </div>
@@ -402,16 +402,16 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
                               ) : (
-                                <div className="text-[7px] print:text-[8.5px] text-black font-black">HANDLE</div>
+                                <div className="text-[7px] print:text-[10px] text-black font-black">HANDLE</div>
                               )}
-                              <div className="absolute top-0.5 left-0.5 bg-black text-white px-1 py-0 rounded shadow-sm text-[7px] print:text-[8.5px] font-black">
+                              <div className="absolute top-0.5 left-0.5 bg-black text-white px-1 py-0 rounded shadow-sm text-[7px] print:text-[10px] font-black">
                                 HD
                               </div>
                             </div>
                             <div className="p-1 flex flex-col justify-between flex-1">
                               <div>
-                                <div className="text-blue-700 font-black text-[7px] print:text-[8.5px] leading-none mb-0.5">{shortLabel}</div>
-                                <h3 className="font-black text-black text-[8px] print:text-[9.5px] leading-tight truncate">{handleName}</h3>
+                                <div className="text-blue-700 font-black text-[7px] print:text-[10px] leading-none mb-0.5">{shortLabel}</div>
+                                <h3 className="font-black text-black text-[8px] print:text-[11px] leading-tight truncate">{handleName}</h3>
                               </div>
                             </div>
                           </div>
