@@ -104,15 +104,15 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
           </div>
 
           <div className="px-5 pb-5 flex-1">
-            {/* 6x3 Grid Layout */}
-            <div className="grid grid-cols-6 grid-rows-3 gap-1.5 h-full">
+            {/* 5x4 Grid Layout */}
+            <div className="grid grid-cols-5 grid-rows-4 gap-1.5 h-full">
               {(() => {
                 const items = [
                   ...order.doors.map((door, idx) => ({ type: 'door' as const, data: door, index: idx })),
                   ...(order.storage.type !== 'NONE' ? [{ type: 'storage' as const, data: order.storage }] : []),
                   ...order.baseboards.filter(b => b.quantity > 0).map(b => ({ type: 'baseboard' as const, data: b })),
                   ...usedHandles.map(h => ({ type: 'handle' as const, data: h }))
-                ].slice(0, 18);
+                ].slice(0, 20);
 
                 return (
                   <>
@@ -408,8 +408,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         );
                       }
                     })}
-                    {/* Fill remaining slots to make exactly 18 slots (3 rows) */}
-                    {Array.from({ length: Math.max(0, 18 - items.length) }).map((_, i) => (
+                    {/* Fill remaining slots to make exactly 20 slots (4 rows) */}
+                    {Array.from({ length: Math.max(0, 20 - items.length) }).map((_, i) => (
                       <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-black min-h-[120px]"></div>
                     ))}
                   </>
