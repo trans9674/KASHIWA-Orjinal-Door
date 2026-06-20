@@ -63,10 +63,21 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
 
   return (
     <div className="fixed inset-0 z-[600] bg-gray-900/95 backdrop-blur-md overflow-y-auto p-4 md:p-12 print:static print:p-0 print:bg-white print:overflow-visible">
-      <div className="max-w-[1400px] mx-auto relative pb-24 print:pb-0">
+      <style>{`
+        @media print {
+          @page {
+            size: A3 landscape;
+            margin: 6mm 10mm;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            background-color: white !important;
+          }
+        }
+      `}</style>
+      <div className="pb-print-wrapper max-w-[1400px] mx-auto relative pb-24 print:pb-0">
         {/* A3 Presentation Sheet (Landscape) */}
-        <div className="bg-white shadow-2xl mx-auto print:shadow-none print:m-0 overflow-hidden rounded-sm flex flex-col print-area" 
-             style={{ width: '100%', maxWidth: '420mm', minHeight: '320mm', height: '320mm', margin: '0 auto' }}>
           
           {/* Header Area */}
           <div className="bg-black text-white p-2 mb-1 flex justify-between items-center shrink-0">
@@ -173,9 +184,9 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         else if (isRight && master?.pbImageUrlR) pbUrl = master.pbImageUrlR;
 
                         return (
-                          <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
+                          <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[116px]">
                             {/* Image Area */}
-                            <div className="h-[72px] bg-white p-0.5 relative flex items-center justify-center overflow-hidden border-b border-black">
+                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center overflow-hidden border-b border-black print:h-[67.2px]">
                               {pbUrl ? (
                                 <img src={pbUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : master?.imageUrl ? (
@@ -222,7 +233,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                 </div>
                                 <p className="font-black text-black text-[8px] leading-tight mb-0.5 tracking-wide">{door.design}</p>
                                 <div className="grid grid-cols-[38px_1fr] gap-y-0 text-[7px] font-black text-black tracking-wide">
-                                  <div>サイズ</div>
+                                  <div className="whitespace-nowrap">サイズ</div>
                                   <div className="text-right">
                                     {door.width === '特寸' ? (
                                       <span className="text-red-500 font-black">特寸 {door.customWidth}</span>
@@ -237,9 +248,9 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                     )}
                                   </div>
                                   
-                                  <div>扉カラー</div>
+                                  <div className="whitespace-nowrap">扉カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
-                                    <span className="text-[6px] font-black text-black leading-tight whitespace-nowrap">{door.doorColor}</span>
+                                    <span className="text-[6px] font-black text-black leading-tight truncate">{door.doorColor}</span>
                                     <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.doorColor] ? (
                                         <img src={COLOR_IMAGES[door.doorColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -249,9 +260,9 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                     </div>
                                   </div>
 
-                                  <div>枠カラー</div>
+                                  <div className="whitespace-nowrap">枠カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
-                                    <span className="text-[6px] font-black text-black leading-tight whitespace-nowrap">{door.frameColor}</span>
+                                    <span className="text-[6px] font-black text-black leading-tight truncate">{door.frameColor}</span>
                                     <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.frameColor] ? (
                                         <img src={COLOR_IMAGES[door.frameColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -280,8 +291,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const storageMaster = storageTypes.find(s => s.id === storage.type);
                         const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
                         return (
-                          <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
-                            <div className="h-[72px] bg-white p-0.5 relative flex items-center justify-center border-b border-black">
+                          <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[116px]">
+                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black print:h-[67.2px]">
                               {imgUrl ? (
                                 <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
                               ) : (
@@ -322,8 +333,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const baseboard = item.data as any;
                         const record = baseboardMaster.find(b => b.product === baseboard.product);
                         return (
-                          <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
-                            <div className="h-[72px] bg-white p-0.5 relative flex items-center justify-center border-b border-black">
+                          <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[116px]">
+                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black print:h-[67.2px]">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
                               ) : COLOR_IMAGES[baseboard.color] ? (
@@ -386,8 +397,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const shortLabel = handleLabel === "レバーハンドル" ? "ハンドル" : handleLabel;
 
                         return (
-                          <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px]">
-                            <div className="h-[72px] bg-white p-0.5 relative flex items-center justify-center border-b border-black">
+                          <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[116px]">
+                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black print:h-[67.2px]">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
                               ) : (
@@ -409,7 +420,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                     })}
                     {/* Fill remaining slots to make exactly 24 slots (4 rows) */}
                     {Array.from({ length: Math.max(0, 24 - items.length) }).map((_, i) => (
-                      <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-black min-h-[110px]"></div>
+                      <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-black min-h-[110px] print:min-h-[116px]"></div>
                     ))}
                   </>
                 );
@@ -476,43 +487,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
             閉じる
           </button>
         </div>
-      </div> {/* Closes max-w-[1400px] */}
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media print {
-          * { 
-            -webkit-print-color-adjust: exact !important; 
-            print-color-adjust: exact !important; 
-          }
-          body * { 
-            visibility: hidden !important; 
-          }
-          .print-area, .print-area * { 
-            visibility: visible !important; 
-          }
-          .no-print { 
-            display: none !important; 
-          }
-          .print-area { 
-            position: fixed !important; 
-            left: 0 !important; 
-            top: 0 !important; 
-            width: 420mm !important; 
-            height: 320mm !important; 
-            max-width: none !important;
-            margin: 0 !important; 
-            padding: 0 !important; 
-            border: none !important;
-            box-shadow: none !important; 
-            z-index: 9999 !important; 
-            background: white !important;
-          }
-          @page { 
-            size: A3 landscape; 
-            margin: 0; 
-          }
-        }
-      ` }} />
+      {/* End of content */}
     </div>
   );
 };
