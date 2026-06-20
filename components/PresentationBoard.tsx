@@ -116,7 +116,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
 
           <div className="px-5 pb-2 flex-1">
             {/* 6x4 Grid Layout */}
-            <div className="grid grid-cols-6 grid-rows-4 gap-1 h-full print:h-auto">
+            <div className="grid grid-cols-6 grid-rows-4 gap-1 print:gap-2 h-full print:h-auto">
               {(() => {
                 const items = [
                   ...order.doors.map((door, idx) => ({ type: 'door' as const, data: door, index: idx })),
