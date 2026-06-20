@@ -95,18 +95,18 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
           <div className="px-8 mb-1 shrink-0">
              <div className="bg-gray-50 border border-black rounded-lg p-1.5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                   <div className="text-[9px] font-black text-black uppercase tracking-widest border-r border-black pr-3 mr-1">Color Palette</div>
-                    <div className="flex flex-wrap gap-2">
+                   <div className="text-[9px] print:text-[10.5px] font-black text-black uppercase tracking-widest border-r border-black pr-3 mr-1">Color Palette</div>
+                    <div className="flex flex-wrap gap-2 print:gap-x-3 print:gap-y-1.5">
                        {Object.entries(COLOR_MAP).map(([color, hex], cIdx) => (
-                         <div key={cIdx} className="flex items-center gap-1">
-                            <div className="w-5 h-5 rounded border border-black shadow-sm overflow-hidden flex items-center justify-center bg-white">
+                         <div key={cIdx} className="flex items-center gap-1 print:gap-1.5">
+                            <div className="w-5 h-5 print:w-[26px] print:h-[26px] rounded border border-black shadow-sm overflow-hidden flex items-center justify-center bg-white">
                                 {COLOR_IMAGES[color] ? (
                                   <img src={COLOR_IMAGES[color]} alt={color} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                 ) : (
                                   <div className="w-full h-full" style={{ backgroundColor: hex }}></div>
                                 )}
                             </div>
-                            <span className="text-[9px] font-black text-black">{color}</span>
+                            <span className="text-[9px] print:text-[10.5px] font-black text-black">{color}</span>
                          </div>
                        ))}
                     </div>
