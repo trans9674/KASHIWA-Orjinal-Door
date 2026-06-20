@@ -69,14 +69,14 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
              style={{ width: '100%', maxWidth: '420mm', minHeight: '297mm', margin: '0 auto' }}>
           
           {/* Header Area */}
-          <div className="bg-black text-white p-4 mb-2 flex justify-between items-center shrink-0">
+          <div className="bg-black text-white p-2 mb-2 flex justify-between items-center shrink-0">
             <div>
-              <h1 className="text-3xl font-black tracking-tighter">PRESENTATION BOARD</h1>
-              <p className="text-white font-black uppercase tracking-widest text-[10px]">Custom Door & Storage Solution</p>
+              <h1 className="text-2xl font-black tracking-tighter">KASHIWA MOKKO PRESENTATION BOARD</h1>
+              <p className="text-white font-black uppercase tracking-widest text-[9px]">Custom Door & Storage Solution</p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-black">{order.customerInfo.siteName} 様邸 新築工事</p>
-              <p className="text-xs font-black font-['Inter']">{new Date().toLocaleDateString('ja-JP')}</p>
+              <p className="text-sm font-black">{order.customerInfo.siteName} 様邸 新築工事</p>
+              <p className="text-[9px] font-black font-['Inter']">{new Date().toLocaleDateString('ja-JP')}</p>
             </div>
           </div>
 
@@ -418,29 +418,6 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
             </div>
 
 
-            {/* Footer Area */}
-            <div className={`mt-6 pt-4 border-t-2 border-black flex justify-between items-start`}>
-              <div className="flex gap-12">
-                <div>
-                   <p className="font-black text-black text-lg">{order.customerInfo.company}</p>
-                </div>
-              </div>
-              <div className="flex flex-col items-end">
-                {showPrices && (
-                  <div className="mb-4 text-right">
-                     <p className="text-[11px] font-black text-black uppercase tracking-widest mb-1">Total Estimated Amount</p>
-                     <p className="text-4xl font-black text-black font-['Inter'] tracking-tighter italic">¥{(
-                       order.doors.reduce((sum, d) => sum + d.price, 0) + 
-                       (order.storage.type !== 'NONE' ? order.storage.basePrice : 0) + 
-                       order.baseboards.reduce((sum, b) => sum + (b.unitPrice * b.quantity), 0)
-                     ).toLocaleString()}</p>
-                  </div>
-                )}
-                <div className="text-right">
-                  <p className="text-xl font-black tracking-tighter italic text-black font-['Inter']">KASHIWA MOKKO CO.,LTD.</p>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
