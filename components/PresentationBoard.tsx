@@ -436,9 +436,9 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
               </div>
               <div className="flex flex-col items-end">
                 {showPrices && (
-                  <div className="mb-0 text-right">
-                     <p className="text-[8px] font-black text-black uppercase tracking-widest mb-0">Total Estimated Amount</p>
-                     <p className="text-2xl font-black text-black font-['Inter'] tracking-tighter italic">¥{(
+                  <div className="mb-0 flex items-baseline gap-2">
+                     <p className="text-xs print:text-sm font-black text-black">合計金額</p>
+                     <p className="text-xl print:text-2xl font-black text-black font-['Inter'] tracking-tighter italic">¥{(
                        order.doors.reduce((sum, d) => sum + d.price, 0) + 
                        (order.storage.type !== 'NONE' ? order.storage.basePrice : 0) + 
                        order.baseboards.reduce((sum, b) => sum + (b.unitPrice * b.quantity), 0)
