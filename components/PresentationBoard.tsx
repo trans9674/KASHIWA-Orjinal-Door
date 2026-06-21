@@ -251,7 +251,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                   <div className="whitespace-nowrap">扉カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
                                     <span className="text-[6px] print:text-[9px] font-black text-black leading-tight truncate">{door.doorColor}</span>
-                                    <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                    <div className="w-2 h-2 print:w-3.5 print:h-3.5 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.doorColor] ? (
                                         <img src={COLOR_IMAGES[door.doorColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                       ) : (
@@ -263,7 +263,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                   <div className="whitespace-nowrap">枠カラー</div>
                                   <div className="flex items-center justify-end gap-1 overflow-hidden">
                                     <span className="text-[6px] print:text-[9px] font-black text-black leading-tight truncate">{door.frameColor}</span>
-                                    <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                    <div className="w-2 h-2 print:w-3.5 print:h-3.5 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[door.frameColor] ? (
                                         <img src={COLOR_IMAGES[door.frameColor]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                       ) : (
@@ -311,7 +311,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                     <div className="font-black text-black">{storage.size} / {storage.filler}</div>
                                     <div className="flex items-center gap-0.5">
                                       <span className="font-black text-black leading-tight">{storage.color}</span>
-                                      <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                      <div className="w-2 h-2 print:w-3.5 print:h-3.5 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                         {COLOR_IMAGES[storage.color] ? (
                                           <img src={COLOR_IMAGES[storage.color]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                         ) : (
@@ -352,7 +352,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                                 <div className="text-[7px] print:text-[10px] font-black text-black mt-0.5 flex items-center justify-between">
                                   <span className="flex items-center gap-0.5 font-black text-black">
                                     <span className="leading-tight">{baseboard.color}</span>
-                                    <div className="w-2 h-2 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
+                                    <div className="w-2 h-2 print:w-3.5 print:h-3.5 rounded border border-black shadow-sm shrink-0 overflow-hidden flex items-center justify-center bg-white">
                                       {COLOR_IMAGES[baseboard.color] ? (
                                         <img src={COLOR_IMAGES[baseboard.color]} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                       ) : (
