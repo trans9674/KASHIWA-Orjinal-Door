@@ -76,7 +76,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
           }
         }
       `}</style>
-      <div className="pb-print-wrapper max-w-[1400px] mx-auto relative pb-24 print:pb-0">
+      <div className="pb-print-wrapper max-w-[1400px] mx-auto relative pb-24 print:pb-0 bg-white p-8 rounded-3xl shadow-2xl print:bg-transparent print:p-0 print:shadow-none print:rounded-none">
         {/* A3 Presentation Sheet (Landscape) */}
           
           {/* Header Area */}
@@ -420,7 +420,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                     })}
                     {/* Fill remaining slots to make exactly 24 slots (4 rows) */}
                     {Array.from({ length: Math.max(0, 24 - items.length) }).map((_, i) => (
-                      <div key={`empty-${i}`} className="bg-gray-50/30 rounded-lg border border-dashed border-black min-h-[110px] print:min-h-[132px]"></div>
+                      <div key={`empty-${i}`} className="bg-gray-50/30 print:bg-transparent rounded-lg border border-dashed border-black min-h-[110px] print:min-h-[132px]"></div>
                     ))}
                   </>
                 );
