@@ -184,9 +184,9 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         else if (isRight && master?.pbImageUrlR) pbUrl = master.pbImageUrlR;
 
                         return (
-                          <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[132px]">
+                          <div key={`door-${door.id}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[118px]">
                             {/* Image Area */}
-                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center overflow-hidden border-b border-black print:h-[77px]">
+                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center overflow-hidden border-b border-black print:h-[64px]">
                               {pbUrl ? (
                                 <img src={pbUrl} alt={door.design} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" />
                               ) : master?.imageUrl ? (
@@ -291,8 +291,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const storageMaster = storageTypes.find(s => s.id === storage.type);
                         const imgUrl = storageMaster?.pbImageUrl || storageMaster?.imageUrl;
                         return (
-                          <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[132px]">
-                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black print:h-[77px]">
+                          <div key="storage-item" className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[118px]">
+                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black print:h-[64px]">
                               {imgUrl ? (
                                 <img src={imgUrl} className="max-h-full max-w-full object-contain" referrerPolicy="no-referrer" alt={storage.type} />
                               ) : (
@@ -333,8 +333,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const baseboard = item.data as any;
                         const record = baseboardMaster.find(b => b.product === baseboard.product);
                         return (
-                          <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[132px]">
-                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black print:h-[77px]">
+                          <div key={`baseboard-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[118px]">
+                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black print:h-[64px]">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
                               ) : COLOR_IMAGES[baseboard.color] ? (
@@ -397,8 +397,8 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                         const shortLabel = handleLabel === "レバーハンドル" ? "ハンドル" : handleLabel;
 
                         return (
-                          <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[132px]">
-                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black print:h-[77px]">
+                          <div key={`handle-${idx}`} className="bg-gray-50 rounded-lg overflow-hidden border border-black flex flex-col h-full min-h-[110px] print:min-h-[118px]">
+                            <div className="h-16 bg-white p-0.5 relative flex items-center justify-center border-b border-black print:h-[64px]">
                               {record?.pbImageUrl ? (
                                 <img src={record.pbImageUrl} className="max-h-full max-w-full object-contain" />
                               ) : (
@@ -420,7 +420,7 @@ export const PresentationBoard: React.FC<PresentationBoardProps> = ({
                     })}
                     {/* Fill remaining slots to make exactly 24 slots (4 rows) */}
                     {Array.from({ length: Math.max(0, 24 - items.length) }).map((_, i) => (
-                      <div key={`empty-${i}`} className="bg-gray-50/30 print:bg-transparent rounded-lg border border-dashed border-black min-h-[110px] print:min-h-[132px]"></div>
+                      <div key={`empty-${i}`} className="bg-gray-50/30 print:bg-transparent rounded-lg border border-dashed border-black min-h-[110px] print:min-h-[118px]"></div>
                     ))}
                   </>
                 );
