@@ -3,6 +3,8 @@ import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { getDoorDetailPdfUrl, getStorageDetailPdfUrl, DOOR_GROUPS, STORAGE_CATEGORIES, DOOR_SPEC_MASTER } from '../constants';
 import { DoorItem, PriceRecord, StorageTypeRecord, ShippingFeeRecord, UsageLocation, DoorType } from '../types';
 import { supabase } from '../supabase';
+import { storage } from '../firebase';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 
 interface DataViewerModalProps {
   onClose: () => void;
@@ -36,6 +38,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const pbFileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [isMigrating, setIsMigrating] = useState(false);
 
   // Resize Logic
   const [modalWidth, setModalWidth] = useState<number>(window.innerWidth * 0.9);
@@ -111,88 +114,190 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     }
   };
 
-  const handleFileUpload = async (file: File, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door', pbSide?: 'L' | 'R') => {
+  const handleMigrateAllImages = async () => {
+    if (!confirm('Supabase Storage上の画像をFirebase Storageへ一括移行しますか？\n（Supabase側の元ファイルは削除されません。URLのみ更新されます）')) return;
+    
+    setIsMigrating(true);
+    let totalMigrated = 0;
+    let totalFailed = 0;
+
+    const migrateUrl = async (url: string | undefined | null, type: string, recordId: string, pbSide?: string): Promise<string | null> => {
+       if (!url || !url.includes('.supabase.co')) return null;
+       
+       try {
+           const response = await fetch(url);
+           if (!response.ok) throw new Error('Fetch failed');
+           const blob = await response.blob();
+           
+           const fileExt = url.split('.').pop()?.split('?')[0] || 'png';
+           const prefix = pbSide ? (pbSide === 'detail' ? '' : `pb_${pbSide.toLowerCase()}_`) : 'pb_';
+           const safeRecordId = btoa(encodeURIComponent(recordId)).substring(0, 10).replace(/[/+=]/g, '');
+           const fileName = `${prefix}${type}_${safeRecordId}_${Date.now()}.${fileExt}`;
+           const filePath = `master_data/${type}/${fileName}`;
+
+           const storageRef = ref(storage, filePath);
+           await uploadBytesResumable(storageRef, blob);
+           return await getDownloadURL(storageRef);
+       } catch (err) {
+           console.error('Failed to migrate image', url, err);
+           totalFailed++;
+           return null;
+       }
+    };
+
     try {
-      const suffix = pbSide ? `_${pbSide}` : '';
-      setUploadingId(recordId + (isPB ? `_pb${suffix}` : '_detail'));
-      const fileExt = file.name.split('.').pop();
-      const prefix = isPB ? `pb${suffix.toLowerCase()}_` : '';
-      
-      const safeRecordId = btoa(encodeURIComponent(recordId)).substring(0, 10).replace(/[/+=]/g, '');
-      const fileName = `${prefix}${type}_${safeRecordId}_${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+       // Doors
+       for (const door of priceList) {
+          let updates: any = {};
+          
+          const newImage = await migrateUrl(door.imageUrl, 'door', door.id, 'detail');
+          if (newImage) updates.image_url = newImage;
+          
+          const newPb = await migrateUrl(door.pbImageUrl, 'door', door.id);
+          if (newPb) updates.pb_image_url = newPb;
 
-      const { error: uploadError } = await supabase.storage.from('door-images').upload(filePath, file);
-      if (uploadError) throw new Error(`画像の保存に失敗しました: ${uploadError.message}`);
+          const newPbL = await migrateUrl(door.pbImageUrlL, 'door', door.id, 'L');
+          if (newPbL) updates.pb_image_url_l = newPbL;
 
-      const { data: { publicUrl } } = supabase.storage.from('door-images').getPublicUrl(filePath);
-      
-      let tableName = 'internal_doors';
-      if (type === 'storage') tableName = 'entrance_storages';
-      if (type === 'handle') tableName = 'handle_master';
-      if (type === 'baseboard') tableName = 'baseboard_master';
+          const newPbR = await migrateUrl(door.pbImageUrlR, 'door', door.id, 'R');
+          if (newPbR) updates.pb_image_url_r = newPbR;
 
-      const fieldName = isPB ? (pbSide ? `pb_image_url_${pbSide.toLowerCase()}` : 'pb_image_url') : 'image_url';
-      const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
+          if (Object.keys(updates).length > 0) {
+             await supabase.from('internal_doors').update(updates).eq('id', door.id);
+             totalMigrated += Object.keys(updates).length;
+          }
+       }
 
-      // Use upsert/insert logic for masters, update for others
-      if (type === 'handle' || type === 'baseboard') {
-        const payload = { [idField]: recordId, [fieldName]: publicUrl };
+       // Storages
+       for (const st of storageTypes) {
+          let updates: any = {};
+          
+          const newImage = await migrateUrl(st.imageUrl, 'storage', st.id, 'detail');
+          if (newImage) updates.image_url = newImage;
+          
+          const newPb = await migrateUrl(st.pbImageUrl, 'storage', st.id);
+          if (newPb) updates.pb_image_url = newPb;
+
+          if (Object.keys(updates).length > 0) {
+             await supabase.from('entrance_storages').update(updates).eq('id', st.id);
+             totalMigrated += Object.keys(updates).length;
+          }
+       }
+
+       // Handle
+       for (const h of handleMaster) {
+          const newPb = await migrateUrl(h.pbImageUrl, 'handle', h.name);
+          if (newPb) {
+             await supabase.from('handle_master').update({ pb_image_url: newPb }).eq('name', h.name);
+             totalMigrated++;
+          }
+       }
+
+       // Baseboard
+       for (const b of baseboardRecordMaster) {
+          const newPb = await migrateUrl(b.pbImageUrl, 'baseboard', b.product);
+          if (newPb) {
+             await supabase.from('baseboard_master').update({ pb_image_url: newPb }).eq('product', b.product);
+             totalMigrated++;
+          }
+       }
+       
+       alert(`移行完了\n成功: ${totalMigrated}件\n失敗: ${totalFailed}件\n※反映のためリロードします。`);
+       window.location.reload();
+
+    } catch (err: any) {
+       console.error(err);
+       alert('移行処理中にエラーが発生しました: ' + err.message);
+    } finally {
+       setIsMigrating(false);
+    }
+  };
+
+  const handleFileUpload = async (files: FileList | File[], recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door', pbSide?: 'L' | 'R') => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+
+    const suffix = pbSide ? `_${pbSide}` : '';
+    setUploadingId(recordId + (isPB ? `_pb${suffix}` : '_detail'));
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const file of fileArray) {
+      try {
+        const fileExt = file.name.split('.').pop();
+        const prefix = isPB ? `pb${suffix.toLowerCase()}_` : '';
         
-        console.log(`Saving to ${tableName}:`, payload);
-        
-        // Try to find if record exists by name/product
-        const { data: existingRecord, error: findError } = await supabase.from(tableName).select('id').eq(idField, recordId).maybeSingle();
-        
-        if (findError) {
-          console.warn(`Error finding record in ${tableName}:`, findError.message);
-        }
+        const safeRecordId = btoa(encodeURIComponent(recordId)).substring(0, 10).replace(/[/+=]/g, '');
+        const fileName = `${prefix}${type}_${safeRecordId}_${Date.now()}.${fileExt}`;
+        const filePath = `master_data/${type}/${fileName}`;
 
-        if (existingRecord) {
-          console.log(`Found existing record with ID ${existingRecord.id} in ${tableName}, updating...`);
-          const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq('id', existingRecord.id);
-          if (dbError) {
-            console.error('Update failed:', dbError);
-            throw new Error(`更新に失敗しました。Supabaseのポリシー(RLS)を確認してください: ${dbError.message}`);
+        const storageRef = ref(storage, filePath);
+        await uploadBytesResumable(storageRef, file);
+        const publicUrl = await getDownloadURL(storageRef);
+        
+        let tableName = 'internal_doors';
+        if (type === 'storage') tableName = 'entrance_storages';
+        if (type === 'handle') tableName = 'handle_master';
+        if (type === 'baseboard') tableName = 'baseboard_master';
+
+        const fieldName = isPB ? (pbSide ? `pb_image_url_${pbSide.toLowerCase()}` : 'pb_image_url') : 'image_url';
+        const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
+
+        if (type === 'handle' || type === 'baseboard') {
+          const payload = { [idField]: recordId, [fieldName]: publicUrl };
+          const { data: existingRecord, error: findError } = await supabase.from(tableName).select('id').eq(idField, recordId).maybeSingle();
+
+          if (findError) console.warn(`Error finding record in ${tableName}:`, findError.message);
+
+          if (existingRecord) {
+            const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq('id', existingRecord.id);
+            if (dbError) throw new Error(`更新に失敗しました: ${dbError.message}`);
+          } else {
+            const { error: dbError } = await supabase.from(tableName).insert([payload]);
+            if (dbError) throw new Error(`新規登録に失敗しました: ${dbError.message}`);
           }
         } else {
-          console.log(`Record not found in ${tableName}, inserting new entry...`);
-          const { error: dbError } = await supabase.from(tableName).insert([payload]);
-          if (dbError) {
-            console.error(`Insert failed for ${tableName}:`, dbError);
-            throw new Error(`新規登録に失敗しました。Supabaseの管理画面で[handle_master/baseboard_master]テーブルのINSERT権限(RLS)が許可されているか確認してください。\n詳細: ${dbError.message}`);
-          }
+          const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
+          if (dbError) throw new Error(`データベースの更新に失敗しました: ${dbError.message}`);
         }
-      } else {
-        const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq(idField, recordId);
-        if (dbError) throw new Error(`データベースの更新に失敗しました: ${dbError.message}`);
-      }
 
-      if (type === 'storage') {
-        setStorageTypes(prev => prev.map(item => item.id === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
-      } else if (type === 'door') {
-        const fieldKey = isPB ? (pbSide ? (pbSide === 'L' ? 'pbImageUrlL' : 'pbImageUrlR') : 'pbImageUrl') : 'imageUrl';
-        setPriceList(prev => prev.map(item => item.id === recordId ? { ...item, [fieldKey]: publicUrl } : item));
-      } else if (type === 'handle') {
-        setHandleMaster(prev => prev.map(item => item.name === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
-      } else if (type === 'baseboard') {
-        setBaseboardMaster(prev => prev.map(item => item.product === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
+        if (type === 'storage') {
+          setStorageTypes(prev => prev.map(item => item.id === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
+        } else if (type === 'door') {
+          const fieldKey = isPB ? (pbSide ? (pbSide === 'L' ? 'pbImageUrlL' : 'pbImageUrlR') : 'pbImageUrl') : 'imageUrl';
+          setPriceList(prev => prev.map(item => item.id === recordId ? { ...item, [fieldKey]: publicUrl } : item));
+        } else if (type === 'handle') {
+          setHandleMaster(prev => prev.map(item => item.name === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
+        } else if (type === 'baseboard') {
+          setBaseboardMaster(prev => prev.map(item => item.product === recordId ? { ...item, [isPB ? 'pbImageUrl' : 'imageUrl']: publicUrl } : item));
+        }
+        successCount++;
+      } catch (error: any) {
+        let errorMsg = '通信エラーまたは権限エラーが発生しました。';
+        if (error?.code === 'storage/unauthorized') errorMsg = '権限エラー: アップロードする権限がありません。';
+        if (error?.code === 'storage/quota-exceeded') errorMsg = '容量エラー: 保存容量の上限に達しました。';
+        
+        console.error('Firebase Storage upload or DB update failed:', error);
+        alert(`アップロード失敗: ${errorMsg}\n詳細: ${error.message}`);
+        failCount++;
       }
-    } catch (error: any) {
-      alert('アップロード失敗:\n' + error.message);
-    } finally {
-      setUploadingId(null);
+    }
+
+    setUploadingId(null);
+    if (fileArray.length > 1) {
+      alert(`一括アップロード完了\n成功: ${successCount}件\n失敗: ${failCount}件`);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door', pbSide?: 'L' | 'R') => {
-    if (e.target.files && e.target.files[0]) handleFileUpload(e.target.files[0], recordId, isStorage, isPB, type, pbSide);
+    if (e.target.files && e.target.files.length > 0) handleFileUpload(e.target.files, recordId, isStorage, isPB, type, pbSide);
     e.target.value = '';
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, recordId: string, isStorage: boolean = false, isPB: boolean = false, type: 'door' | 'storage' | 'handle' | 'baseboard' = 'door', pbSide?: 'L' | 'R') => {
     e.preventDefault(); e.stopPropagation();
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFileUpload(e.dataTransfer.files[0], recordId, isStorage, isPB, type, pbSide);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) handleFileUpload(e.dataTransfer.files, recordId, isStorage, isPB, type, pbSide);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); };
@@ -209,18 +314,32 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           const fieldName = isPB ? (pbSide ? `pb_image_url_${pbSide.toLowerCase()}` : 'pb_image_url') : 'image_url';
           const idField = (type === 'baseboard') ? 'product' : (type === 'handle') ? 'name' : 'id';
 
+          const { data: recordData } = await supabase.from(tableName).select(fieldName).eq(idField, recordId).maybeSingle();
+          const currentUrl = recordData?.[fieldName];
+
           if (type === 'handle' || type === 'baseboard') {
              const { data: existingRecord } = await supabase.from(tableName).select('id').eq(idField, recordId).maybeSingle();
              if (existingRecord) {
                 await supabase.from(tableName).update({ [fieldName]: null }).eq('id', existingRecord.id);
-             } else {
-                // If it doesn't exist in DB, nothing to delete from DB
-                console.log(`Record ${recordId} not in DB, skipping DB delete`);
              }
           } else {
              await supabase.from(tableName).update({ [fieldName]: null }).eq(idField, recordId);
           }
           
+          if (currentUrl && currentUrl.includes('firebasestorage.googleapis.com')) {
+              try {
+                  const pathRegex = /o\/(.+?)\?alt=/;
+                  const match = currentUrl.match(pathRegex);
+                  if (match && match[1]) {
+                      const decodedPath = decodeURIComponent(match[1]);
+                      const storageRef = ref(storage, decodedPath);
+                      await deleteObject(storageRef);
+                  }
+              } catch (delError) {
+                  console.error('Failed to delete file from Firebase Storage:', delError);
+              }
+          }
+
           if (type === 'storage') {
             setStorageTypes(prev => prev.map(s => s.id === recordId ? {...s, [isPB ? 'pbImageUrl' : 'imageUrl']: undefined} : s));
           } else if (type === 'door') {
@@ -432,7 +551,16 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                <svg className="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" /></svg>
                プレゼンボード用：デザイン画像を登録すると、色はカラーパレットで補完されます
              </div>
+             <div className="flex items-center gap-4 pr-2">
+             <button
+               onClick={handleMigrateAllImages}
+               disabled={isMigrating}
+               className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-3 py-1.5 rounded disabled:opacity-50"
+             >
+               {isMigrating ? "移行処理中..." : "画像一括移行 (Supabase -> Firebase)"}
+             </button>
              <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+          </div>
           </div>
         </div>
 
@@ -506,7 +634,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                     未登録(自動割当済)
                                   </span>
                                 )}
-                                <div className="border border-dashed p-1 text-center cursor-pointer hover:bg-gray-100" onClick={() => row.id && fileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id)}/><span className="text-[9px] text-gray-400">PDF/詳細図登録</span></div>
+                                <div className="border border-dashed p-1 text-center cursor-pointer hover:bg-gray-100" onClick={() => row.id && fileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id)} onDragOver={handleDragOver}><input type="file" multiple className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id)}/><span className="text-[9px] text-gray-400">PDF/詳細図登録</span></div>
                               </div>
                             )}
                           </td>
@@ -535,7 +663,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                             <span className="text-gray-300 text-[9px] block text-center italic">未登録</span>
                                           )}
                                           <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={() => row.id && pbFileInputRefs.current[row.id + '_L']?.click()} onDrop={(e) => row.id && handleDrop(e, row.id, false, true, 'door', 'L')} onDragOver={handleDragOver}>
-                                            <input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id + '_L'] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true, 'door', 'L')}/>
+                                            <input type="file" multiple className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id + '_L'] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true, 'door', 'L')}/>
                                             <span className="text-[9px] text-emerald-600 font-bold">左画像UP</span>
                                           </div>
                                         </div>
@@ -558,7 +686,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                             <span className="text-gray-300 text-[9px] block text-center italic">未登録</span>
                                           )}
                                           <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={() => row.id && pbFileInputRefs.current[row.id + '_R']?.click()} onDrop={(e) => row.id && handleDrop(e, row.id, false, true, 'door', 'R')} onDragOver={handleDragOver}>
-                                            <input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id + '_R'] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true, 'door', 'R')}/>
+                                            <input type="file" multiple className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id + '_R'] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true, 'door', 'R')}/>
                                             <span className="text-[9px] text-emerald-600 font-bold">右画像UP</span>
                                           </div>
                                         </div>
@@ -585,7 +713,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                           未登録
                                         </span>
                                       )}
-                                      <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={() => row.id && pbFileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id, false, true)} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true)}/><span className="text-[9px] text-emerald-600 font-bold">プレゼン用画像</span></div>
+                                      <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={() => row.id && pbFileInputRefs.current[row.id]?.click()} onDrop={(e) => row.id && handleDrop(e, row.id, false, true)} onDragOver={handleDragOver}><input type="file" multiple className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => row.id && handleFileSelect(e, row.id, false, true)}/><span className="text-[9px] text-emerald-600 font-bold">プレゼン用画像</span></div>
                                     </div>
                                   )}
                                 </div>
@@ -656,7 +784,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                      未登録(割当済)
                                    </span>
                                  )}
-                                 <div className="border border-dashed p-1 text-center cursor-pointer" onClick={()=>fileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true, false, 'storage')} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true, false, 'storage')}/><span className="text-[8px] text-gray-400">図面PDF登録</span></div>
+                                 <div className="border border-dashed p-1 text-center cursor-pointer" onClick={()=>fileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true, false, 'storage')} onDragOver={handleDragOver}><input type="file" multiple className="hidden" ref={el => { if(row.id) fileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true, false, 'storage')}/><span className="text-[8px] text-gray-400">図面PDF登録</span></div>
                                </div>
                              )}
                           </td>
@@ -674,7 +802,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                                  ) : (
                                    <span className="text-gray-300 text-[9px] block text-center italic">未登録</span>
                                  )}
-                                 <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={()=>pbFileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true, true, 'storage')} onDragOver={handleDragOver}><input type="file" className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true, true, 'storage')}/><span className="text-[8px] text-emerald-600 font-bold">プレゼン用画像</span></div>
+                                 <div className="border border-emerald-200 border-dashed p-1 text-center cursor-pointer hover:bg-emerald-50" onClick={()=>pbFileInputRefs.current[row.id]?.click()} onDrop={(e)=>handleDrop(e, row.id, true, true, 'storage')} onDragOver={handleDragOver}><input type="file" multiple className="hidden" ref={el => { if(row.id) pbFileInputRefs.current[row.id] = el; }} onChange={e => handleFileSelect(e, row.id, true, true, 'storage')}/><span className="text-[8px] text-emerald-600 font-bold">プレゼン用画像</span></div>
                                </div>
                              )}
                           </td>
@@ -707,8 +835,12 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                               <button onClick={() => handleDeleteImage(h.name, false, true, 'handle')} className="text-red-500">×</button>
                             </div>
                           ) : <span className="text-gray-300 italic">未登録</span>}
-                          <button onClick={() => fileInputRefs.current[h.name]?.click()} className="text-[10px] text-blue-600 border border-dashed p-1">画像登録</button>
-                          <input type="file" className="hidden" ref={el => fileInputRefs.current[h.name] = el} onChange={e => handleFileSelect(e, h.name, false, true, 'handle')}/>
+                          {uploadingId === (h.name + '_pb') ? "UP中..." : (
+                            <>
+                              <button onClick={() => fileInputRefs.current[h.name]?.click()} className="text-[10px] text-blue-600 border border-dashed p-1">画像登録</button>
+                              <input type="file" multiple className="hidden" ref={el => fileInputRefs.current[h.name] = el} onChange={e => handleFileSelect(e, h.name, false, true, 'handle')}/>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -736,7 +868,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                              </div>
                            ) : <span className="text-gray-300 italic">未登録</span>}
                            <button onClick={() => fileInputRefs.current[b.product]?.click()} className="text-[10px] text-blue-600 border border-dashed p-1">画像登録</button>
-                           <input type="file" className="hidden" ref={el => fileInputRefs.current[b.product] = el} onChange={e => handleFileSelect(e, b.product, false, true, 'baseboard')}/>
+                           <input type="file" multiple className="hidden" ref={el => fileInputRefs.current[b.product] = el} onChange={e => handleFileSelect(e, b.product, false, true, 'baseboard')}/>
                          </div>
                        </td>
                      </tr>
