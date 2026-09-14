@@ -1127,26 +1127,26 @@ ${order.memo}
     <div className="min-h-screen bg-slate-100 font-['Noto_Sans_JP']">
       
       {isPasswordModalOpen && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in zoom-in">
+        <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-in zoom-in border border-[#E5E5E7]">
             <button 
               onClick={() => {
                 setIsPasswordModalOpen(false);
                 setPasswordInput('');
                 setPasswordError(false);
               }} 
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 rounded-full p-2 hover:bg-gray-100 transition-colors"
+              className="absolute top-4 right-4 text-[#86868B] hover:text-[#1D1D1F] rounded-full p-2 hover:bg-[#F5F5F7] transition-all"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-[#F5F5F7] text-[#0071E3] rounded-full flex items-center justify-center mx-auto mb-5 border border-[#E5E5E7]">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
               </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-2">パスワードの入力</h3>
-              <p className="text-gray-500 text-sm">管理画面にアクセスするにはパスワードを入力してください。</p>
+              <h3 className="text-2xl font-bold text-[#1D1D1F] mb-2 tracking-tight">パスワードの入力</h3>
+              <p className="text-[#86868B] text-sm font-medium">管理画面にアクセスするにはパスワードを入力してください。</p>
             </div>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <form onSubmit={handlePasswordSubmit} className="space-y-6">
               <div>
                 <input
                   type="password"
@@ -1155,17 +1155,17 @@ ${order.memo}
                     setPasswordInput(e.target.value);
                     setPasswordError(false);
                   }}
-                  className={`w-full px-4 py-3 rounded-xl border-2 outline-none transition-colors text-center text-xl tracking-widest ${passwordError ? 'border-red-500 focus:border-red-500 bg-red-50' : 'border-gray-200 focus:border-blue-500 bg-gray-50 focus:bg-white'}`}
+                  className={`w-full px-4 py-4 rounded-xl border outline-none transition-all text-center text-2xl tracking-widest ${passwordError ? 'border-red-500 bg-red-50 focus:ring-1 focus:ring-red-500' : 'border-[#E5E5E7] focus:border-[#0071E3] bg-[#F5F5F7] focus:bg-white focus:ring-1 focus:ring-[#0071E3]'}`}
                   placeholder="••••"
                   autoFocus
                 />
                 {passwordError && (
-                  <p className="text-red-500 text-sm mt-2 text-center font-bold">パスワードが間違っています</p>
+                  <p className="text-red-600 text-xs mt-3 text-center font-bold">パスワードが間違っています</p>
                 )}
               </div>
               <button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition-colors shadow-lg active:scale-95"
+                className="w-full bg-[#1D1D1F] hover:bg-black text-white py-4 rounded-xl font-bold transition-all shadow-sm active:scale-[0.98]"
               >
                 確認
               </button>
@@ -1205,45 +1205,47 @@ ${order.memo}
 
       {/* バリデーションエラーモーダル */}
       {isValidationModalOpen && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsValidationModalOpen(false)}>
-          <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-red-600 px-6 py-4 text-white font-bold flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                入力内容の確認が必要です
+        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsValidationModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-[#F5F5F7] border-b border-[#E5E5E7] px-8 py-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-red-500 p-1.5 rounded-full text-white">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h3 className="text-xl font-bold text-[#1D1D1F] tracking-tight">入力内容の確認が必要です</h3>
               </div>
-              <button onClick={() => setIsValidationModalOpen(false)} className="hover:rotate-90 transition-transform">
+              <button onClick={() => setIsValidationModalOpen(false)} className="text-[#86868B] hover:text-[#1D1D1F] transition-all p-2 hover:bg-black/[0.05] rounded-full">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="p-8 space-y-6">
+            <div className="p-8 space-y-8">
               {validationData.errors.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="text-red-600 font-black text-sm flex items-center gap-2 border-b-2 border-red-50 pb-2 uppercase tracking-wider">
-                    <span className="bg-red-100 px-2 py-0.5 rounded text-[10px]">Must</span>
+                <div className="space-y-4">
+                  <h4 className="text-[#1D1D1F] font-bold text-[11px] flex items-center gap-2 uppercase tracking-widest border-b border-[#E5E5E7] pb-2">
+                    <span className="bg-red-500 w-1.5 h-4 rounded-full"></span>
                     修正が必要な項目 ({validationData.errors.length})
                   </h4>
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {validationData.errors.map((error, idx) => (
-                      <li key={idx} className="flex gap-3 text-sm font-bold text-gray-700 leading-relaxed group">
-                        <span className="text-red-500 mt-0.5 shrink-0 group-hover:scale-125 transition-transform">●</span>
+                      <li key={idx} className="flex gap-3 text-sm font-medium text-[#1D1D1F] leading-relaxed">
+                        <span className="text-red-500 mt-1 shrink-0">•</span>
                         {error}
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
-              <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex items-start gap-3">
-                <div className="bg-blue-600 text-white rounded-full p-1 shrink-0 mt-0.5">
-                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <div className="bg-[#F5F5F7] p-5 rounded-xl border border-[#E5E5E7] flex items-start gap-4 shadow-sm">
+                <div className="bg-[#0071E3] text-white rounded-full p-1.5 shrink-0 mt-0.5 shadow-sm">
+                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
-                <p className="text-[11px] font-bold text-blue-800 leading-relaxed">
+                <p className="text-xs font-medium text-[#1D1D1F] leading-relaxed">
                   納品日の不備については、日付選択欄に詳細な案内（吹き出し）が表示されています。
                 </p>
               </div>
             </div>
-            <div className="p-6 bg-gray-50 border-t flex justify-end">
-              <button onClick={() => setIsValidationModalOpen(false)} className="bg-gray-800 hover:bg-black text-white px-10 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95">
+            <div className="p-8 bg-[#F5F5F7] border-t border-[#E5E5E7] flex justify-end">
+              <button onClick={() => setIsValidationModalOpen(false)} className="bg-[#1D1D1F] hover:bg-black text-white px-10 py-3 rounded-md text-sm font-bold transition-all active:scale-[0.98] shadow-sm">
                 閉じて修正する
               </button>
             </div>
@@ -1252,55 +1254,58 @@ ${order.memo}
       )}
 
       {isMailModalOpen && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsMailModalOpen(false)}>
-          <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6 border-b pb-4">
-              <h3 className="text-xl font-bold text-gray-800 flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shrink-0">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
+        <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsMailModalOpen(false)}>
+          <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-[#F5F5F7] text-[#0071E3] rounded-full flex items-center justify-center border border-[#E5E5E7] shadow-sm">
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                 </div>
-                メール送信の準備
-              </h3>
-               <button onClick={() => setIsMailModalOpen(false)} className="text-gray-400 hover:text-gray-600 rounded-full p-1 hover:bg-gray-100 transition-colors">
+                <h3 className="text-2xl font-bold text-[#1D1D1F] tracking-tight">メール送信の準備</h3>
+              </div>
+               <button onClick={() => setIsMailModalOpen(false)} className="text-[#86868B] hover:text-[#1D1D1F] rounded-full p-2 hover:bg-[#F5F5F7] transition-all">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
             
-            <div className="space-y-6">
-              <div className="bg-orange-50 p-4 rounded-xl border-2 border-orange-200">
-                  <p className="font-bold text-orange-800 text-sm">重要：メールを起動する前に、必ず「PDF保存」ボタンから見積書を保存してください。</p>
+            <div className="space-y-8">
+              <div className="bg-[#F5F5F7] p-6 rounded-xl border border-red-200">
+                  <p className="font-bold text-red-600 text-sm flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    重要：メールを起動する前に、必ず「PDF保存」ボタンから見積書を保存してください。
+                  </p>
               </div>
 
-              <div>
-                <h4 className="font-bold text-gray-800 mb-2">添付ファイル準備リスト</h4>
-                <div className="bg-gray-50 p-4 rounded-xl border space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-gray-100">
-                    <input type="checkbox" checked={isEstimateSaved} onChange={(e) => setIsEstimateSaved(e.target.checked)} className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500" />
-                    <span className={`font-medium ${isEstimateSaved ? 'text-gray-800' : 'text-gray-400'}`}>1. 見積書PDFを保存しました</span>
+              <div className="space-y-4">
+                <h4 className="font-bold text-[#1D1D1F] text-[11px] uppercase tracking-widest border-b border-[#E5E5E7] pb-2">添付ファイル準備リスト</h4>
+                <div className="bg-[#F5F5F7] p-6 rounded-xl border border-[#E5E5E7] space-y-4 shadow-sm">
+                  <label className="flex items-center gap-4 cursor-pointer p-3 rounded-lg hover:bg-white transition-all border border-transparent hover:border-[#E5E5E7] group">
+                    <input type="checkbox" checked={isEstimateSaved} onChange={(e) => setIsEstimateSaved(e.target.checked)} className="w-5 h-5 rounded border-[#E5E5E7] text-[#0071E3] focus:ring-[#0071E3] transition-all" />
+                    <span className={`font-bold text-sm ${isEstimateSaved ? 'text-[#1D1D1F]' : 'text-[#86868B]'}`}>1. 見積書PDFを保存しました</span>
                   </label>
-                  <div className="flex items-center gap-3 p-2">
-                     <div className="w-5 h-5 flex items-center justify-center"><svg className="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg></div>
-                     <span className="font-medium text-gray-400">2. 現地案内図</span>
+                  <div className="flex items-center gap-4 p-3 border border-transparent">
+                     <div className="w-5 h-5 flex items-center justify-center text-[#E5E5E7]"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg></div>
+                     <span className="font-bold text-sm text-[#86868B]">2. 現地案内図</span>
                   </div>
-                   <div className="flex items-center gap-3 p-2">
-                     <div className="w-5 h-5 flex items-center justify-center"><svg className="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg></div>
-                     <span className="font-medium text-gray-400">3. 平面図</span>
+                   <div className="flex items-center gap-4 p-3 border border-transparent">
+                     <div className="w-5 h-5 flex items-center justify-center text-[#E5E5E7]"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg></div>
+                     <span className="font-bold text-sm text-[#86868B]">3. 平面図</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t flex justify-end gap-3">
+            <div className="mt-10 pt-8 border-t border-[#E5E5E7] flex justify-end gap-4">
               <button 
                 onClick={() => setIsMailModalOpen(false)}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold transition-colors"
+                className="bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] px-8 py-3 rounded-md text-sm font-bold transition-all border border-[#E5E5E7]"
               >
                 キャンセル
               </button>
               <button 
                 onClick={handleLaunchMail}
                 disabled={!isEstimateSaved}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-colors shadow-lg shadow-blue-200 disabled:bg-gray-300 disabled:shadow-none disabled:cursor-not-allowed"
+                className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm active:scale-[0.98] disabled:bg-[#F5F5F7] disabled:text-[#D1D1D6] disabled:border-[#E5E5E7] disabled:shadow-none disabled:cursor-not-allowed"
               >
                 メールアプリを起動
               </button>
@@ -1311,50 +1316,50 @@ ${order.memo}
 
       {isOrderFlowModalOpen && (
         <div 
-          className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto no-print animate-in fade-in duration-300 flex justify-center p-4"
+          className="fixed inset-0 z-[150] bg-black/10 backdrop-blur-md overflow-y-auto no-print animate-in fade-in duration-300 flex justify-center p-4"
           onClick={() => setIsOrderFlowModalOpen(false)}
         >
            <div 
              className="w-full max-w-5xl scale-[0.8] origin-top transition-transform my-auto"
              onClick={(e) => e.stopPropagation()}
            >
-             <div className="bg-white rounded-3xl shadow-2xl w-full p-10 relative animate-in zoom-in">
-               <button onClick={() => setIsOrderFlowModalOpen(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 rounded-full p-2 hover:bg-gray-100 transition-colors">
+             <div className="bg-white rounded-3xl shadow-2xl w-full p-12 relative animate-in zoom-in border border-[#E5E5E7]">
+               <button onClick={() => setIsOrderFlowModalOpen(false)} className="absolute top-8 right-8 text-[#86868B] hover:text-[#1D1D1F] rounded-full p-2 hover:bg-[#F5F5F7] transition-all">
                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                </button>
                
-               <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                <div className="lg:col-span-1 space-y-6">
-                  <h3 className="text-3xl font-bold text-gray-800 border-b-2 border-gray-100 pb-4">ご注文フロー確認</h3>
-                   <div className="bg-white rounded-2xl border-2 border-blue-100 overflow-hidden shadow-sm">
-                    <h5 className="text-blue-800 font-bold p-5 bg-blue-50 border-b border-blue-100 flex items-center gap-2">
+               <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                <div className="lg:col-span-1 space-y-8">
+                  <h3 className="text-3xl font-bold text-[#1D1D1F] border-b border-[#E5E5E7] pb-6 tracking-tight">ご注文フロー確認</h3>
+                   <div className="bg-white rounded-2xl border border-[#E5E5E7] overflow-hidden shadow-sm">
+                    <h5 className="text-[#0071E3] font-bold p-5 bg-[#F5F5F7] border-b border-[#E5E5E7] flex items-center gap-3 tracking-tight">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                       商品に関するお問い合わせ
                     </h5>
-                    <div className="p-6 space-y-4">
+                    <div className="p-6 space-y-5">
                       <div>
-                        <p className="text-xs text-gray-500 font-bold mb-1">担当者</p>
-                        <p className="text-xl font-black text-gray-800">柏木工株式会社　滝下</p>
+                        <p className="text-[10px] text-[#86868B] font-bold mb-1 uppercase tracking-widest">担当者</p>
+                        <p className="text-xl font-bold text-[#1D1D1F] tracking-tight">柏木工株式会社　滝下</p>
                       </div>
                       <div className="space-y-3">
-                        <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
-                          <span className="text-gray-500 font-['Inter'] text-xs font-bold">TEL</span>
-                          <span className="font-mono font-bold text-lg text-gray-800">090-3307-6294</span>
+                        <div className="flex justify-between items-center bg-[#F5F5F7] p-3.5 rounded-xl border border-[#E5E5E7]">
+                          <span className="text-[#86868B] font-bold text-[10px] uppercase tracking-widest">TEL</span>
+                          <span className="font-mono font-bold text-lg text-[#1D1D1F]">090-3307-6294</span>
                         </div>
-                        <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
-                          <span className="text-gray-500 font-['Inter'] text-xs font-bold">Email</span>
-                          <span className="font-mono text-blue-600 font-bold break-all text-sm">takishita@kashiwa-f.com</span>
+                        <div className="flex justify-between items-center bg-[#F5F5F7] p-3.5 rounded-xl border border-[#E5E5E7]">
+                          <span className="text-[#86868B] font-bold text-[10px] uppercase tracking-widest">Email</span>
+                          <span className="font-mono text-[#0071E3] font-bold break-all text-sm">takishita@kashiwa-f.com</span>
                         </div>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="bg-orange-50 p-6 rounded-2xl border-2 border-orange-100 text-orange-900 text-sm leading-relaxed">
-                    <p className="font-bold mb-2 flex items-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                  <div className="bg-[#F5F5F7] p-6 rounded-2xl border border-[#E5E5E7] text-[#1D1D1F] text-sm leading-relaxed shadow-sm">
+                    <p className="font-bold mb-3 flex items-center gap-2 tracking-tight">
+                      <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                       ご注意
                     </p>
-                    <ul className="list-disc pl-5 space-y-1">
+                    <ul className="list-disc pl-5 space-y-2 text-[#86868B] font-medium">
                       <li>正式発注後の変更・キャンセルは原則お受けできません。仕様や寸法は十分にご確認ください。</li>
                       <li>玄関収納、造作材のみの注文の場合の送料は自動計算ではなく別途計算いたします。</li>
                     </ul>
@@ -1362,50 +1367,50 @@ ${order.memo}
                 </div>
 
                 <div className="lg:col-span-2">
-                  <div className="bg-gray-900 p-8 rounded-3xl shadow-xl text-white h-full">
-                    <h5 className="text-indigo-400 font-bold mb-8 text-xl border-b border-gray-800 pb-4 flex items-center gap-3">
+                  <div className="bg-[#1D1D1F] p-10 rounded-3xl shadow-xl text-white h-full border border-black">
+                    <h5 className="text-[#86868B] font-bold mb-10 text-xl border-b border-white/10 pb-6 flex items-center gap-3 tracking-tight">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18l-6-6m0 0l6-6m-6 6h18" /></svg>
                       ご注文から納品までの流れ
                     </h5>
                     <div className="space-y-0 relative">
-                      <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-gray-700"></div>
+                      <div className="absolute left-[19px] top-4 bottom-4 w-px bg-white/10"></div>
                       {[
-                        { step: 1, title: "見積書の入力", desc: "アプリ上で仕様を入力し、見積書PDFを作成・保存します。", color: "bg-indigo-500", ring: "ring-indigo-900" },
-                        { step: 2, title: "注文書送付依頼を送る", desc: "「注文書送付依頼」ボタンからメールを起動し、見積書PDFと平面図を添付して送信します。", color: "bg-indigo-500", ring: "ring-indigo-900" },
-                        { step: 3, title: "見積り確認・図面確認（柏木工側）", desc: "お送りいただいた内容を確認し、詳細図面を作成します。", color: "bg-gray-600", ring: "ring-gray-800" },
-                        { step: 4, title: "正式な注文書を送付いたします", desc: "柏木工より, 図面と正式な注文書をお送りいたします。", color: "bg-gray-600", ring: "ring-gray-800" },
-                        { step: 5, title: "注文書返信により正式発注", desc: "内容をご確認の上、注文書にご捺印いただきご返信ください。この時点で発注確定となります。", color: "bg-orange-500", ring: "ring-orange-900" },
-                        { step: 6, title: "製作開始", desc: "製作期間（中2週間〜）のカウントを開始します。", color: "bg-blue-600", ring: "ring-blue-900" },
-                        { step: 7, title: "1次納品（枠・巾木）", desc: "現場の進捗に合わせ、枠類を先行納品します。", color: "bg-emerald-500", ring: "ring-emerald-900" },
-                        { step: 8, title: "2次納品（ドア本体）", desc: "ドア本体を順次納品し、完了となります。", color: "bg-emerald-500", ring: "ring-emerald-900" },
+                        { step: 1, title: "見積書の入力", desc: "アプリ上で仕様を入力し、見積書PDFを作成・保存します。", color: "bg-[#0071E3]", ring: "ring-white/10" },
+                        { step: 2, title: "注文書送付依頼を送る", desc: "「注文書送付依頼」ボタンからメールを起動し、見積書PDFと平面図を添付して送信します。", color: "bg-[#0071E3]", ring: "ring-white/10" },
+                        { step: 3, title: "見積り確認・図面確認（柏木工側）", desc: "お送りいただいた内容を確認し、詳細図面を作成します。", color: "bg-[#86868B]", ring: "ring-white/10" },
+                        { step: 4, title: "正式な注文書を送付いたします", desc: "柏木工より, 図面と正式な注文書をお送りいたします。", color: "bg-[#86868B]", ring: "ring-white/10" },
+                        { step: 5, title: "注文書返信により正式発注", desc: "内容をご確認の上、注文書にご捺印いただきご返信ください。この時点で発注確定となります。", color: "bg-[#0071E3]", ring: "ring-white/10" },
+                        { step: 6, title: "製作開始", desc: "製作期間（中2週間〜）のカウントを開始します。", color: "bg-[#86868B]", ring: "ring-white/10" },
+                        { step: 7, title: "1次納品（枠・巾木）", desc: "現場の進捗に合わせ、枠類を先行納品します。", color: "bg-[#0071E3]", ring: "ring-white/10" },
+                        { step: 8, title: "2次納品（ドア本体）", desc: "ドア本体を順次納品し、完了となります。", color: "bg-[#0071E3]", ring: "ring-white/10" },
                       ].map((item, idx) => (
-                        <div key={idx} className="flex gap-6 relative z-10 pb-8 last:pb-0 group">
-                          <div className={`${item.color} ${item.ring} ring-4 w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-black shadow-lg text-sm z-10 transition-transform group-hover:scale-110`}>
+                        <div key={idx} className="flex gap-8 relative z-10 pb-8 last:pb-0 group">
+                          <div className={`${item.color} ${item.ring} ring-4 w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-white font-bold shadow-lg text-xs z-10 transition-all group-hover:scale-110`}>
                             {item.step}
                           </div>
                           <div className="flex flex-col pt-1.5 pb-2">
-                            <p className="text-lg font-bold leading-none mb-2">{item.title}</p>
-                            <p className="text-sm text-gray-400 font-medium leading-relaxed">{item.desc}</p>
+                            <p className="text-lg font-bold leading-none mb-2 tracking-tight">{item.title}</p>
+                            <p className="text-sm text-[#86868B] font-medium leading-relaxed">{item.desc}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
-             </div>
-             
-             <div className="flex justify-center mt-8">
-               <button onClick={() => setIsOrderFlowModalOpen(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-12 py-4 rounded-xl font-bold transition-colors text-lg shadow-sm">
-                 閉じる
-               </button>
-             </div>
-           </div>
+              </div>
+              
+              <div className="flex justify-center mt-10">
+                <button onClick={() => setIsOrderFlowModalOpen(false)} className="bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] px-12 py-4 rounded-xl font-bold transition-all text-sm border border-[#E5E5E7] shadow-sm active:scale-[0.98]">
+                  閉じる
+                </button>
+              </div>
+            </div>
            </div>
         </div>
       )}
 
       {isEstimateModalOpen && (
-        <div className="fixed inset-0 z-[150] bg-gray-600/90 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300 print:static print:inset-auto print:bg-white print:h-auto print:w-full print:z-[200] print:overflow-visible">
+        <div className="fixed inset-0 z-[150] bg-black/10 backdrop-blur-md overflow-y-auto animate-in fade-in duration-300 print:static print:inset-auto print:bg-white print:h-auto print:w-full print:z-[200] print:overflow-visible">
            <style>{`
              @media print {
                @page {
@@ -1430,27 +1435,27 @@ ${order.memo}
                }
              }
            `}</style>
-           <div className="min-h-screen py-6 px-4 flex flex-col items-center print:block print:h-auto print:p-0">
-            <div className="max-w-[1000px] w-full flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-xl border border-gray-200 gap-4 no-print">
-              <button onClick={() => setIsEstimateModalOpen(false)} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold group">
-                <div className="bg-gray-100 p-2 rounded-full group-hover:bg-gray-200 transition-colors">
+           <div className="min-h-screen py-8 px-4 flex flex-col items-center print:block print:h-auto print:p-0">
+            <div className="max-w-[1000px] w-full flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-2xl border border-[#E5E5E7] gap-4 no-print">
+              <button onClick={() => setIsEstimateModalOpen(false)} className="flex items-center gap-3 text-[#1D1D1F] hover:text-[#0071E3] font-bold group transition-all">
+                <div className="bg-[#F5F5F7] p-2.5 rounded-full group-hover:bg-[#E5E5E7] transition-all border border-[#E5E5E7]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 </div>
                 戻って修正
               </button>
-              <div className="flex flex-wrap justify-center items-center gap-3">
-                <button onClick={handlePrintPdf} className="bg-gray-800 hover:bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
+              <div className="flex flex-wrap justify-center items-center gap-4">
+                <button onClick={handlePrintPdf} className="bg-[#1D1D1F] hover:bg-black text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-[0.98]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                   PDF保存
                 </button>
                 <button 
                   onClick={() => setIsPbModalOpen(true)}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95"
+                  className="bg-[#F5F5F7] border border-[#E5E5E7] hover:bg-[#E5E5E7] text-[#1D1D1F] px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-[0.98]"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                   プレゼンボード
                 </button>
-                <button onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all active:scale-95">
+                <button onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); }} className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-[0.98]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                   注文書送付依頼
                 </button>
@@ -1459,35 +1464,35 @@ ${order.memo}
 
             <div className="flex justify-center w-full max-w-[1000px] print:block print:w-full print:max-w-none">
               <div className="flex-grow w-full flex justify-center print:block">
-                <div className="bg-white p-[10mm] shadow-2xl rounded-sm text-gray-900 w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:block print:shadow-none print:w-full print:max-w-none print:p-0 print:m-0 print:min-h-0 box-border">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex-1 mr-4">
-                      <h2 className="text-4xl font-bold border-b-4 border-gray-800 pb-2 mb-4 font-['Inter'] tracking-tight">御見積書</h2>
-                      <div className="space-y-2">
+                <div className="bg-white p-[15mm] shadow-2xl rounded-sm text-[#1D1D1F] w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:block print:shadow-none print:w-full print:max-w-none print:p-0 print:m-0 print:min-h-0 box-border">
+                  <div className="flex justify-between items-start mb-10">
+                    <div className="flex-1 mr-8">
+                      <h2 className="text-4xl font-bold border-b-4 border-[#1D1D1F] pb-4 mb-6 tracking-tight">御見積書</h2>
+                      <div className="space-y-4">
                         <div className="flex flex-wrap items-baseline gap-4">
-                            <p className="text-xl font-bold underline underline-offset-4">{order.customerInfo.company} 御中</p>
+                            <p className="text-2xl font-bold underline underline-offset-[6px] decoration-1">{order.customerInfo.company} 御中</p>
                             {order.customerInfo.contactName && (
-                              <p className="text-lg font-bold underline underline-offset-4">{order.customerInfo.contactName} 様</p>
+                              <p className="text-xl font-bold underline underline-offset-[6px] decoration-1">{order.customerInfo.contactName} 様</p>
                             )}
                         </div>
-                        <div className="flex flex-wrap gap-6 text-sm">
-                            <p>現場名：{order.customerInfo.siteName}</p>
-                            <p>連絡先：{order.customerInfo.phone}</p>
-                            <p className={`font-bold ${order.customerInfo.ceilingPB === '15.0' ? 'text-red-600' : 'text-gray-700'}`}>天井PB厚：{order.customerInfo.ceilingPB}mm</p>
+                        <div className="flex flex-wrap gap-8 text-sm font-medium">
+                            <p className="text-[#86868B]">現場名：<span className="text-[#1D1D1F]">{order.customerInfo.siteName}</span></p>
+                            <p className="text-[#86868B]">連絡先：<span className="text-[#1D1D1F] font-mono">{order.customerInfo.phone}</span></p>
+                            <p className="text-[#86868B]">天井PB厚：<span className={`font-bold ${order.customerInfo.ceilingPB === '15.0' ? 'text-red-600' : 'text-[#1D1D1F]'}`}>{order.customerInfo.ceilingPB}mm</span></p>
                         </div>
-                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm leading-tight">
-                          <p className="flex items-center gap-2">
-                            <span className="font-bold">納品希望日①</span> 
-                            <span>{order.customerInfo.deliveryDate1 || '未指定'}</span>
-                            <span className="text-xs text-gray-600">（ドア枠
+                        <div className="space-y-1 text-sm leading-relaxed">
+                          <p className="flex items-center gap-4">
+                            <span className="font-bold text-[#86868B] text-[10px] uppercase tracking-widest min-w-[80px]">納品希望日①</span> 
+                            <span className="font-mono font-bold">{order.customerInfo.deliveryDate1 || '未指定'}</span>
+                            <span className="text-[10px] text-[#86868B] font-medium">（ドア枠
                               {order.customerInfo.delivery1Selection.baseboard ? '・巾木' : ''}
                               {order.customerInfo.delivery1Selection.storage ? '・玄関収納' : ''}
                               ）</span>
                           </p>
-                          <p className="flex items-center gap-2">
-                            <span className="font-bold">納品希望日②</span> 
-                            <span>{order.customerInfo.deliveryDate2 || '未指定'}</span>
-                            <span className="text-xs text-gray-600">（ドア本体
+                          <p className="flex items-center gap-4">
+                            <span className="font-bold text-[#86868B] text-[10px] uppercase tracking-widest min-w-[80px]">納品希望日②</span> 
+                            <span className="font-mono font-bold">{order.customerInfo.deliveryDate2 || '未指定'}</span>
+                            <span className="text-[10px] text-[#86868B] font-medium">（ドア本体
                               {order.customerInfo.delivery2Selection.baseboard ? '・巾木' : ''}
                               {order.customerInfo.delivery2Selection.storage ? '・玄関収納' : ''}
                               ）</span>
@@ -1496,28 +1501,28 @@ ${order.memo}
                       </div>
                     </div>
                     <div className="text-right whitespace-nowrap">
-                      <p className="text-sm text-gray-500 mb-2 font-['Inter']">発行日：{new Date().toLocaleDateString('ja-JP')}</p>
-                      <p className="font-bold text-lg">柏木工株式会社</p>
-                      <p className="text-sm">担当：滝下</p>
-                      <p className="text-sm mt-2 font-['Inter']">TEL: 090-3307-6294</p>
+                      <p className="text-xs text-[#86868B] mb-3 font-mono">発行日：{new Date().toLocaleDateString('ja-JP')}</p>
+                      <p className="font-bold text-xl tracking-tight">柏木工株式会社</p>
+                      <p className="text-sm font-medium text-[#86868B] mt-1">担当：滝下</p>
+                      <p className="text-sm mt-3 font-mono text-[#1D1D1F]">TEL: 090-3307-6294</p>
                     </div>
                   </div>
 
-                  <div className="bg-gray-100 p-4 rounded-xl mb-6 flex justify-between items-baseline">
-                    <span className="text-lg font-bold">御見積合計（税込）</span>
-                    <span className="text-xl font-black font-['Inter']">¥{totals.total.toLocaleString()}</span>
+                  <div className="bg-[#F5F5F7] p-6 rounded-2xl mb-10 flex justify-between items-center border border-[#E5E5E7] shadow-sm">
+                    <span className="text-lg font-bold tracking-tight">御見積合計（税込）</span>
+                    <span className="text-3xl font-black font-mono tracking-tight text-[#0071E3]">¥{totals.total.toLocaleString()}</span>
                   </div>
 
-                  <div className="mb-4 flex-grow">
-                    <h4 className="font-bold border-b border-gray-300 pb-1 mb-2 text-gray-700 uppercase tracking-widest text-xs">内訳明細</h4>
+                  <div className="mb-6 flex-grow">
+                    <h4 className="font-bold border-b border-[#E5E5E7] pb-2 mb-4 text-[#86868B] uppercase tracking-[0.2em] text-[10px]">内訳明細</h4>
                     <table className="w-full text-xs border-collapse">
                       <thead>
-                        <tr className="border-b-2 border-gray-800">
-                          <th className="py-2 text-left w-8">No.</th>
-                          <th className="py-2 text-left">品名・仕様</th>
-                          <th className="py-2 text-center w-14">数量</th>
-                          <th className="py-2 text-left w-16">単価</th>
-                          <th className="py-2 text-right w-20">金額</th>
+                        <tr className="border-b-2 border-[#1D1D1F] bg-[#F5F5F7]">
+                          <th className="py-3 px-3 text-left w-10 text-[#86868B] font-bold">No.</th>
+                          <th className="py-3 text-left text-[#86868B] font-bold">品名・仕様</th>
+                          <th className="py-3 text-center w-16 text-[#86868B] font-bold">数量</th>
+                          <th className="py-3 text-left w-24 text-[#86868B] font-bold">単価</th>
+                          <th className="py-3 px-3 text-right w-28 text-[#86868B] font-bold">金額</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1530,11 +1535,11 @@ ${order.memo}
 
                           return (
                             <React.Fragment key={door.id}>
-                              <tr className="border-b border-gray-200 break-inside-avoid page-break-inside-avoid">
-                                  <td className="py-1.5 align-top font-medium text-gray-500">WD{idx+1}</td>
-                                  <td className="py-1.5 align-top">
-                                    <div className="font-bold text-sm">{door.type} {door.roomName}</div>
-                                    <div className="text-[10px] text-gray-600 mt-0.5 flex flex-wrap gap-x-3 gap-y-0 leading-tight">
+                              <tr className="border-b border-[#E5E5E7] break-inside-avoid page-break-inside-avoid hover:bg-[#F5F5F7]/30 transition-all">
+                                  <td className="py-3 px-3 align-top font-mono text-[#86868B]">WD{idx+1}</td>
+                                  <td className="py-3 align-top">
+                                    <div className="font-bold text-sm tracking-tight">{door.type} {door.roomName}</div>
+                                    <div className="text-[10px] text-[#86868B] mt-1 flex flex-wrap gap-x-4 gap-y-0.5 leading-relaxed font-medium">
                                        <span className={isDesignRed ? 'text-red-600 font-bold' : ''}>デザイン: {door.design}</span>
                                        <span className={isSizeRed ? 'text-red-600 font-bold' : ''}>サイズ: {door.width==='特寸'?`W${door.customWidth}㎜特寸`:door.width} × {door.height==='特寸'?`H${door.customHeight}㎜特寸`:door.height}</span>
                                        <span>吊元: {door.hangingSide}</span>
@@ -1556,9 +1561,9 @@ ${order.memo}
                                        {door.specialNotes && <span className="text-red-500 font-bold">特記: {door.specialNotes}</span>}
                                     </div>
                                   </td>
-                                  <td className="py-1.5 align-top text-center">1式</td>
-                                  <td className="py-1.5 align-top text-left font-mono text-sm">¥{door.price.toLocaleString()}</td>
-                                  <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{door.price.toLocaleString()}</td>
+                                  <td className="py-3 align-top text-center font-medium">1式</td>
+                                  <td className="py-3 align-top text-left font-mono text-sm">¥{door.price.toLocaleString()}</td>
+                                  <td className="py-3 px-3 align-top text-right font-bold font-mono text-sm">¥{door.price.toLocaleString()}</td>
                               </tr>
                             </React.Fragment>
                           );
@@ -1566,43 +1571,43 @@ ${order.memo}
 
                         {order.storage.type !== 'NONE' && (
                           <>
-                            <tr className="border-b border-gray-200">
-                               <td className="py-1.5 align-top font-medium text-gray-500">GS</td>
-                               <td className="py-1.5 align-top">
-                                  <div className="font-bold text-sm">玄関収納 本体</div>
-                                  <div className="text-[10px] text-gray-500 mt-0.5">
+                            <tr className="border-b border-[#E5E5E7] hover:bg-[#F5F5F7]/30 transition-all">
+                               <td className="py-3 px-3 align-top font-mono text-[#86868B]">GS</td>
+                               <td className="py-3 align-top">
+                                  <div className="font-bold text-sm tracking-tight">玄関収納 本体</div>
+                                  <div className="text-[10px] text-[#86868B] mt-1 font-medium">
                                      {order.storage.type} / {order.storage.size} / {order.storage.color}
                                   </div>
                                </td>
-                               <td className="py-1.5 align-top text-center">1式</td>
-                               <td className="py-1.5 align-top text-left font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
-                               <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
+                               <td className="py-3 align-top text-center font-medium">1式</td>
+                               <td className="py-3 align-top text-left font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
+                               <td className="py-3 px-3 align-top text-right font-bold font-mono text-sm">¥{order.storage.basePrice.toLocaleString()}</td>
                             </tr>
                              {order.storage.baseRingPrice > 0 && (
-                               <tr className="border-b border-gray-200">
-                                 <td className="py-1 align-top"></td>
-                                 <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ 台輪あり ({order.storage.baseRing})</td>
-                                 <td className="py-1 align-top text-center">1式</td>
-                                 <td className="py-1 align-top text-left font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
-                                 <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
+                               <tr className="border-b border-[#E5E5E7] hover:bg-[#F5F5F7]/30 transition-all">
+                                 <td className="py-2 align-top"></td>
+                                 <td className="py-2 align-top text-[#86868B] pl-4 text-[10px] font-medium">└ 台輪あり ({order.storage.baseRing})</td>
+                                 <td className="py-2 align-top text-center font-medium">1式</td>
+                                 <td className="py-2 align-top text-left font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
+                                 <td className="py-2 px-3 align-top text-right font-bold font-mono text-sm">¥{order.storage.baseRingPrice.toLocaleString()}</td>
                                </tr>
                             )}
                             {order.storage.mirrorPrice > 0 && (
-                               <tr className="border-b border-gray-200">
-                                 <td className="py-1 align-top"></td>
-                                 <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ ミラーあり ({order.storage.mirror})</td>
-                                 <td className="py-1 align-top text-center">1式</td>
-                                 <td className="py-1 align-top text-left font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
-                                 <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
+                               <tr className="border-b border-[#E5E5E7] hover:bg-[#F5F5F7]/30 transition-all">
+                                 <td className="py-2 align-top"></td>
+                                 <td className="py-2 align-top text-[#86868B] pl-4 text-[10px] font-medium">└ ミラーあり ({order.storage.mirror})</td>
+                                 <td className="py-2 align-top text-center font-medium">1式</td>
+                                 <td className="py-2 align-top text-left font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
+                                 <td className="py-2 px-3 align-top text-right font-bold font-mono text-sm">¥{order.storage.mirrorPrice.toLocaleString()}</td>
                                </tr>
                             )}
                             {order.storage.fillerCount > 0 && (
-                               <tr className="border-b border-gray-200">
-                                 <td className="py-1 align-top"></td>
-                                 <td className="py-1 align-top text-gray-600 pl-4 text-[10px]">└ フィラー</td>
-                                 <td className="py-1 align-top text-center">{order.storage.fillerCount}個</td>
-                                 <td className="py-1 align-top text-left font-mono text-sm">¥{order.storage.fillerPrice.toLocaleString()}</td>
-                                 <td className="py-1 align-top text-right font-bold font-mono text-sm">¥{(order.storage.fillerPrice * order.storage.fillerCount).toLocaleString()}</td>
+                               <tr className="border-b border-[#E5E5E7] hover:bg-[#F5F5F7]/30 transition-all">
+                                 <td className="py-2 align-top"></td>
+                                 <td className="py-2 align-top text-[#86868B] pl-4 text-[10px] font-medium">└ フィラー</td>
+                                 <td className="py-2 align-top text-center font-medium">{order.storage.fillerCount}個</td>
+                                 <td className="py-2 align-top text-left font-mono text-sm">¥{order.storage.fillerPrice.toLocaleString()}</td>
+                                 <td className="py-2 px-3 align-top text-right font-bold font-mono text-sm">¥{(order.storage.fillerPrice * order.storage.fillerCount).toLocaleString()}</td>
                                </tr>
                             )}
                           </>
@@ -1611,58 +1616,58 @@ ${order.memo}
                         {order.baseboards.map((item, idx) => {
                            if (item.quantity === 0) return null;
                            return (
-                              <tr key={idx} className="border-b border-gray-200">
-                                 <td className="py-1.5 align-top font-medium text-gray-500">{idx===0 ? 'Z1' : 'Z2'}</td>
-                                 <td className="py-1.5 align-top">
-                                    <div className="font-bold text-sm">{item.product}</div>
-                                    <div className="text-[10px] text-gray-500 mt-0.5">{item.color}</div>
+                              <tr key={idx} className="border-b border-[#E5E5E7] hover:bg-[#F5F5F7]/30 transition-all">
+                                 <td className="py-3 px-3 align-top font-mono text-[#86868B]">{idx===0 ? 'Z1' : 'Z2'}</td>
+                                 <td className="py-3 align-top">
+                                    <div className="font-bold text-sm tracking-tight">{item.product}</div>
+                                    <div className="text-[10px] text-[#86868B] mt-1 font-medium">{item.color}</div>
                                  </td>
-                                 <td className="py-1.5 align-top text-center">{item.quantity}{item.unit}</td>
-                                 <td className="py-1.5 align-top text-left font-mono text-sm">¥{item.unitPrice.toLocaleString()}</td>
-                                 <td className="py-1.5 align-top text-right font-bold font-mono text-sm">¥{(item.unitPrice * item.quantity).toLocaleString()}</td>
+                                 <td className="py-3 align-top text-center font-medium">{item.quantity}{item.unit}</td>
+                                 <td className="py-3 align-top text-left font-mono text-sm">¥{item.unitPrice.toLocaleString()}</td>
+                                 <td className="py-3 px-3 align-top text-right font-bold font-mono text-sm">¥{(item.unitPrice * item.quantity).toLocaleString()}</td>
                               </tr>
                            );
                         })}
 
                         {order.shipping > 0 && (
-                            <tr className="border-b border-gray-200">
-                               <td className="py-1.5 align-top font-medium text-gray-500">他</td>
-                               <td className="py-1.5 align-top">
-                                 <div className="font-bold text-sm">運搬諸経費（点数計算: {totals.totalPoints}点）</div>
-                                 <div className="text-[10px] text-gray-500 mt-0.5">
+                            <tr className="border-b border-[#E5E5E7] hover:bg-[#F5F5F7]/30 transition-all">
+                               <td className="py-3 px-3 align-top font-mono text-[#86868B]">他</td>
+                               <td className="py-3 align-top">
+                                 <div className="font-bold text-sm tracking-tight">運搬諸経費（点数計算: {totals.totalPoints}点）</div>
+                                 <div className="text-[10px] text-[#86868B] mt-1 font-medium">
                                    納品先: {order.customerInfo.address}
                                    {totals.isShippingDiscounted && !totals.isShippingSeparate && ` (送料算定点数: ${totals.totalPoints}/10)`}
                                  </div>
                                </td>
-                               <td className="py-1.5 align-top text-center">1式</td>
-                               <td className="py-1.5 align-top text-left font-mono text-sm">{totals.isShippingSeparate ? '【別途】' : `¥${totals.finalShipping.toLocaleString()}`}</td>
-                               <td className="py-1.5 align-top text-right font-bold font-mono text-sm">{totals.isShippingSeparate ? '【別途】' : `¥${totals.finalShipping.toLocaleString()}`}</td>
+                               <td className="py-3 align-top text-center font-medium">1式</td>
+                               <td className="py-3 align-top text-left font-mono text-sm">{totals.isShippingSeparate ? '【別途】' : `¥${totals.finalShipping.toLocaleString()}`}</td>
+                               <td className="py-3 px-3 align-top text-right font-bold font-mono text-sm">{totals.isShippingSeparate ? '【別途】' : `¥${totals.finalShipping.toLocaleString()}`}</td>
                             </tr>
                         )}
                         
-                        <tr className="border-t-2 border-gray-400">
+                        <tr className="border-t-2 border-[#1D1D1F]">
                           <td colSpan={2}></td>
-                          <td colSpan={2} className="py-1 px-2 text-right text-sm text-gray-600">小計 (税抜)</td>
-                          <td className="py-1 px-2 text-right font-mono text-sm">¥{totals.subtotal.toLocaleString()}</td>
+                          <td colSpan={2} className="py-3 px-3 text-right text-[10px] font-bold text-[#86868B] uppercase tracking-wider">小計 (税抜)</td>
+                          <td className="py-3 px-3 text-right font-mono text-sm font-bold">¥{totals.subtotal.toLocaleString()}</td>
                         </tr>
-                        <tr>
+                        <tr className="border-b border-[#E5E5E7]">
                           <td colSpan={2}></td>
-                          <td colSpan={2} className="py-1 px-2 text-right text-sm text-gray-600">消費税 (10%)</td>
-                          <td className="py-1 px-2 text-right font-mono text-sm">¥{totals.tax.toLocaleString()}</td>
+                          <td colSpan={2} className="py-3 px-3 text-right text-[10px] font-bold text-[#86868B] uppercase tracking-wider">消費税 (10%)</td>
+                          <td className="py-3 px-3 text-right font-mono text-sm font-bold">¥{totals.tax.toLocaleString()}</td>
                         </tr>
-                        <tr className="bg-gray-50 font-bold border-t border-gray-200">
+                        <tr className="bg-[#F5F5F7]/50 font-bold">
                           <td colSpan={2}></td>
-                          <td colSpan={2} className="py-2 px-2 text-right text-sm">合計 (税込)</td>
-                          <td className="py-2 px-2 text-right font-mono text-base">¥{totals.total.toLocaleString()}</td>
+                          <td colSpan={2} className="py-4 px-3 text-right text-sm tracking-tight">合計 (税込)</td>
+                          <td className="py-4 px-3 text-right font-mono text-xl text-[#0071E3]">¥{totals.total.toLocaleString()}</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
-                  <div className="border-t-2 border-gray-200 pt-2 print:break-inside-avoid">
-                    <h4 className="font-bold text-xs text-gray-700 mb-1">備考 / メモ</h4>
+                  <div className="border-t-2 border-[#E5E5E7] pt-6 print:break-inside-avoid">
+                    <h4 className="font-bold text-[10px] text-[#86868B] mb-3 uppercase tracking-widest">備考 / メモ</h4>
                     <textarea
-                      className="w-full h-24 p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 outline-none text-xs print:border print:border-gray-400 print:text-gray-900 bg-white"
+                      className="w-full h-32 p-4 border border-[#E5E5E7] rounded-2xl resize-none focus:ring-1 focus:ring-[#0071E3] outline-none text-xs print:border print:border-[#E5E5E7] print:text-[#1D1D1F] bg-[#F5F5F7]/30 transition-all"
                       placeholder="特記事項やご要望があればご記入ください。"
                       value={order.memo}
                       onChange={(e) => setOrder(prev => ({ ...prev, memo: e.target.value }))}
@@ -1676,125 +1681,131 @@ ${order.memo}
       )}
       
        {isHardwareModalOpen && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHardwareModalOpen(false)}>
-           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute -top-12 right-0 text-white p-2" onClick={() => setIsHardwareModalOpen(false)}>
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsHardwareModalOpen(false)}>
+           <div className="relative bg-white p-2 rounded-2xl shadow-2xl max-w-5xl w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-12 right-0 text-white hover:text-[#E5E5E7] transition-all p-2" onClick={() => setIsHardwareModalOpen(false)}>
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="bg-gray-50 p-4 border-b rounded-t-lg">
-              <h4 className="text-center font-bold text-gray-800">ハンドル・ハードウェア一覧</h4>
+            <div className="bg-[#F5F5F7] p-5 border-b border-[#E5E5E7] rounded-t-xl">
+              <h4 className="text-center font-bold text-[#1D1D1F] tracking-tight">ハンドル・ハードウェア一覧</h4>
             </div>
-            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/hardware.JPG" alt="ハードウェア一覧" className="w-full h-auto rounded-b-lg" />
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/hardware.JPG" alt="ハードウェア一覧" className="w-full h-auto rounded-b-xl shadow-sm" />
           </div>
         </div>
       )}
       {isHandleModalOpen && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHandleModalOpen(false)}>
-           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-lg w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute -top-12 right-0 text-white p-2" onClick={() => setIsHandleModalOpen(false)}>
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsHandleModalOpen(false)}>
+           <div className="relative bg-white p-2 rounded-2xl shadow-2xl max-w-lg w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-12 right-0 text-white hover:text-[#E5E5E7] transition-all p-2" onClick={() => setIsHandleModalOpen(false)}>
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="bg-gray-50 p-4 border-b rounded-t-lg">
-              <h4 className="text-center font-bold text-gray-800">J型取手 形状確認</h4>
-              <p className="text-[10px] text-center text-gray-500 mt-1">折戸・物入の標準仕様となります。</p>
+            <div className="bg-[#F5F5F7] p-5 border-b border-[#E5E5E7] rounded-t-xl">
+              <h4 className="text-center font-bold text-[#1D1D1F] tracking-tight text-sm">J型取手 形状確認</h4>
+              <p className="text-[10px] text-center text-[#86868B] mt-1 font-medium">折戸・物入の標準仕様となります。</p>
             </div>
-            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/jtotte.JPG" alt="J型取手" className="w-full h-auto rounded-b-lg" />
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/jtotte.JPG" alt="J型取手" className="w-full h-auto rounded-b-xl shadow-sm" />
           </div>
         </div>
       )}
       {isInfoModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsInfoModalOpen(false)}>
-           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/hirakigatte.jpg" alt="吊元説明" className="w-full h-auto rounded-lg" />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsInfoModalOpen(false)}>
+           <div className="relative bg-white p-2 rounded-2xl shadow-2xl max-w-5xl w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+             <button className="absolute -top-12 right-0 text-white hover:text-[#E5E5E7] transition-all p-2" onClick={() => setIsInfoModalOpen(false)}>
+               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+             </button>
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/hirakigatte.jpg" alt="吊元説明" className="w-full h-auto rounded-xl shadow-sm" />
           </div>
         </div>
       )}
       {isWakuModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsWakuModalOpen(false)}>
-           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/waku.jpg" alt="枠仕様説明" className="w-full h-auto rounded-lg" />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsWakuModalOpen(false)}>
+           <div className="relative bg-white p-2 rounded-2xl shadow-2xl max-w-5xl w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+             <button className="absolute -top-12 right-0 text-white hover:text-[#E5E5E7] transition-all p-2" onClick={() => setIsWakuModalOpen(false)}>
+               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+             </button>
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/waku.jpg" alt="枠仕様説明" className="w-full h-auto rounded-xl shadow-sm" />
           </div>
         </div>
       )}
       {isHabakiModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsHabakiModalOpen(false)}>
-          <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute -top-10 right-0 text-white p-2" onClick={() => setIsHabakiModalOpen(false)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsHabakiModalOpen(false)}>
+          <div className="relative bg-white p-2 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-12 right-0 text-white hover:text-[#E5E5E7] transition-all p-2" onClick={() => setIsHabakiModalOpen(false)}>
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="bg-gray-50 p-4 border-b rounded-t-lg">
-              <h4 className="text-center font-bold text-gray-800">スリム巾木 詳細</h4>
+            <div className="bg-[#F5F5F7] p-5 border-b border-[#E5E5E7] rounded-t-xl">
+              <h4 className="text-center font-bold text-[#1D1D1F] tracking-tight">巾木 仕様詳細</h4>
             </div>
-            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/slimhabaki.JPG" alt="スリム巾木説明" className="w-full h-auto rounded-b-lg" />
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/slimhabaki.JPG" alt="スリム巾木説明" className="w-full h-auto rounded-b-xl shadow-sm" />
           </div>
         </div>
       )}
       {isCornerHabakiModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsCornerHabakiModalOpen(false)}>
-           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute -top-10 right-0 text-white p-2" onClick={() => setIsCornerHabakiModalOpen(false)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsCornerHabakiModalOpen(false)}>
+           <div className="relative bg-white p-2 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-12 right-0 text-white hover:text-[#E5E5E7] transition-all p-2" onClick={() => setIsCornerHabakiModalOpen(false)}>
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="bg-gray-50 p-4 border-b rounded-t-lg">
-              <h4 className="text-center font-bold text-gray-800">スリムコーナー巾木 詳細</h4>
+            <div className="bg-[#F5F5F7] p-5 border-b border-[#E5E5E7] rounded-t-xl">
+              <h4 className="text-center font-bold text-[#1D1D1F] tracking-tight">スリムコーナー巾木 詳細</h4>
             </div>
-            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/cornerslimhabaki.JPG" alt="スリムコーナー巾木説明" className="w-full h-auto rounded-b-lg" />
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/cornerslimhabaki.JPG" alt="スリムコーナー巾木説明" className="w-full h-auto rounded-b-xl" />
           </div>
         </div>
       )}
       {isDoorStopperSvModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsDoorStopperSvModalOpen(false)}>
-           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute -top-10 right-0 text-white p-2" onClick={() => setIsDoorStopperSvModalOpen(false)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsDoorStopperSvModalOpen(false)}>
+           <div className="relative bg-white p-2 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-12 right-0 text-white hover:text-[#E5E5E7] transition-all p-2" onClick={() => setIsDoorStopperSvModalOpen(false)}>
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="bg-gray-50 p-4 border-b rounded-t-lg">
-              <h4 className="text-center font-bold text-gray-800">マグネット式ドアストッパー(サテンニッケル) 詳細</h4>
+            <div className="bg-[#F5F5F7] p-5 border-b border-[#E5E5E7] rounded-t-xl">
+              <h4 className="text-center font-bold text-[#1D1D1F] tracking-tight">マグネット式ドアストッパー(サテンニッケル) 詳細</h4>
             </div>
-            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/toatariSV.JPG" alt="サテンニッケル" className="w-full h-auto rounded-b-lg" />
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/toatariSV.JPG" alt="サテンニッケル" className="w-full h-auto rounded-b-xl" />
           </div>
         </div>
       )}
       {isDoorStopperBkModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsDoorStopperBkModalOpen(false)}>
-           <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-md w-full animate-in zoom-in" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute -top-10 right-0 text-white p-2" onClick={() => setIsDoorStopperBkModalOpen(false)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsDoorStopperBkModalOpen(false)}>
+           <div className="relative bg-white p-2 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-12 right-0 text-white hover:text-[#E5E5E7] transition-all p-2" onClick={() => setIsDoorStopperBkModalOpen(false)}>
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="bg-gray-50 p-4 border-b rounded-t-lg">
-              <h4 className="text-center font-bold text-gray-800">マグネット式ドアストッパー(マットブラック) 詳細</h4>
+            <div className="bg-[#F5F5F7] p-5 border-b border-[#E5E5E7] rounded-t-xl">
+              <h4 className="text-center font-bold text-[#1D1D1F] tracking-tight">マグネット式ドアストッパー(マットブラック) 詳細</h4>
             </div>
-            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/toatariBK.JPG" alt="マットブラック" className="w-full h-auto rounded-b-lg" />
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/toatariBK.JPG" alt="マットブラック" className="w-full h-auto rounded-b-xl" />
           </div>
         </div>
       )}
       {isColorModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setIsColorModalOpen(false)}>
-          <div className="relative bg-white p-2 rounded-xl shadow-2xl max-w-5xl w-full animate-in zoom-in flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
-            <button className="absolute -top-10 right-0 text-white p-2" onClick={() => setIsColorModalOpen(false)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsColorModalOpen(false)}>
+          <div className="relative bg-white p-2 rounded-2xl shadow-2xl max-w-5xl w-full animate-in zoom-in flex flex-col items-center border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-12 right-0 text-white hover:text-[#E5E5E7] transition-all p-2" onClick={() => setIsColorModalOpen(false)}>
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="bg-gray-50 p-4 border-b rounded-t-lg w-full">
-              <h4 className="text-center font-bold text-gray-800">扉カラー 一覧</h4>
+            <div className="bg-[#F5F5F7] p-5 border-b border-[#E5E5E7] w-full rounded-t-xl">
+              <h4 className="text-center font-bold text-[#1D1D1F] tracking-tight">扉カラー 一覧</h4>
             </div>
-            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/Doorcolor.jpg" alt="扉カラー一覧" className="w-[60%] h-auto rounded-lg my-4" />
+            <img src="http://25663cc9bda9549d.main.jp/aistudio/door/Doorcolor.jpg" alt="扉カラー一覧" className="w-[60%] h-auto rounded-xl my-8 shadow-sm" />
           </div>
         </div>
       )}
       {deleteTargetId && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in" onClick={cancelDeleteDoor}>
-          <div className="bg-[#f8f9f4] rounded-2xl shadow-2xl max-w-sm w-full p-8" onClick={e => e.stopPropagation()}>
-            <p className="text-[#2c2c2c] text-base font-medium mb-8">このWD行を削除してもよろしいですか？</p>
-            <div className="flex justify-end gap-3">
+        <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={cancelDeleteDoor}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 border border-[#E5E5E7] animate-in zoom-in" onClick={e => e.stopPropagation()}>
+            <p className="text-[#1D1D1F] text-base font-bold mb-8 tracking-tight text-center">このWD行を削除してもよろしいですか？</p>
+            <div className="flex justify-center gap-4">
               <button 
                 onClick={confirmDeleteDoor}
-                className="bg-[#417538] hover:bg-[#325a2b] text-white px-6 py-2 rounded-2xl font-bold transition-colors shadow-sm"
+                className="bg-red-500 hover:bg-red-600 text-white px-8 py-2.5 rounded-lg font-bold transition-all shadow-sm active:scale-[0.98]"
               >
-                OK
+                削除
               </button>
               <button 
                 onClick={cancelDeleteDoor}
-                className="bg-[#bdf4a9] hover:bg-[#a5e090] text-[#2c2c2c] px-6 py-2 rounded-2xl font-bold transition-colors shadow-sm"
+                className="bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] px-8 py-2.5 rounded-lg font-bold transition-all border border-[#E5E5E7] shadow-sm active:scale-[0.98]"
               >
                 キャンセル
               </button>
@@ -1804,135 +1815,144 @@ ${order.memo}
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full overflow-hidden animate-in zoom-in flex flex-col max-h-[90vh]">
-            <div className="bg-gray-900 px-6 py-4 text-white font-bold text-xl flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                初期設定【柏木工 オリジナルドア】
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-md p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full overflow-hidden animate-in zoom-in flex flex-col max-h-[90vh] border border-[#E5E5E7]">
+            <div className="bg-[#F5F5F7] px-6 py-4 text-[#1D1D1F] font-semibold text-lg flex items-center justify-between shrink-0 border-b border-[#E5E5E7]">
+              <div className="flex items-center gap-3 tracking-tight">
+                <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                初期設定
               </div>
               <button 
                 onClick={() => setIsPasswordModalOpen(true)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-sm group"
+                className="bg-[#1D1D1F] hover:bg-black text-white px-3 py-1.5 rounded-md flex items-center gap-2 transition-all shadow-sm group"
                 title="商品データの管理・画像の登録"
               >
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
-                <span className="text-xs font-bold text-gray-300 group-hover:text-white">管理者メニュー</span>
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                <span className="text-[10px] font-medium text-white/80 group-hover:text-white">管理者</span>
               </button>
             </div>
-            <div className="p-6 overflow-y-auto custom-scrollbar">
-              <div className="flex flex-col lg:flex-row gap-6">
+            <div className="p-8 overflow-y-auto custom-scrollbar bg-white">
+              <div className="flex flex-col lg:flex-row gap-8">
                 
                 <div className="flex-1 lg:max-w-[40%] flex flex-col">
-                  <h3 className="font-bold text-gray-800 text-lg mb-4 border-b-2 border-blue-500 pb-1 inline-block">基本設定の入力</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-3">
-                       <div className="grid grid-cols-1 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold text-gray-500 ml-1">会社名</label>
-                          <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="株式会社 〇〇" value={initialSettings.company} onChange={e => setInitialSettings(p => ({...p, company: e.target.value}))} />
+                  <h3 className="font-semibold text-[#1D1D1F] text-base mb-6 tracking-tight">基本設定の入力</h3>
+                  <div className="space-y-6">
+                    <div className="space-y-4">
+                       <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-medium text-[#86868B] ml-1">会社名</label>
+                          <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-[#F5F5F7]/30" placeholder="株式会社 〇〇" value={initialSettings.company} onChange={e => setInitialSettings(p => ({...p, company: e.target.value}))} />
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-xs font-bold text-gray-500 ml-1">現場名</label>
-                          <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="〇〇様邸" value={initialSettings.siteName} onChange={e => setInitialSettings(p => ({...p, siteName: e.target.value}))} />
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-medium text-[#86868B] ml-1">現場名</label>
+                          <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-[#F5F5F7]/30" placeholder="〇〇様邸" value={initialSettings.siteName} onChange={e => setInitialSettings(p => ({...p, siteName: e.target.value}))} />
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-500 ml-1">担当者名</label>
-                            <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="山田 太郎" value={initialSettings.contactName} onChange={e => setInitialSettings(p => ({...p, contactName: e.target.value}))} />
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-medium text-[#86868B] ml-1">担当者名</label>
+                            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-[#F5F5F7]/30" placeholder="山田 太郎" value={initialSettings.contactName} onChange={e => setInitialSettings(p => ({...p, contactName: e.target.value}))} />
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-xs font-bold text-gray-500 ml-1">連絡先(電話番号)</label>
-                            <input type="text" className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="090-0000-0000" value={initialSettings.phone} onChange={e => setInitialSettings(p => ({...p, phone: e.target.value}))} />
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-medium text-[#86868B] ml-1">連絡先</label>
+                            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-[#F5F5F7]/30" placeholder="090-0000-0000" value={initialSettings.phone} onChange={e => setInitialSettings(p => ({...p, phone: e.target.value}))} />
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="border-t border-gray-100 pt-3 space-y-3">
-                      <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-500 ml-1">標準高さ</label>
-                        <select className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white" value={initialSettings.defaultHeight} onChange={e => setInitialSettings(p => ({...p, defaultHeight: e.target.value}))}><option value="H2000">H2000</option><option value="H2200">H2200</option><option value="H2400">H2400</option></select>
+                    <div className="border-t border-[#E5E5E7] pt-6 space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-medium text-[#86868B] ml-1">標準高さ</label>
+                        <select className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-white" value={initialSettings.defaultHeight} onChange={e => setInitialSettings(p => ({...p, defaultHeight: e.target.value}))}><option value="H2000">H2000</option><option value="H2200">H2200</option><option value="H2400">H2400</option></select>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-500 ml-1">扉標準カラー</label>
-                        <select className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white" value={initialSettings.defaultDoorColor} onChange={e => setInitialSettings(p => ({...p, defaultDoorColor: e.target.value}))}>{COLORS.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-medium text-[#86868B] ml-1">扉標準カラー</label>
+                        <select className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-white" value={initialSettings.defaultDoorColor} onChange={e => setInitialSettings(p => ({...p, defaultDoorColor: e.target.value}))}>{COLORS.map(c => <option key={c} value={c}>{c}</option>)}</select>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-500 ml-1">標準ハンドル</label>
-                        <select className="w-full border rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white" value={initialSettings.defaultHandleColor} onChange={e => setInitialSettings(p => ({...p, defaultHandleColor: e.target.value}))}>{SIMPLE_HANDLE_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}</select>
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-medium text-[#86868B] ml-1">標準ハンドル</label>
+                        <select className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-white" value={initialSettings.defaultHandleColor} onChange={e => setInitialSettings(p => ({...p, defaultHandleColor: e.target.value}))}>{SIMPLE_HANDLE_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}</select>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex-1 lg:border-l lg:pl-6 lg:border-gray-200 flex flex-col">
-                   <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 shadow-sm mb-4">
-                    <h3 className="font-bold text-orange-800 flex items-center gap-2 mb-3 text-base border-b border-orange-200 pb-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <div className="flex-1 lg:border-l lg:pl-8 lg:border-[#E5E5E7] flex flex-col">
+                   <div className="bg-[#F5F5F7] border border-[#E5E5E7] rounded-2xl p-6 shadow-sm mb-6">
+                    <h3 className="font-bold text-[#1D1D1F] flex items-center gap-2 mb-4 text-base border-b border-[#E5E5E7] pb-3 tracking-tight">
+                      <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                       見積書のご入力について
                     </h3>
-                    <div className="space-y-3">
-                      <ul className="list-disc list-inside space-y-1 text-xs text-gray-800 font-medium ml-1">
-                        <li><span className="font-bold text-orange-700">納品希望日</span>：玄関収納、巾木の納品日が枠(①)か本体(②)か要確認。</li>
-                        <li><span className="font-bold text-orange-700">天井PB厚</span>：下地材サイズに影響するため確認してください。</li>
-                        <li><span className="font-bold text-orange-700">特寸入力</span>：リストの高さ/幅の「特寸」を選択して入力。</li>
+                    <div className="space-y-4">
+                      <ul className="space-y-2 text-xs text-[#1D1D1F] font-medium leading-relaxed">
+                        <li className="flex gap-2">
+                           <span className="text-[#0071E3] shrink-0 font-bold">•</span>
+                           <span><span className="font-bold text-[#1D1D1F]">納品希望日</span>：玄関収納、巾木の納品日が枠(①)か本体(②)か要確認。</span>
+                        </li>
+                        <li className="flex gap-2">
+                           <span className="text-[#0071E3] shrink-0 font-bold">•</span>
+                           <span><span className="font-bold text-[#1D1D1F]">天井PB厚</span>：下地材サイズに影響するため確認してください。</span>
+                        </li>
+                        <li className="flex gap-2">
+                           <span className="text-[#0071E3] shrink-0 font-bold">•</span>
+                           <span><span className="font-bold text-[#1D1D1F]">特寸入力</span>：リストの高さ/幅の「特寸」を選択して入力。</span>
+                        </li>
                       </ul>
 
-                      <div className="bg-white p-3 rounded-lg border border-orange-100">
-                        <p className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-2">
-                          <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <div className="bg-white p-5 rounded-xl border border-[#E5E5E7] shadow-sm">
+                        <p className="text-[11px] font-bold text-[#1D1D1F] mb-3 flex items-center gap-2 tracking-tight">
+                          <svg className="w-4 h-4 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           枠オプション設定について
                         </p>
-                        <p className="text-[10px] text-gray-600 mb-3 leading-relaxed ml-1 flex flex-wrap items-center gap-1">
+                        <p className="text-[10px] text-[#86868B] mb-4 leading-relaxed font-medium">
                           ドア下開口（アンダーカット）や枠伸長は、リスト内「枠仕様」欄の設定ボタン
-                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-200 text-gray-500">
+                          <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#F5F5F7] text-[#86868B] border border-[#E5E5E7] mx-1">
                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           </span>
-                          から。
+                          から設定可能です。
                         </p>
                          <div className="grid grid-cols-2 gap-4">
                           <div className="text-center group">
-                            <div className="overflow-hidden rounded border border-gray-200 shadow-sm mb-1 bg-gray-100 h-28 flex items-center justify-center">
-                              <img src="http://25663cc9bda9549d.main.jp/aistudio/door/kaikou.jpg" alt="ドア下開口" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                            <div className="overflow-hidden rounded-xl border border-[#E5E5E7] shadow-sm mb-2 bg-[#F5F5F7] h-24 flex items-center justify-center p-2">
+                              <img src="http://25663cc9bda9549d.main.jp/aistudio/door/kaikou.jpg" alt="ドア下開口" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-110 transition-all duration-500" />
                             </div>
-                            <p className="text-[10px] font-bold text-gray-600">ドア下開口</p>
+                            <p className="text-[10px] font-bold text-[#1D1D1F]">ドア下開口</p>
                           </div>
                           <div className="text-center group">
-                            <div className="overflow-hidden rounded border border-gray-200 shadow-sm mb-1 bg-gray-100 h-28 flex items-center justify-center">
-                              <img src="http://25663cc9bda9549d.main.jp/aistudio/door/wakuencho.jpg" alt="枠伸長" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                            <div className="overflow-hidden rounded-xl border border-[#E5E5E7] shadow-sm mb-2 bg-[#F5F5F7] h-24 flex items-center justify-center p-2">
+                              <img src="http://25663cc9bda9549d.main.jp/aistudio/door/wakuencho.jpg" alt="枠伸長" className="max-h-full w-auto object-contain mix-blend-multiply group-hover:scale-110 transition-all duration-500" />
                             </div>
-                            <p className="text-[10px] font-bold text-gray-600">枠伸長</p>
+                            <p className="text-[10px] font-bold text-[#1D1D1F]">枠伸長</p>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                   
-                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm mt-auto">
-                    <h3 className="font-bold text-slate-700 flex items-center gap-2 mb-4 text-sm border-b border-slate-200 pb-2">
-                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                   <div className="bg-[#F5F5F7] border border-[#E5E5E7] rounded-2xl p-6 shadow-sm mt-auto">
+                    <h3 className="font-bold text-[#1D1D1F] flex items-center gap-2 mb-4 text-base border-b border-[#E5E5E7] pb-3 tracking-tight">
+                      <svg className="w-5 h-5 text-[#86868B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                       ご注文〜納品の流れ
                     </h3>
-                    <div className="relative pt-2 px-1">
-                      <div className="absolute top-[11px] left-4 right-4 h-0.5 bg-slate-300 -z-0"></div>
+                    <div className="relative pt-3 px-1">
+                      <div className="absolute top-[13px] left-4 right-4 h-px bg-[#E5E5E7] -z-0"></div>
                       
                       <div className="flex justify-between items-start relative z-10">
                         {[
-                          { label: "見積・依頼", sub: "お客様", color: "bg-indigo-500" },
-                          { label: "図面確認", sub: "柏木工", color: "bg-gray-500" },
-                          { label: "正式発注", sub: "お客様", color: "bg-orange-500", active: true },
-                          { label: "製作", sub: "中2週〜", color: "bg-blue-600" },
-                          { label: "納品", sub: "1次・2次", color: "bg-emerald-500" },
+                          { label: "見積・依頼", sub: "お客様", color: "bg-[#0071E3]" },
+                          { label: "図面確認", sub: "柏木工", color: "bg-[#86868B]" },
+                          { label: "正式発注", sub: "お客様", color: "bg-[#1D1D1F]", active: true },
+                          { label: "製作", sub: "中2週〜", color: "bg-[#86868B]" },
+                          { label: "納品", sub: "1次・2次", color: "bg-[#0071E3]" },
                         ].map((step, idx) => (
-                          <div key={idx} className="flex flex-col items-center gap-1 group w-14">
-                            <div className={`w-6 h-6 rounded-full ${step.color} text-white text-[10px] font-bold flex items-center justify-center shadow-sm ring-4 ring-slate-50 group-hover:scale-110 transition-transform`}>
+                          <div key={idx} className="flex flex-col items-center gap-2 group w-14">
+                            <div className={`w-6 h-6 rounded-full ${step.color} text-white text-[10px] font-bold flex items-center justify-center shadow-sm ring-4 ring-[#F5F5F7] group-hover:scale-125 transition-all`}>
                               {idx + 1}
                             </div>
                             <div className="flex flex-col items-center">
-                              <span className={`text-[10px] font-bold ${step.active ? 'text-orange-600' : 'text-slate-700'} leading-tight whitespace-nowrap`}>
+                              <span className={`text-[10px] font-bold ${step.active ? 'text-[#0071E3]' : 'text-[#1D1D1F]'} leading-tight whitespace-nowrap`}>
                                 {step.label}
                               </span>
-                              <span className="text-[9px] text-slate-400 leading-none scale-90 whitespace-nowrap">{step.sub}</span>
+                              <span className="text-[9px] text-[#86868B] leading-none scale-90 whitespace-nowrap font-medium">{step.sub}</span>
                             </div>
                           </div>
                         ))}
@@ -1944,69 +1964,69 @@ ${order.memo}
               </div>
             </div>
             
-            <div className="p-4 bg-gray-50 flex justify-end border-t shrink-0">
-              <button onClick={handleStart} className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all active:scale-95 flex items-center gap-2">
+            <div className="p-6 bg-[#F5F5F7] flex justify-end border-t border-[#E5E5E7] shrink-0">
+              <button onClick={handleStart} className="bg-[#1D1D1F] hover:bg-black text-white px-8 py-2.5 rounded-md text-sm font-medium transition-all active:scale-95 flex items-center gap-2 shadow-sm">
                 <span>入力を開始する</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
               </button>
             </div>
           </div>
         </div>
       )}
       
-       <div className={`max-w-[1550px] mx-auto p-8 bg-white shadow-xl my-8 transition-opacity duration-500 rounded-3xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen || isValidationModalOpen || isPbModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
-        <div className="flex justify-between items-center mb-8 border-b-2 border-gray-900 pb-4">
+       <div className={`max-w-[1550px] mx-auto p-12 bg-white border border-[#E5E5E7] shadow-sm my-12 transition-opacity duration-500 rounded-2xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen || isValidationModalOpen || isPbModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+        <div className="flex justify-between items-center mb-10 border-b border-[#E5E5E7] pb-6">
           <div className="shrink-0 mr-4">
-            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight whitespace-nowrap">柏木工 オリジナルドア 発注書</h1>
-            <p className="text-lg text-gray-500 mt-1 font-['Inter']">Ordering System v1.0</p>
+            <h1 className="text-2xl font-bold text-[#1D1D1F] tracking-tight whitespace-nowrap">柏木工 オリジナルドア 発注書</h1>
+            <p className="text-sm text-[#86868B] mt-1">Ordering System v1.1</p>
           </div>
           <div className="flex gap-4 shrink-0 relative">
             <div className="relative">
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg active:scale-95 whitespace-nowrap shrink-0"
+                className="bg-[#1D1D1F] hover:bg-black text-white px-5 py-2 rounded-md text-xs font-medium flex items-center gap-2 transition-all shadow-sm active:scale-95 whitespace-nowrap shrink-0"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
                 メニュー
-                <svg className={`w-4 h-4 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                <svg className={`w-3 h-3 transition-transform ${isMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
               </button>
 
               {isMenuOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
-                  <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden py-2 animate-in fade-in zoom-in duration-200">
+                  <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-[#E5E5E7] z-50 overflow-hidden py-2 animate-in fade-in zoom-in duration-200">
                     <button 
                       onClick={() => { setIsOrderFlowModalOpen(true); setIsMenuOpen(false); }}
-                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-gray-700 font-bold flex items-center gap-3 transition-colors"
+                      className="w-full text-left px-5 py-3 hover:bg-[#F5F5F7] text-[#1D1D1F] font-bold flex items-center gap-3 transition-all"
                     >
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18l-6-6m0 0l6-6m-6 6h18" /></svg>
+                      <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18l-6-6m0 0l6-6m-6 6h18" /></svg>
                       注文フロー確認
                     </button>
                     <button 
                       onClick={() => { handleOpenEstimate(); setIsMenuOpen(false); }}
-                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-gray-700 font-bold flex items-center gap-3 transition-colors"
+                      className="w-full text-left px-5 py-3 hover:bg-[#F5F5F7] text-[#1D1D1F] font-bold flex items-center gap-3 transition-all"
                     >
-                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                       見積書作成
                     </button>
                     <button 
                       onClick={() => { setIsPbModalOpen(true); setIsMenuOpen(false); }}
-                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-gray-700 font-bold flex items-center gap-3 transition-colors"
+                      className="w-full text-left px-5 py-3 hover:bg-[#F5F5F7] text-[#1D1D1F] font-bold flex items-center gap-3 transition-all"
                     >
-                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       プレゼンボード
                     </button>
                     <button 
                       onClick={() => { handleBatchExport(); setIsMenuOpen(false); }}
-                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-gray-700 font-bold flex items-center gap-3 transition-colors"
+                      className="w-full text-left px-5 py-3 hover:bg-[#F5F5F7] text-[#1D1D1F] font-bold flex items-center gap-3 transition-all"
                     >
-                      <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                      <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
                       詳細図一括出力
                     </button>
-                    <div className="h-px bg-gray-100 my-1"></div>
+                    <div className="h-px bg-[#E5E5E7] my-1 mx-2"></div>
                     <button 
                       onClick={handleInstallApp}
-                      className="w-full text-left px-5 py-3 hover:bg-blue-50 text-blue-700 font-bold flex items-center gap-3 transition-colors"
+                      className="w-full text-left px-5 py-3 hover:bg-[#0071E3]/[0.05] text-[#0071E3] font-bold flex items-center gap-3 transition-all"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                       {showUpdate ? 'アプリを更新する' : 'アプリをインストール'}
@@ -2020,46 +2040,46 @@ ${order.memo}
             
             <button 
               onClick={handleSaveJson}
-              className="bg-white text-gray-700 border-2 border-gray-100 hover:bg-gray-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0"
+              className="bg-white text-[#1D1D1F] border border-[#E5E5E7] hover:bg-[#F5F5F7] px-5 py-2 rounded-md text-xs font-medium flex items-center gap-2 transition-all shadow-sm active:scale-95 whitespace-nowrap shrink-0"
             >
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+              <svg className="w-4 h-4 text-[#86868B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
               保存
             </button>
-            <label className="bg-white text-gray-700 border-2 border-gray-100 hover:bg-gray-50 px-5 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap shrink-0">
-              <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+            <label className="bg-white text-[#1D1D1F] border border-[#E5E5E7] hover:bg-[#F5F5F7] px-5 py-2 rounded-md text-xs font-medium flex items-center gap-2 transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap shrink-0">
+              <svg className="w-4 h-4 text-[#86868B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               読込
               <input type="file" accept=".json,.kashiwa" onChange={handleLoadJson} className="hidden" />
             </label>
           </div>
         </div>
 
-         <div className="grid grid-cols-4 gap-6 mb-8 bg-gray-50 p-6 rounded-2xl border">
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">会社名</label>
-            <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="会社名" value={order.customerInfo.company} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, company: e.target.value}}))} />
+         <div className="grid grid-cols-4 gap-8 mb-12 bg-[#F5F5F7]/50 p-8 rounded-xl border border-[#E5E5E7]">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">会社名</label>
+            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="会社名" value={order.customerInfo.company} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, company: e.target.value}}))} />
           </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">現場名</label>
-            <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="〇〇様邸" value={order.customerInfo.siteName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, siteName: e.target.value}}))} />
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">現場名</label>
+            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="〇〇様邸" value={order.customerInfo.siteName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, siteName: e.target.value}}))} />
           </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">担当者名</label>
-            <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="担当者名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, contactName: e.target.value}}))} />
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">担当者名</label>
+            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="担当者名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, contactName: e.target.value}}))} />
           </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">連絡先(電話番号)</label>
-            <input type="text" className="w-full border rounded-lg p-2.5 bg-white font-medium focus:ring-1 focus:ring-blue-500 outline-none" placeholder="電話番号" value={order.customerInfo.phone} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, phone: e.target.value}}))} />
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">連絡先</label>
+            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="電話番号" value={order.customerInfo.phone} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, phone: e.target.value}}))} />
           </div>
-          <div className="space-y-1 col-span-2">
-            <label className="text-[10px] font-bold text-gray-400 ml-1 uppercase tracking-wider">納品先住所</label>
-            <div className="flex gap-2">
+          <div className="space-y-1.5 col-span-2">
+            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">納品先住所</label>
+            <div className="flex gap-3">
               <div className="w-1/3 shrink-0">
                 <select 
-                  className={`w-full border rounded-lg p-2.5 font-medium focus:ring-1 outline-none transition-colors ${!addressPart.prefecture && order.customerInfo.address ? 'border-red-300 focus:ring-red-500 bg-red-50' : 'border-gray-200 focus:ring-blue-500 bg-white'}`}
+                  className={`w-full border rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 outline-none transition-all ${!addressPart.prefecture && order.customerInfo.address ? 'border-red-200 focus:ring-red-500 bg-red-50' : 'border-[#E5E5E7] focus:ring-[#0071E3] bg-white'}`}
                   value={addressPart.prefecture}
                   onChange={(e) => handlePrefectureChange(e.target.value)}
                 >
-                  <option value="">都道府県を選択</option>
+                  <option value="">都道府県</option>
                   {shippingFees.map(fee => (
                     <option key={fee.id} value={fee.prefecture}>{fee.prefecture}</option>
                   ))}
@@ -2068,7 +2088,7 @@ ${order.memo}
               <div className="flex-1">
                 <input 
                   type="text" 
-                  className="w-full border border-gray-200 rounded-lg p-2.5 font-medium focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+                  className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none bg-white transition-all"
                   placeholder="市区町村・番地・マンション名など" 
                   value={addressPart.detail} 
                   onChange={(e) => handleAddressDetailChange(e.target.value)} 
@@ -2156,19 +2176,19 @@ ${order.memo}
           </div>
         </div>
 
-        <div className="flex justify-between items-center mb-4 border-l-4 border-blue-500 pl-3 mt-10">
-          <h3 className="text-xl font-bold text-gray-800">内部建具</h3>
+        <div className="flex justify-between items-center mb-6 border-l-2 border-[#1D1D1F] pl-4 mt-12">
+          <h3 className="text-lg font-semibold text-[#1D1D1F] tracking-tight">内部建具</h3>
         </div>
 
-        <div className="mb-8 overflow-x-auto rounded-2xl border shadow-sm">
-          <table className="w-full border-collapse min-w-[1300px]">
-            <thead className="bg-gray-800 text-white text-[10px] uppercase font-bold text-center">
+        <div className="mb-12 overflow-x-auto rounded-xl border border-[#E5E5E7] shadow-sm">
+          <table className="w-full border-collapse min-w-[1300px] bg-white">
+            <thead className="bg-[#F5F5F7] text-[#86868B] text-[10px] uppercase font-semibold text-center border-b border-[#E5E5E7]">
               <tr>
-                <th className="p-4 w-12 border-r border-gray-700">No.</th>
-                <th className="w-[106px]">部屋名</th>
-                <th className="w-[218px]">建具種類</th>
-                <th className="w-[186px]">デザイン</th>
-                <th className="w-[55px]">幅</th>
+                <th className="p-3 w-12 border-r border-[#E5E5E7]">No.</th>
+                <th className="w-[106px] border-r border-[#E5E5E7]">部屋名</th>
+                <th className="w-[218px] border-r border-[#E5E5E7]">建具種類</th>
+                <th className="w-[186px] border-r border-[#E5E5E7]">デザイン</th>
+                <th className="w-[55px] border-r border-[#E5E5E7]">幅</th>
                 <th className="w-[55px]">高さ</th>
                 <th className="w-[122px]">枠仕様</th>
                 <th className="w-[135px]">
@@ -2229,14 +2249,17 @@ ${order.memo}
               ))}
             </tbody>
           </table>
-          <div className="p-4 bg-gray-50 border-t flex justify-between items-center">
-            <button onClick={addDoorRow} className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 px-6 py-2 rounded-xl font-bold transition-all border border-blue-200">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-              建具行を追加する
+          <div className="p-4 bg-[#F5F5F7] border-t border-[#E5E5E7] flex justify-between items-center">
+            <button 
+              onClick={addDoorRow} 
+              className="flex items-center gap-2 bg-white hover:bg-black/[0.02] text-[#1D1D1F] px-5 py-2 rounded-md text-xs font-medium transition-all border border-[#E5E5E7] shadow-sm active:scale-95"
+            >
+              <svg className="w-4 h-4 text-[#86868B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+              行を追加
             </button>
             <div className="flex items-baseline gap-2">
-              <span className="text-sm font-bold text-gray-500">建具合計:</span>
-              <div className="text-3xl font-bold text-blue-700 font-['Inter']">¥{totals.doorSubtotal.toLocaleString()}</div>
+              <span className="text-xs font-semibold text-[#86868B]">建具合計:</span>
+              <div className="text-2xl font-bold text-[#1D1D1F] tracking-tight font-mono">¥{totals.doorSubtotal.toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -2259,35 +2282,26 @@ ${order.memo}
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-8 items-start mt-10">
-          <div className="border p-6 rounded-2xl bg-white shadow-sm border-emerald-100 flex flex-col h-full relative">
-            {showBaseboardBubble && (
-              <div className="absolute top-4 right-10 z-20 bg-red-600 text-white p-3 rounded-lg shadow-lg text-xs font-bold animate-bounce">
-                <div className="flex justify-between items-start gap-2">
-                  <span className="leading-tight">どちらかの納品希望日の<br/>どちらかを選択してください</span>
-                  <button onClick={() => setIsBaseboardGuideOpen(false)} className="text-white hover:text-red-200 ml-2 text-lg leading-none">×</button>
-                </div>
-                <div className="absolute -bottom-2 left-1/2 w-4 h-4 bg-red-600 rotate-45"></div>
-              </div>
-            )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mt-12">
+          <div className="border border-[#E5E5E7] p-8 rounded-xl bg-white shadow-sm flex flex-col h-full relative">
             <div className="flex-grow relative">
-              <h3 className="text-xl font-bold border-l-4 border-emerald-600 pl-3 mb-6 text-gray-800">
+              <h3 className="text-lg font-semibold border-l-2 border-[#1D1D1F] pl-4 mb-8 text-[#1D1D1F] tracking-tight">
                 巾木・造作材
               </h3>
-              <div className="divide-y divide-emerald-50">
+              <div className="divide-y divide-[#E5E5E7]">
                 {order.baseboards.map((b,i) => {
                   const isDoorStopper = b.product.includes('マグネット式ドアストッパー');
                   if (isDoorStopper) return null;
                   
                   return (
-                    <div key={i} className="flex flex-col xl:flex-row justify-between items-center py-4 border-b border-gray-100 last:border-0">
-                      <div className="flex flex-col mb-2 xl:mb-0 w-full xl:w-auto">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-sm text-gray-700">{b.product}</span>
+                    <div key={i} className="flex flex-col xl:flex-row justify-between items-center py-5 first:pt-0 last:border-0">
+                      <div className="flex flex-col mb-3 xl:mb-0 w-full xl:w-auto">
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold text-sm text-[#1D1D1F]">{b.product}</span>
                           {b.product === 'スリムコーナー巾木' ? (
                             <button
                               onClick={() => setIsCornerHabakiModalOpen(true)}
-                              className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
+                              className="no-print bg-[#0071E3] hover:bg-[#0077ED] text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
                               title="コーナー巾形の詳細を表示"
                             >
                               i
@@ -2295,14 +2309,14 @@ ${order.memo}
                           ) : b.product.includes('スリム巾木') ? (
                             <button
                               onClick={() => setIsHabakiModalOpen(true)}
-                              className="no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
+                              className="no-print bg-[#0071E3] hover:bg-[#0077ED] text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0"
                               title="巾形の詳細を表示"
                             >
                               i
                             </button>
                           ) : null}
                         </div>
-                        <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-3 mt-2">
                           {i === 0 ? (
                             <select
                               value={b.color}
@@ -2316,29 +2330,29 @@ ${order.memo}
                                   })
                                 }));
                               }}
-                              className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-emerald-500 max-w-[180px] cursor-pointer"
+                              className="text-[11px] font-medium text-[#1D1D1F] bg-[#F5F5F7] border border-[#E5E5E7] rounded px-2 py-1 outline-none focus:ring-1 focus:ring-[#0071E3] cursor-pointer"
                             >
                               {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                           ) : (
-                            <span className="text-xs font-bold px-2 py-0.5 rounded-full border cursor-not-allowed text-gray-500 bg-gray-100 border-gray-200" title="スリム巾木の色と連動します">
+                            <span className="text-[11px] font-medium px-2 py-1 rounded bg-[#F5F5F7] border border-[#E5E5E7] text-[#86868B]" title="スリム巾木の色と連動します">
                               {b.color}
                             </span>
                           )}
                           {b.product.includes('3960') && b.quantity > 0 && (
-                            <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                            <span className="text-[11px] font-semibold text-[#0071E3] bg-[#0071E3]/[0.05] px-2 py-1 rounded">
                               換算: {(b.quantity * 3.96).toFixed(2)}m
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
-                        <span className="text-sm font-medium whitespace-nowrap text-gray-500">単価 ¥{b.unitPrice.toLocaleString()}</span>
+                      <div className="flex items-center gap-6 w-full xl:w-auto justify-between xl:justify-end">
+                        <span className="text-xs font-medium whitespace-nowrap text-[#86868B]">単価 ¥{b.unitPrice.toLocaleString()}</span>
                         <div className="flex items-center gap-1">
                           <input 
                             type="number" 
                             min="0" 
-                            className="w-16 border rounded-lg text-center h-9 font-bold focus:ring-1 focus:ring-emerald-500 outline-none bg-white text-gray-900" 
+                            className="w-16 border border-[#E5E5E7] rounded-md text-center h-8 text-sm font-medium focus:ring-1 focus:ring-[#0071E3] outline-none bg-white text-[#1D1D1F]" 
                             value={b.quantity} 
                             onChange={e => { 
                               const val = Math.max(0, parseInt(e.target.value)||0);
@@ -2348,44 +2362,44 @@ ${order.memo}
                               })); 
                             }} 
                           />
-                          <span className="text-xs font-bold text-gray-400">{b.unit}</span>
+                          <span className="text-[11px] font-medium text-[#86868B]">{b.unit}</span>
                         </div>
-                        <span className="text-base font-bold font-mono whitespace-nowrap w-[120px] text-right text-blue-600">小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
+                        <span className="text-sm font-semibold font-mono whitespace-nowrap w-[110px] text-right text-[#1D1D1F]">¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
                       </div>
                     </div>
                   );
                 })}
 
-                <div className="py-4 border-b border-gray-100 last:border-0">
-                  <h4 className="font-bold text-sm text-gray-700 mb-4">マグネット式ドアストッパー</h4>
-                  <div className="space-y-4">
+                <div className="py-6 border-b border-[#E5E5E7] last:border-0">
+                  <h4 className="font-semibold text-sm text-[#1D1D1F] mb-5 tracking-tight uppercase tracking-widest text-[10px]">マグネット式ドアストッパー</h4>
+                  <div className="space-y-5">
                     {order.baseboards.map((b, i) => {
                       if (!b.product.includes('マグネット式ドアストッパー')) return null;
                       const isDisabled = !hasHingedDoor;
                       const isSv = b.product.includes('サテンニッケル');
                       return (
-                        <div key={i} className={`flex flex-col xl:flex-row justify-between items-center pl-4 ${isDisabled ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
-                          <div className="flex items-center gap-2 mb-2 xl:mb-0 w-full xl:w-auto">
-                            <span className={`text-xs font-bold px-3 py-1 rounded-full border ${isDisabled ? 'text-gray-400 bg-gray-50 border-gray-200' : 'text-gray-700 bg-gray-50 border-gray-200'}`}>
+                        <div key={i} className={`flex flex-col xl:flex-row justify-between items-center pl-4 ${isDisabled ? 'opacity-30 grayscale pointer-events-none' : ''}`}>
+                          <div className="flex items-center gap-3 mb-3 xl:mb-0 w-full xl:w-auto">
+                            <span className="text-[11px] font-medium px-2 py-1 rounded bg-[#F5F5F7] border border-[#E5E5E7] text-[#1D1D1F]">
                               {isSv ? 'サテンニッケル' : 'マットブラック'}
                             </span>
                             <button
                               onClick={() => !isDisabled && (isSv ? setIsDoorStopperSvModalOpen(true) : setIsDoorStopperBkModalOpen(true))}
-                              className={`no-print bg-blue-500 hover:bg-blue-400 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
+                              className={`no-print bg-[#0071E3] hover:bg-[#0077ED] text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] transition-colors shadow-sm shrink-0 ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}`}
                               title={`ドアストッパー(${isSv ? 'サテンニッケル' : 'マットブラック'})の詳細を表示`}
                               disabled={isDisabled}
                             >
                               i
                             </button>
                           </div>
-                          <div className="flex items-center gap-4 w-full xl:w-auto justify-between xl:justify-end">
-                            <span className={`text-sm font-medium whitespace-nowrap ${isDisabled ? 'text-gray-300' : 'text-gray-500'}`}>単価 ¥{b.unitPrice.toLocaleString()}</span>
+                          <div className="flex items-center gap-6 w-full xl:w-auto justify-between xl:justify-end">
+                            <span className="text-xs font-medium whitespace-nowrap text-[#86868B]">単価 ¥{b.unitPrice.toLocaleString()}</span>
                             <div className="flex items-center gap-1">
                               <input 
                                 type="number" 
                                 min="0" 
                                 disabled={isDisabled}
-                                className={`w-16 border rounded-lg text-center h-9 font-bold focus:ring-1 focus:ring-emerald-500 outline-none ${isDisabled ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-white text-gray-900'}`} 
+                                className="w-16 border border-[#E5E5E7] rounded-md text-center h-8 text-sm font-medium focus:ring-1 focus:ring-[#0071E3] outline-none bg-white text-[#1D1D1F]" 
                                 value={b.quantity} 
                                 onChange={e => { 
                                   const val = Math.max(0, parseInt(e.target.value)||0);
@@ -2395,9 +2409,9 @@ ${order.memo}
                                   })); 
                                 }} 
                               />
-                              <span className={`text-xs font-bold ${isDisabled ? 'text-gray-300' : 'text-gray-400'}`}>{b.unit}</span>
+                              <span className="text-[11px] font-medium text-[#86868B]">{b.unit}</span>
                             </div>
-                            <span className={`text-base font-bold font-mono whitespace-nowrap w-[120px] text-right ${isDisabled ? 'text-gray-300' : 'text-blue-600'}`}>小計 ¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
+                            <span className="text-sm font-semibold font-mono whitespace-nowrap w-[110px] text-right text-[#1D1D1F]">¥{(b.unitPrice * b.quantity).toLocaleString()}</span>
                           </div>
                         </div>
                       );
@@ -2406,49 +2420,47 @@ ${order.memo}
                 </div>
               </div>
             </div>
-            <div className="mt-4 pt-4 border-t border-emerald-100 flex justify-end items-baseline gap-2">
-              <span className="text-sm font-bold text-gray-500">造作材合計:</span>
-              <div className="text-3xl font-bold text-blue-700 font-['Inter']">¥{totals.baseboardSubtotal.toLocaleString()}</div>
+            <div className="mt-6 pt-6 border-t border-[#E5E5E7] flex justify-end items-baseline gap-3">
+              <span className="text-xs font-semibold text-[#86868B]">造作材合計:</span>
+              <div className="text-2xl font-bold text-[#1D1D1F] tracking-tight font-mono">¥{totals.baseboardSubtotal.toLocaleString()}</div>
             </div>
           </div>
-          <div className="bg-white text-gray-900 p-10 rounded-3xl shadow-2xl flex flex-col justify-between relative overflow-hidden group border border-gray-200">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16 blur-2xl transition-all group-hover:bg-blue-500/10"></div>
-            
-            <div className="w-full space-y-3 mb-8">
-                <div className="flex justify-between items-center border-b border-gray-100 pb-3">
-                    <span className="text-gray-500 font-bold text-base">配送点数</span>
-                    <span className="text-xl font-bold font-['Inter'] text-gray-800">{totals.totalPoints} 点</span>
+
+          <div className="bg-[#F5F5F7] p-10 rounded-xl border border-[#E5E5E7] flex flex-col justify-between relative shadow-sm">
+            <div className="w-full space-y-4 mb-10">
+                <div className="flex justify-between items-center border-b border-[#E5E5E7] pb-4">
+                    <span className="text-[#86868B] font-semibold text-sm">配送点数</span>
+                    <span className="text-lg font-bold font-mono text-[#1D1D1F]">{totals.totalPoints} <span className="text-xs font-medium text-[#86868B]">点</span></span>
                 </div>
-                <div className="flex justify-between items-center border-b border-gray-100 pb-3">
+                <div className="flex justify-between items-center border-b border-[#E5E5E7] pb-4">
                     <div className="flex flex-col">
-                      <span className="text-gray-500 font-bold text-base">運搬諸経費</span>
+                      <span className="text-[#86868B] font-semibold text-sm">運搬諸経費</span>
                       {totals.isShippingDiscounted && !totals.isShippingSeparate && (
-                        <span className="text-[10px] text-orange-500 font-bold leading-tight">送料算定点数 ({totals.totalPoints}/10)</span>
+                        <span className="text-[10px] text-[#0071E3] font-semibold leading-tight mt-0.5">送料算定点数 ({totals.totalPoints}/10)</span>
                       )}
                     </div>
-                    <span className="text-xl font-bold font-['Inter'] text-gray-800">{totals.isShippingSeparate ? '【別途】' : `¥${totals.finalShipping.toLocaleString()}`}</span>
+                    <span className="text-lg font-bold font-mono text-[#1D1D1F]">{totals.isShippingSeparate ? '【別途】' : `¥${totals.finalShipping.toLocaleString()}`}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-gray-500 font-bold text-base">小計 (税抜)</span>
-                    <span className="text-xl font-bold font-['Inter'] text-gray-800">¥{totals.subtotal.toLocaleString()}</span>
+                <div className="flex justify-between items-center py-1">
+                    <span className="text-[#86868B] font-semibold text-sm">小計 (税抜)</span>
+                    <span className="text-lg font-bold font-mono text-[#1D1D1F]">¥{totals.subtotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                    <span className="text-gray-500 font-bold text-base">消費税 (10%)</span>
-                    <span className="text-xl font-bold font-['Inter'] text-gray-800">¥{totals.tax.toLocaleString()}</span>
+                <div className="flex justify-between items-center py-1">
+                    <span className="text-[#86868B] font-semibold text-sm">消費税 (10%)</span>
+                    <span className="text-lg font-bold font-mono text-[#1D1D1F]">¥{totals.tax.toLocaleString()}</span>
                 </div>
             </div>
 
-            <div className="flex justify-between items-end mt-4 pt-4 border-t border-gray-200">
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-base font-['Inter'] mb-2">合計金額（税込）</p>
-                <p className="text-4xl xl:text-5xl font-black font-['Inter'] tracking-tighter leading-none text-blue-700">¥{totals.total.toLocaleString()}</p>
+            <div className="flex justify-between items-end pt-8 border-t border-[#E5E5E7]">
+                <p className="text-[#1D1D1F] font-bold text-sm tracking-tight uppercase tracking-widest text-[10px]">合計金額（税込）</p>
+                <p className="text-4xl xl:text-5xl font-bold font-mono tracking-tighter leading-none text-[#0071E3]">¥{totals.total.toLocaleString()}</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-16 text-[10px] text-gray-300 border-t pt-8 flex justify-center items-center gap-4">
-          <p className="font-bold uppercase tracking-widest font-['Inter']">Kashiwa-f Ordering System</p>
-          <span className="h-1 w-1 bg-gray-200 rounded-full"></span>
-          <p className="font-medium font-['Inter']">Copyright © Kashiwa-f Co., Ltd. All Rights Reserved.</p>
+        <div className="mt-20 text-[10px] text-[#86868B] border-t border-[#E5E5E7] pt-10 flex flex-col items-center gap-2">
+          <p className="font-semibold uppercase tracking-[0.2em] text-[#1D1D1F]">Kashiwa-f Ordering System</p>
+          <p className="font-medium">Copyright © Kashiwa-f Co., Ltd. All Rights Reserved.</p>
         </div>
       </div>
     </div>
