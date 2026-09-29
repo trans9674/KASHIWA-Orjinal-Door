@@ -140,7 +140,7 @@ export const getFrameType = (type: string, height: string): string => {
 
 // Fallback logic for PDF generation if no image URL in DB
 export const getDoorDetailPdfUrl = (door: DoorItem): string => {
-  const baseUrl = "https://25663cc9bda9549d.main.jp/aistudio/door/PDFsyousai/";
+  const baseUrl = "/pdf/";
   let filename = "door_details.pdf";
   const hStr = door.height === '特寸' ? '2400' : door.height.replace('H', '');
   const design = door.design;
@@ -226,7 +226,7 @@ export const getDoorDetailPdfUrl = (door: DoorItem): string => {
 };
 
 export const getStorageDetailPdfUrl = (typeId: string): string => {
-  const baseUrl = "https://25663cc9bda9549d.main.jp/aistudio/door/PDFsyousai/";
+  const baseUrl = "/pdf/";
   const mapping: Record<string, string> = {
     "E02": "SBfloor7W800.pdf",
     "E03R": "SBfloor8W1200(R).pdf",
