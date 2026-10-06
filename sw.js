@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kashiwa-cache-v4';
+const CACHE_NAME = 'kashiwa-cache-v5';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -32,11 +32,12 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request).catch(() => {
-        // Fallback or just let it fail
-      });
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });

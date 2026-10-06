@@ -287,7 +287,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     if (!editingId) return;
     try {
       const { error } = await supabase.from('internal_doors').update({
-        design: editValues.design, notes: editValues.notes, frame_price: editValues.framePrice, door_price: editValues.doorPrice, set_price: editValues.setPrice,
+        design: editValues.design, frame_price: editValues.framePrice, door_price: editValues.doorPrice, set_price: editValues.setPrice,
       }).eq('id', editingId);
       if (error) throw error;
       setPriceList(prev => prev.map(p => p.id === editingId ? { ...p, ...editValues } as PriceRecord : p));
@@ -329,7 +329,6 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
         type: newDoor.type, 
         location: newDoor.location || UsageLocation.Room, 
         design: newDoor.design, 
-        notes: newDoor.notes || '',
         height: newDoor.height,
         frame_price: newDoor.framePrice || 0, 
         door_price: newDoor.doorPrice || 0, 
