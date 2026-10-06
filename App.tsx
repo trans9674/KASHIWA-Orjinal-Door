@@ -1106,7 +1106,9 @@ ${order.memo}
       setIsPasswordModalOpen(false);
       setPasswordInput('');
       setPasswordError(false);
-      setIsDataViewerOpen(true);
+      setTimeout(() => {
+        setIsDataViewerOpen(true);
+      }, 0);
     } else {
       setPasswordError(true);
     }
