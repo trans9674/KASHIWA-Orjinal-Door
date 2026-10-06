@@ -281,6 +281,20 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     return items;
   }, [storageTypes]);
 
+  const [doorPage, setDoorPage] = useState(1);
+  const [storagePage, setStoragePage] = useState(1);
+  const itemsPerPage = 20;
+
+  const paginatedPriceList = useMemo(() => {
+    const start = (doorPage - 1) * itemsPerPage;
+    return sortedPriceList.slice(start, start + itemsPerPage);
+  }, [sortedPriceList, doorPage]);
+
+  const paginatedStorageList = useMemo(() => {
+    const start = (storagePage - 1) * itemsPerPage;
+    return sortedStorageList.slice(start, start + itemsPerPage);
+  }, [sortedStorageList, storagePage]);
+
   const handleStartEdit = (record: PriceRecord) => { setEditingId(record.id!); setEditValues({ ...record }); };
   const handleCancelEdit = () => { setEditingId(null); setEditValues({}); };
   const handleSaveEdit = async () => {
@@ -482,7 +496,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedPriceList.map((row) => {
+                    {paginatedPriceList.map((row) => {
                       const isEditing = editingId === row.id;
                       return (
                         <tr key={row.id} className={`${isEditing ? 'bg-[#0071E3]/5' : 'hover:bg-black/[0.01] transition-colors'} border-b border-[#E5E5E7]/50`}>
@@ -613,6 +627,14 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                   </tbody>
                 </table>
               </div>
+              <div className="bg-[#F5F5F7] px-6 py-3 border-t border-[#E5E5E7] flex justify-between items-center shrink-0 text-xs">
+                <span className="text-[#86868B]">全 {sortedPriceList.length} 件中 {(doorPage - 1) * itemsPerPage + 1}〜{Math.min(doorPage * itemsPerPage, sortedPriceList.length)} 件を表示</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setDoorPage(p => Math.max(1, p - 1))} disabled={doorPage === 1} className="px-3 py-1 bg-white rounded border border-[#E5E5E7] disabled:opacity-40 hover:bg-gray-50 font-bold">前へ</button>
+                  <span className="font-bold">{doorPage} / {Math.ceil(sortedPriceList.length / itemsPerPage) || 1}</span>
+                  <button onClick={() => setDoorPage(p => Math.min(Math.ceil(sortedPriceList.length / itemsPerPage), p + 1))} disabled={doorPage >= Math.ceil(sortedPriceList.length / itemsPerPage)} className="px-3 py-1 bg-white rounded border border-[#E5E5E7] disabled:opacity-40 hover:bg-gray-50 font-bold">次へ</button>
+                </div>
+              </div>
             </div>
           ) : activeTab === 'storage' ? (
             <div className="flex flex-col h-full bg-white">
@@ -649,7 +671,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedStorageList.map((row) => {
+                    {paginatedStorageList.map((row) => {
                       const isEditing = editingStorageId === row.id;
                       return (
                         <tr key={row.id} className={`${isEditing ? 'bg-[#0071E3]/5' : 'hover:bg-black/[0.01] transition-colors'} border-b border-[#E5E5E7]/50`}>
@@ -713,6 +735,14 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                     })}
                   </tbody>
                 </table>
+              </div>
+              <div className="bg-[#F5F5F7] px-6 py-3 border-t border-[#E5E5E7] flex justify-between items-center shrink-0 text-xs">
+                <span className="text-[#86868B]">全 {sortedStorageList.length} 件中 {(storagePage - 1) * itemsPerPage + 1}〜{Math.min(storagePage * itemsPerPage, sortedStorageList.length)} 件を表示</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setStoragePage(p => Math.max(1, p - 1))} disabled={storagePage === 1} className="px-3 py-1 bg-white rounded border border-[#E5E5E7] disabled:opacity-40 hover:bg-gray-50 font-bold">前へ</button>
+                  <span className="font-bold">{storagePage} / {Math.ceil(sortedStorageList.length / itemsPerPage) || 1}</span>
+                  <button onClick={() => setStoragePage(p => Math.min(Math.ceil(sortedStorageList.length / itemsPerPage), p + 1))} disabled={storagePage >= Math.ceil(sortedStorageList.length / itemsPerPage)} className="px-3 py-1 bg-white rounded border border-[#E5E5E7] disabled:opacity-40 hover:bg-gray-50 font-bold">次へ</button>
+                </div>
               </div>
             </div>
           ) : activeTab === 'handle' ? (
