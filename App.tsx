@@ -279,6 +279,14 @@ const App: React.FC = () => {
   const [shippingFees, setShippingFees] = useState<ShippingFeeRecord[]>([]);
   const [handleMaster, setHandleMaster] = useState<HandleRecord[]>([]);
   const [baseboardMaster, setBaseboardMaster] = useState<BaseboardItem[]>([]);
+  const [storageOptionPrices, setStorageOptionPrices] = useState({
+    mirror: 11440,
+    filler: 2200,
+    daiwa_800: 2530,
+    daiwa_1200: 3410,
+    daiwa_1600: 4070,
+    daiwa_2000: 4290
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -456,30 +464,83 @@ const App: React.FC = () => {
         try {
           const { data: bData } = await supabase.from('baseboard_master').select('*');
           if (bData && bData.length > 0) {
-            setBaseboardMaster(bData.map(b => ({ 
-              product: b.product, 
-              color: '', 
-              unitPrice: 0, 
-              quantity: 0, 
-              unit: '', 
-              pbImageUrl: b.pb_image_url 
-            })));
+            // __storage_options_config__ レコードの処理
+            const configRecord = bData.find(b => b.product === '__storage_options_config__');
+            if (configRecord && configRecord.pb_image_url) {
+              try {
+                const config = JSON.parse(configRecord.pb_image_url);
+                setStorageOptionPrices(prev => ({ ...prev, ...config }));
+              } catch (e) {
+                console.warn('Failed to parse __storage_options_config__', e);
+              }
+            }
+
+            const filteredBData = bData.filter(b => b.product !== '__storage_options_config__');
+            const mappedBaseboardMaster = filteredBData.map(b => {
+              let unitPrice = 0;
+              let unit = '';
+              let pbImageUrl = b.pb_image_url;
+
+              // デフォルト設定
+              if (b.product.includes('スリム巾木')) { unitPrice = 980; unit = '本'; }
+              else if (b.product.includes('スリムコーナー巾木')) { unitPrice = 540; unit = '個'; }
+              else if (b.product.includes('マグネット式ドアストッパー')) { unitPrice = 990; unit = '個'; }
+
+              if (b.pb_image_url && b.pb_image_url.startsWith('{')) {
+                try {
+                  const meta = JSON.parse(b.pb_image_url);
+                  unitPrice = meta.price ?? unitPrice;
+                  unit = meta.unit ?? unit;
+                  pbImageUrl = meta.imageUrl ?? '';
+                } catch (e) {
+                  console.warn('Failed to parse JSON pb_image_url for', b.product, e);
+                }
+              }
+
+              return {
+                product: b.product,
+                color: '',
+                unitPrice,
+                quantity: 0,
+                unit,
+                pbImageUrl
+              };
+            });
+
+            setBaseboardMaster(mappedBaseboardMaster);
+
+            // 現在のオーダーの巾木価格をデータベースの値と同期
+            setOrder(prev => {
+              const updatedBaseboards = prev.baseboards.map(ob => {
+                const masterItem = mappedBaseboardMaster.find(m => m.product === ob.product);
+                if (masterItem) {
+                  return {
+                    ...ob,
+                    unitPrice: masterItem.unitPrice,
+                    unit: masterItem.unit
+                  };
+                }
+                return ob;
+              });
+              return { ...prev, baseboards: updatedBaseboards };
+            });
+
           } else {
             setBaseboardMaster([
-              'スリム巾木(t5.5×H23×L3960)',
-              'スリムコーナー巾木',
-              'マグネット式ドアストッパー(サテンニッケル)',
-              'マグネット式ドアストッパー(マットブラック)'
-            ].map(p => ({ product: p, color: '', unitPrice: 0, quantity: 0, unit: '' })));
+              { product: 'スリム巾木(t5.5×H23×L3960)', color: '', unitPrice: 980, quantity: 0, unit: '本' },
+              { product: 'スリムコーナー巾木', color: '', unitPrice: 540, quantity: 0, unit: '個' },
+              { product: 'マグネット式ドアストッパー(サテンニッケル)', color: '', unitPrice: 990, quantity: 0, unit: '個' },
+              { product: 'マグネット式ドアストッパー(マットブラック)', color: '', unitPrice: 990, quantity: 0, unit: '個' }
+            ]);
           }
         } catch (e) {
-          console.warn('baseboard_master not available yet');
+          console.warn('baseboard_master not available yet', e);
           setBaseboardMaster([
-            'スリム巾木(t5.5×H23×L3960)',
-            'スリムコーナー巾木',
-            'マグネット式ドアストッパー(サテンニッケル)',
-            'マグネット式ドアストッパー(マットブラック)'
-          ].map(p => ({ product: p, color: '', unitPrice: 0, quantity: 0, unit: '' })));
+            { product: 'スリム巾木(t5.5×H23×L3960)', color: '', unitPrice: 980, quantity: 0, unit: '本' },
+            { product: 'スリムコーナー巾木', color: '', unitPrice: 540, quantity: 0, unit: '個' },
+            { product: 'マグネット式ドアストッパー(サテンニッケル)', color: '', unitPrice: 990, quantity: 0, unit: '個' },
+            { product: 'マグネット式ドアストッパー(マットブラック)', color: '', unitPrice: 990, quantity: 0, unit: '個' }
+          ]);
         }
 
       } catch (error) {
@@ -1202,6 +1263,8 @@ ${order.memo}
           setStorageTypes={setStorageTypes}
           setHandleMaster={setHandleMaster}
           setBaseboardMaster={setBaseboardMaster}
+          storageOptionPrices={storageOptionPrices}
+          setStorageOptionPrices={setStorageOptionPrices}
         />
       )}
 
@@ -2281,6 +2344,7 @@ ${order.memo}
             updateStorage={u => setOrder(p => ({...p, storage: {...p.storage, ...u}}))} 
             siteName={order.customerInfo.siteName} 
             storageTypes={storageTypes}
+            storageOptionPrices={storageOptionPrices}
           />
         </div>
 

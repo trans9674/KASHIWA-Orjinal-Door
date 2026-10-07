@@ -16,6 +16,22 @@ interface DataViewerModalProps {
   setStorageTypes: React.Dispatch<React.SetStateAction<StorageTypeRecord[]>>;
   setHandleMaster: React.Dispatch<React.SetStateAction<HandleRecord[]>>;
   setBaseboardMaster: React.Dispatch<React.SetStateAction<BaseboardItem[]>>;
+  storageOptionPrices?: {
+    mirror: number;
+    filler: number;
+    daiwa_800: number;
+    daiwa_1200: number;
+    daiwa_1600: number;
+    daiwa_2000: number;
+  };
+  setStorageOptionPrices?: React.Dispatch<React.SetStateAction<{
+    mirror: number;
+    filler: number;
+    daiwa_800: number;
+    daiwa_1200: number;
+    daiwa_1600: number;
+    daiwa_2000: number;
+  }>>;
 }
 
 export const DataViewerModal: React.FC<DataViewerModalProps> = ({ 
@@ -29,13 +45,73 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
   setPriceList,
   setStorageTypes,
   setHandleMaster,
-  setBaseboardMaster
+  setBaseboardMaster,
+  storageOptionPrices,
+  setStorageOptionPrices
 }) => {
   const [activeTab, setActiveTab] = useState<'door' | 'storage' | 'shipping' | 'handle' | 'baseboard'>('door');
   const [isAdding, setIsAdding] = useState(false);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const pbFileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const [uploadingId, setUploadingId] = useState<string | null>(null);
+
+  const [localOptionPrices, setLocalOptionPrices] = useState({
+    mirror: 11440,
+    filler: 2200,
+    daiwa_800: 2530,
+    daiwa_1200: 3410,
+    daiwa_1600: 4070,
+    daiwa_2000: 4290
+  });
+
+  useEffect(() => {
+    if (storageOptionPrices) {
+      setLocalOptionPrices(storageOptionPrices);
+    }
+  }, [storageOptionPrices]);
+
+  const handleSaveStorageOptions = async () => {
+    const metaString = JSON.stringify(localOptionPrices);
+    try {
+      const { data: existingRecord } = await supabase.from('baseboard_master').select('id').eq('product', '__storage_options_config__').maybeSingle();
+      if (existingRecord) {
+        await supabase.from('baseboard_master').update({ pb_image_url: metaString }).eq('id', existingRecord.id);
+      } else {
+        await supabase.from('baseboard_master').insert([{ product: '__storage_options_config__', pb_image_url: metaString }]);
+      }
+      if (setStorageOptionPrices) {
+        setStorageOptionPrices(localOptionPrices);
+      }
+      alert('玄関収納のオプション単価を保存しました。');
+    } catch (e: any) {
+      alert('設定の保存に失敗しました: ' + e.message);
+    }
+  };
+
+  const handleUpdateBaseboardMeta = async (product: string, price: number, unit: string) => {
+    const currentItem = baseboardRecordMaster.find(b => b.product === product);
+    const pbImageUrl = currentItem ? currentItem.pbImageUrl || '' : '';
+
+    const meta = {
+      imageUrl: pbImageUrl,
+      price,
+      unit
+    };
+    const metaString = JSON.stringify(meta);
+
+    try {
+      const { data: existingRecord } = await supabase.from('baseboard_master').select('id').eq('product', product).maybeSingle();
+      if (existingRecord) {
+        await supabase.from('baseboard_master').update({ pb_image_url: metaString }).eq('id', existingRecord.id);
+      } else {
+        await supabase.from('baseboard_master').insert([{ product, pb_image_url: metaString }]);
+      }
+
+      setBaseboardMaster(prev => prev.map(item => item.product === product ? { ...item, unitPrice: price, unit } : item));
+    } catch (e: any) {
+      alert('造作材設定の保存に失敗しました: ' + e.message);
+    }
+  };
 
   // Resize Logic
   const [modalWidth, setModalWidth] = useState<number>(window.innerWidth * 0.9);
@@ -137,7 +213,21 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
       // Use upsert/insert logic for masters, update for others
       if (type === 'handle' || type === 'baseboard') {
-        const payload = { [idField]: recordId, [fieldName]: publicUrl };
+        let payloadValue: any = publicUrl;
+
+        if (type === 'baseboard') {
+          const currentItem = baseboardRecordMaster.find(b => b.product === recordId);
+          const price = currentItem ? currentItem.unitPrice : 0;
+          const unit = currentItem ? currentItem.unit : '';
+          const meta = {
+            imageUrl: publicUrl,
+            price,
+            unit
+          };
+          payloadValue = JSON.stringify(meta);
+        }
+
+        const payload = { [idField]: recordId, [fieldName]: payloadValue };
         
         console.log(`Saving to ${tableName}:`, payload);
         
@@ -150,7 +240,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
 
         if (existingRecord) {
           console.log(`Found existing record with ID ${existingRecord.id} in ${tableName}, updating...`);
-          const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: publicUrl }).eq('id', existingRecord.id);
+          const { error: dbError } = await supabase.from(tableName).update({ [fieldName]: payloadValue }).eq('id', existingRecord.id);
           if (dbError) {
             console.error('Update failed:', dbError);
             throw new Error(`更新に失敗しました。Supabaseのポリシー(RLS)を確認してください: ${dbError.message}`);
@@ -212,7 +302,19 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           if (type === 'handle' || type === 'baseboard') {
              const { data: existingRecord } = await supabase.from(tableName).select('id').eq(idField, recordId).maybeSingle();
              if (existingRecord) {
-                await supabase.from(tableName).update({ [fieldName]: null }).eq('id', existingRecord.id);
+                let updatePayload: any = { [fieldName]: null };
+                if (type === 'baseboard') {
+                  const currentItem = baseboardRecordMaster.find(b => b.product === recordId);
+                  const price = currentItem ? currentItem.unitPrice : 0;
+                  const unit = currentItem ? currentItem.unit : '';
+                  const meta = {
+                    imageUrl: null,
+                    price,
+                    unit
+                  };
+                  updatePayload = { [fieldName]: JSON.stringify(meta) };
+                }
+                await supabase.from(tableName).update(updatePayload).eq('id', existingRecord.id);
              } else {
                 // If it doesn't exist in DB, nothing to delete from DB
                 console.log(`Record ${recordId} not in DB, skipping DB delete`);
@@ -784,35 +886,164 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
              <div className="p-8 bg-white h-full overflow-auto custom-scrollbar">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-1.5 h-6 bg-[#0071E3] rounded-full" />
-                  <h3 className="font-bold text-xl text-[#1D1D1F]">巾木・ストッパーマスター <span className="text-xs font-normal text-[#86868B] ml-2 tracking-tight">プレゼンボード用画像登録</span></h3>
+                  <h3 className="font-bold text-xl text-[#1D1D1F]">巾木・ストッパー設定 <span className="text-xs font-normal text-[#86868B] ml-2 tracking-tight">単価、単位、プレゼンボード用画像登録</span></h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                    {baseboardRecordMaster.map(b => (
-                     <div key={b.product} className="bg-white rounded-2xl border border-[#E5E5E7] p-5 shadow-sm hover:shadow-md transition-all group">
-                       <div className="flex justify-between items-start mb-4">
-                         <h4 className="font-bold text-[#1D1D1F] text-lg tracking-tight">{b.product}</h4>
-                         {b.pbImageUrl && <span className="bg-[#0071E3]/10 text-[#0071E3] text-[10px] font-bold px-2 py-0.5 rounded-full">登録済み</span>}
+                     <div key={b.product} className="bg-white rounded-2xl border border-[#E5E5E7] p-5 shadow-sm hover:shadow-md transition-all group flex flex-col justify-between">
+                       <div>
+                         <div className="flex justify-between items-start mb-4">
+                           <h4 className="font-bold text-[#1D1D1F] text-sm tracking-tight leading-snug">{b.product}</h4>
+                           {b.pbImageUrl && <span className="bg-[#0071E3]/10 text-[#0071E3] text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">画像登録済み</span>}
+                         </div>
+                         <div className="aspect-square bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] overflow-hidden flex items-center justify-center relative mb-4">
+                           {b.pbImageUrl ? (
+                             <>
+                               <img src={b.pbImageUrl} className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-110" />
+                               <button onClick={() => handleDeleteImage(b.product, false, true, 'baseboard')} className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors">×</button>
+                             </>
+                           ) : (
+                             <div className="flex flex-col items-center gap-2">
+                                <svg className="w-10 h-10 text-[#86868B]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                <span className="text-[11px] text-[#86868B] italic">画像未登録</span>
+                             </div>
+                           )}
+                         </div>
+                         <button onClick={() => fileInputRefs.current[b.product]?.click()} className="w-full bg-[#F5F5F7] border border-[#E5E5E7] text-[#1D1D1F] py-2.5 rounded-xl text-xs font-bold hover:bg-[#E5E5E7] transition-all flex items-center justify-center gap-2 shadow-xs active:scale-95">
+                           <svg className="w-4 h-4 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                           画像をアップロード
+                         </button>
+                         <input type="file" className="hidden" ref={el => fileInputRefs.current[b.product] = el} onChange={e => handleFileSelect(e, b.product, false, true, 'baseboard')}/>
                        </div>
-                       <div className="aspect-square bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] overflow-hidden flex items-center justify-center relative mb-4">
-                         {b.pbImageUrl ? (
-                           <>
-                             <img src={b.pbImageUrl} className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-110" />
-                             <button onClick={() => handleDeleteImage(b.product, false, true, 'baseboard')} className="absolute top-2 right-2 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 transition-colors">×</button>
-                           </>
-                         ) : (
-                           <div className="flex flex-col items-center gap-2">
-                              <svg className="w-10 h-10 text-[#86868B]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                              <span className="text-[11px] text-[#86868B] italic">未登録</span>
+
+                       {/* 単価・単位編集インプット */}
+                       <div className="mt-5 border-t border-[#E5E5E7]/60 pt-4 space-y-3">
+                         <div className="grid grid-cols-2 gap-3">
+                           <div>
+                             <label className="block text-[10px] font-bold text-[#86868B] mb-1">単価 (円)</label>
+                             <input 
+                               type="number"
+                               defaultValue={b.unitPrice}
+                               id={`price_${b.product}`}
+                               className="w-full border border-[#E5E5E7] rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#0071E3] bg-[#F5F5F7]/30"
+                             />
                            </div>
-                         )}
+                           <div>
+                             <label className="block text-[10px] font-bold text-[#86868B] mb-1">単位</label>
+                             <input 
+                               type="text"
+                               defaultValue={b.unit}
+                               id={`unit_${b.product}`}
+                               placeholder="本、個など"
+                               className="w-full border border-[#E5E5E7] rounded-lg px-2.5 py-1.5 text-xs font-bold text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#0071E3] bg-[#F5F5F7]/30"
+                             />
+                           </div>
+                         </div>
+                         <button 
+                           onClick={() => {
+                             const priceInput = document.getElementById(`price_${b.product}`) as HTMLInputElement;
+                             const unitInput = document.getElementById(`unit_${b.product}`) as HTMLInputElement;
+                             if (priceInput && unitInput) {
+                               handleUpdateBaseboardMeta(b.product, parseInt(priceInput.value) || 0, unitInput.value);
+                               alert(`${b.product} の設定を保存しました。`);
+                             }
+                           }}
+                           className="w-full bg-[#0071E3] hover:bg-[#0077ED] text-white py-2 rounded-xl text-[11px] font-bold transition-all active:scale-95 shadow-xs"
+                         >
+                           単価・単位を保存
+                         </button>
                        </div>
-                       <button onClick={() => fileInputRefs.current[b.product]?.click()} className="w-full bg-[#F5F5F7] border border-[#E5E5E7] text-[#1D1D1F] py-2.5 rounded-xl text-xs font-bold hover:bg-[#E5E5E7] transition-all flex items-center justify-center gap-2 shadow-xs active:scale-95">
-                         <svg className="w-4 h-4 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                         画像をアップロード
-                       </button>
-                       <input type="file" className="hidden" ref={el => fileInputRefs.current[b.product] = el} onChange={e => handleFileSelect(e, b.product, false, true, 'baseboard')}/>
                      </div>
                    ))}
+                </div>
+
+                {/* 玄関収納オプション単価設定 */}
+                <div className="mt-12 border-t border-[#E5E5E7] pt-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-1.5 h-6 bg-[#ea580c] rounded-full" />
+                    <h3 className="font-bold text-xl text-[#1D1D1F]">玄関収納 オプション単価設定 <span className="text-xs font-normal text-[#86868B] ml-2 tracking-tight">ミラー・フィラー・台輪の単価設定</span></h3>
+                  </div>
+
+                  <div className="bg-[#F5F5F7] p-6 rounded-2xl border border-[#E5E5E7] max-w-4xl space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2 bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
+                        <label className="block text-xs font-bold text-[#86868B]">ミラーオプション単価 (円)</label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[#86868B] font-mono text-xs">¥</span>
+                          <input 
+                            type="number"
+                            value={localOptionPrices.mirror}
+                            onChange={e => setLocalOptionPrices(prev => ({ ...prev, mirror: parseInt(e.target.value) || 0 }))}
+                            className="w-full bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg px-3 py-2 text-sm font-mono font-bold text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#ea580c]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
+                        <label className="block text-xs font-bold text-[#86868B]">フィラーオプション単価 (円)</label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[#86868B] font-mono text-xs">¥</span>
+                          <input 
+                            type="number"
+                            value={localOptionPrices.filler}
+                            onChange={e => setLocalOptionPrices(prev => ({ ...prev, filler: parseInt(e.target.value) || 0 }))}
+                            className="w-full bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg px-3 py-2 text-sm font-mono font-bold text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#ea580c]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
+                      <label className="block text-xs font-bold text-[#86868B] mb-2">台輪オプション単価 (幅別)</label>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                          <span className="block text-[11px] text-[#86868B] mb-1">幅800㎜ (円)</span>
+                          <input 
+                            type="number"
+                            value={localOptionPrices.daiwa_800}
+                            onChange={e => setLocalOptionPrices(prev => ({ ...prev, daiwa_800: parseInt(e.target.value) || 0 }))}
+                            className="w-full bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg px-3 py-2 text-xs font-mono font-bold text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#ea580c]"
+                          />
+                        </div>
+                        <div>
+                          <span className="block text-[11px] text-[#86868B] mb-1">幅1200㎜ (円)</span>
+                          <input 
+                            type="number"
+                            value={localOptionPrices.daiwa_1200}
+                            onChange={e => setLocalOptionPrices(prev => ({ ...prev, daiwa_1200: parseInt(e.target.value) || 0 }))}
+                            className="w-full bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg px-3 py-2 text-xs font-mono font-bold text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#ea580c]"
+                          />
+                        </div>
+                        <div>
+                          <span className="block text-[11px] text-[#86868B] mb-1">幅1600㎜ (円)</span>
+                          <input 
+                            type="number"
+                            value={localOptionPrices.daiwa_1600}
+                            onChange={e => setLocalOptionPrices(prev => ({ ...prev, daiwa_1600: parseInt(e.target.value) || 0 }))}
+                            className="w-full bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg px-3 py-2 text-xs font-mono font-bold text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#ea580c]"
+                          />
+                        </div>
+                        <div>
+                          <span className="block text-[11px] text-[#86868B] mb-1">幅2000㎜ (円)</span>
+                          <input 
+                            type="number"
+                            value={localOptionPrices.daiwa_2000}
+                            onChange={e => setLocalOptionPrices(prev => ({ ...prev, daiwa_2000: parseInt(e.target.value) || 0 }))}
+                            className="w-full bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg px-3 py-2 text-xs font-mono font-bold text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#ea580c]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button 
+                        onClick={handleSaveStorageOptions}
+                        className="bg-[#ea580c] hover:bg-orange-600 text-white px-8 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm"
+                      >
+                        収納オプション設定を保存
+                      </button>
+                    </div>
+                  </div>
                 </div>
              </div>
           ) : (

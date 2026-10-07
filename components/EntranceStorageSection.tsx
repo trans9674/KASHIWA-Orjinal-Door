@@ -8,9 +8,37 @@ interface EntranceStorageSectionProps {
   updateStorage: (updates: Partial<EntranceStorage>) => void;
   siteName: string;
   storageTypes: StorageTypeRecord[];
+  storageOptionPrices?: {
+    mirror: number;
+    filler: number;
+    daiwa_800: number;
+    daiwa_1200: number;
+    daiwa_1600: number;
+    daiwa_2000: number;
+  };
 }
 
-export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ storage, updateStorage, siteName, storageTypes }) => {
+export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
+  storage, 
+  updateStorage, 
+  siteName, 
+  storageTypes,
+  storageOptionPrices = {
+    mirror: 11440,
+    filler: 2200,
+    daiwa_800: 2530,
+    daiwa_1200: 3410,
+    daiwa_1600: 4070,
+    daiwa_2000: 4290
+  }
+}) => {
+  const getDaiwaPrice = (width: number) => {
+    if (width === 800) return storageOptionPrices.daiwa_800;
+    if (width === 1200) return storageOptionPrices.daiwa_1200;
+    if (width === 1600) return storageOptionPrices.daiwa_1600;
+    if (width === 2000) return storageOptionPrices.daiwa_2000;
+    return 0;
+  };
   const initialCategory = storageTypes.find(s => s.id === storage.type)?.category || "なし";
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [isFillerInfoOpen, setIsFillerInfoOpen] = useState(false);
@@ -256,7 +284,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
           type: firstInCat.id,
           size: firstInCat.name,
           basePrice: firstInCat.price,
-          baseRingPrice: storage.baseRing !== "なし" ? (DAIWA_PRICES[firstInCat.width] || 0) : 0
+          baseRingPrice: storage.baseRing !== "なし" ? (getDaiwaPrice(firstInCat.width) || 0) : 0
         };
 
         if (mirrorIncompatibleCategories.includes(newCategory)) {
@@ -276,7 +304,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
         type: selected.id,
         size: selected.name,
         basePrice: selected.price,
-        baseRingPrice: storage.baseRing !== "なし" ? (DAIWA_PRICES[selected.width] || 0) : 0
+        baseRingPrice: storage.baseRing !== "なし" ? (getDaiwaPrice(selected.width) || 0) : 0
       });
     }
   };
@@ -288,7 +316,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
     
     updateStorage({
       baseRing: e.target.value,
-      baseRingPrice: hasBaseRing ? (DAIWA_PRICES[width] || 0) : 0
+      baseRingPrice: hasBaseRing ? (getDaiwaPrice(width) || 0) : 0
     });
   };
 
@@ -471,11 +499,11 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
             <select
               value={storage.mirror}
               disabled={isMirrorDisabled}
-              onChange={(e) => updateStorage({ mirror: e.target.value, mirrorPrice: e.target.value === 'あり' ? 11440 : 0 })}
+              onChange={(e) => updateStorage({ mirror: e.target.value, mirrorPrice: e.target.value === 'あり' ? storageOptionPrices.mirror : 0 })}
               className={`w-full border rounded-md px-2 py-2 text-xs focus:ring-1 focus:ring-[#0071E3] outline-none transition-all ${isMirrorDisabled ? 'bg-[#F5F5F7] text-[#D1D1D6] border-[#E5E5E7] cursor-not-allowed' : 'bg-white text-[#1D1D1F] border-[#E5E5E7]'}`}
             >
               <option value="なし">なし</option>
-              {!isMirrorDisabled && <option value="あり">あり (+¥11,440)</option>}
+              {!isMirrorDisabled && <option value="あり">あり (+¥{storageOptionPrices.mirror.toLocaleString()})</option>}
             </select>
           </div>
           <div className="col-span-3">
@@ -498,7 +526,7 @@ export const EntranceStorageSection: React.FC<EntranceStorageSectionProps> = ({ 
                 disabled={isNone}
                 onChange={(e) => {
                   const count = Math.max(0, parseInt(e.target.value) || 0);
-                  updateStorage({ fillerCount: count, fillerPrice: 2200 });
+                  updateStorage({ fillerCount: count, fillerPrice: storageOptionPrices.filler });
                 }}
                 className={`w-[45%] border rounded-md px-2 py-2 text-xs text-center focus:ring-1 focus:ring-[#0071E3] outline-none transition-all ${isNone ? 'bg-[#F5F5F7] text-[#D1D1D6] border-[#E5E5E7]' : 'bg-white text-[#1D1D1F] border-[#E5E5E7] font-semibold'}`}
               />
