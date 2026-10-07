@@ -1574,7 +1574,7 @@ ${order.memo}
                   </div>
 
                   <div className="bg-[#F5F5F7] p-6 rounded-2xl mb-10 flex justify-between items-center border border-[#E5E5E7] shadow-sm">
-                    <span className="text-lg font-bold tracking-tight">御見積合計（税込）</span>
+                    <span className="text-lg font-bold tracking-tight">御見積下代合計（税込）</span>
                     <span className="text-3xl font-black font-mono tracking-tight text-[#0071E3]">¥{totals.total.toLocaleString()}</span>
                   </div>
 
@@ -2518,7 +2518,7 @@ ${order.memo}
             </div>
 
             <div className="flex justify-between items-end pt-8 border-t border-[#E5E5E7]">
-                <p className="text-[#1D1D1F] font-bold text-sm tracking-tight uppercase tracking-widest text-[10px]">合計金額（税込）</p>
+                <p className="text-[#1D1D1F] font-bold text-sm tracking-tight uppercase tracking-widest text-[10px]">下代合計金額（税込）</p>
                 <p className="text-4xl xl:text-5xl font-bold font-mono tracking-tighter leading-none text-[#0071E3]">¥{totals.total.toLocaleString()}</p>
             </div>
           </div>
