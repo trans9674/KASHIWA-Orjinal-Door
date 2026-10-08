@@ -772,6 +772,7 @@ const App: React.FC = () => {
       { key: 'company', label: '会社名' },
       { key: 'siteName', label: '現場名' },
       { key: 'contactName', label: 'ご担当者名' },
+      { key: 'phone', label: '電話番号' },
       { key: 'address', label: '納品先住所' },
     ];
     basicFields.forEach(f => { if (!order.customerInfo[f.key as keyof typeof order.customerInfo]) errors.push(`${f.label}が入力されていません。`); });
@@ -1042,9 +1043,9 @@ const App: React.FC = () => {
 
 ■お客様情報
 会社名：${order.customerInfo.company}
-担当者名：${order.customerInfo.contactName}
+ご担当者様名：${order.customerInfo.contactName}
 現場名：${order.customerInfo.siteName}
-連絡先：${order.customerInfo.phone}
+電話番号：${order.customerInfo.phone}
 
 ■備考
 ${order.memo}
@@ -1914,11 +1915,11 @@ ${order.memo}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <label className="text-[11px] font-medium text-[#86868B] ml-1">担当者名</label>
+                            <label className="text-[11px] font-medium text-[#86868B] ml-1">ご担当者様名</label>
                             <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-[#F5F5F7]/30" placeholder="山田 太郎" value={initialSettings.contactName} onChange={e => setInitialSettings(p => ({...p, contactName: e.target.value}))} />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-[11px] font-medium text-[#86868B] ml-1">連絡先</label>
+                            <label className="text-[11px] font-medium text-[#86868B] ml-1">電話番号</label>
                             <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-[#F5F5F7]/30" placeholder="090-0000-0000" value={initialSettings.phone} onChange={e => setInitialSettings(p => ({...p, phone: e.target.value}))} />
                           </div>
                         </div>
@@ -2128,11 +2129,11 @@ ${order.memo}
             <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="〇〇様邸" value={order.customerInfo.siteName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, siteName: e.target.value}}))} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">担当者名</label>
-            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="担当者名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, contactName: e.target.value}}))} />
+            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">ご担当者様名</label>
+            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="ご担当者様名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, contactName: e.target.value}}))} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">連絡先</label>
+            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">電話番号</label>
             <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="電話番号" value={order.customerInfo.phone} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, phone: e.target.value}}))} />
           </div>
           <div className="space-y-1.5 col-span-2">
