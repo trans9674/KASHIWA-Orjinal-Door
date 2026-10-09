@@ -2157,7 +2157,7 @@ ${order.memo}
         </div>
       )}
       
-       <div className={`max-w-[1550px] mx-auto p-12 bg-white border border-[#E5E5E7] shadow-sm my-12 transition-opacity duration-500 rounded-2xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen || isValidationModalOpen || isPbModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+       <div className={`max-w-[1550px] mx-auto p-12 bg-white border border-[#E5E5E7] shadow-sm my-12 transition-opacity duration-500 rounded-2xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isValidationModalOpen || isPbModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-10 border-b border-[#E5E5E7] pb-6">
           <div className="shrink-0 mr-4">
             <h1 className="text-2xl font-bold text-[#1D1D1F] tracking-tight whitespace-nowrap">柏木工 オリジナルドア 発注書</h1>
