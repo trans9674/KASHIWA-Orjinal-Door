@@ -1095,17 +1095,17 @@ const App: React.FC = () => {
   };
 
   const handleSendMail = async () => {
-    if (!selectedPdf) {
-      alert("PDFファイルを選択してください。");
+    if (!pdfBase64) {
+      alert("PDFが生成されていません。");
       return;
     }
     
     setIsSending(true);
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(selectedPdf);
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
+      // const reader = new FileReader();
+      // reader.readAsDataURL(selectedPdf);
+      // reader.onload = async () => {
+        const base64 = pdfBase64;
         const subject = "注文書送付依頼書";
         const body = `柏木工株式会社
 担当：滝下 様
@@ -1135,7 +1135,7 @@ ${order.memo}
             subject,
             text: body,
             pdfBase64: base64,
-            filename: selectedPdf.name
+            filename: '現場名_柏木工見積書.pdf'
           })
         });
         
@@ -1146,10 +1146,10 @@ ${order.memo}
         } else {
           throw new Error(result.error || '送信に失敗しました。');
         }
-      };
-      reader.onerror = () => {
-        throw new Error('ファイルの読み込みに失敗しました。');
-      };
+      // };
+      // reader.onerror = () => {
+      //   throw new Error('ファイルの読み込みに失敗しました');
+      // };
     } catch (err: any) {
       alert(err.message);
     } finally {
