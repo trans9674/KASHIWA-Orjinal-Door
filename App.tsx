@@ -1038,9 +1038,11 @@ const App: React.FC = () => {
          });
       }
 
-      return await doc.save();
-  };
-
+      // PDF保存と表示
+      const pdfBytes = await doc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
 
     } catch (e: any) {
       console.error(e);
