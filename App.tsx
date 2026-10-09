@@ -1139,12 +1139,7 @@ const App: React.FC = () => {
       }
   };
 
-  const handleSendMail = async () => {
-    if (!pdfBase64) {
-      alert("PDFが生成されていません。");
-      return;
-    }
-    
+  const directSendMail = async (pdfBase64Data: string) => {
     setIsSending(true);
     try {
         const attachments = [];
@@ -1177,7 +1172,7 @@ const App: React.FC = () => {
 備考: ${order.customerInfo.remarks || 'なし'}
 
 添付資料一覧:
-- 見視書PDF
+- 見積書PDF
 - 現場案内図
 - 平面図
 
@@ -1190,7 +1185,7 @@ const App: React.FC = () => {
                 to: process.env.VITE_ALLOWED_TO_EMAIL,
                 subject,
                 text: body,
-                pdfBase64,
+                pdfBase64: pdfBase64Data,
                 filename: `${order.customerInfo.siteName}_柏木工見積書.pdf`,
                 attachments
             })
@@ -1202,11 +1197,20 @@ const App: React.FC = () => {
         } else {
             throw new Error(result.error);
         }
-    } catch (err: any) {
-      alert(err.message);
+    } catch (e: any) {
+        console.error(e);
+        alert(e.message || "送信に失敗しました。");
     } finally {
-      setIsSending(false);
+        setIsSending(false);
     }
+  };
+
+  const handleSendMail = async () => {
+    if (!pdfBase64) {
+      alert("PDFが生成されていません。");
+      return;
+    }
+    await directSendMail(pdfBase64);
   };
 
 
@@ -1573,7 +1577,7 @@ const App: React.FC = () => {
                     キャンセル
                   </button>
                   <button 
-                    onClick={showConfirmation ? handleSendMail : async () => {
+                    onClick={async () => {
                         if (!siteMapFile || !floorPlanFile) {
                             alert('現場案内図と平面図を選択してください。');
                             return;
@@ -1581,15 +1585,13 @@ const App: React.FC = () => {
                         setIsGenerating(true);
                         try {
                             const base64 = await generatePdfBlob();
-                            setPdfBase64(base64);
-                            setShowConfirmation(true);
+                            await directSendMail(base64);
                         } catch (error) {
-                            alert("PDFの生成に失敗しました。再試行してください。");
-                        } finally {
+                            alert("PDF生成または送信に失敗しました。再試行してください。");
                             setIsGenerating(false);
                         }
                     }}
-                    disabled={isSending || (!showConfirmation && (!siteMapFile || !floorPlanFile || isGenerating))}
+                    disabled={isSending || isGenerating || !siteMapFile || !floorPlanFile}
                     className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm active:scale-[0.98] disabled:bg-[#F5F5F7] disabled:text-[#D1D1D6] disabled:border-[#E5E5E7] disabled:shadow-none disabled:cursor-not-allowed"
                   >
                     {isSending ? '送信中...' : isGenerating ? 'PDF生成中...' : '注文書の作成を依頼する'}
