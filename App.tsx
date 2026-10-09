@@ -377,6 +377,7 @@ const App: React.FC = () => {
     siteName: '',
     contactName: localStorage.getItem('order_contactName') || '',
     phone: localStorage.getItem('order_phone') || '',
+    email: localStorage.getItem('order_email') || '',
     defaultHeight: 'H2200',
     defaultDoorColor: COLORS[0],
     defaultHandleColor: SIMPLE_HANDLE_OPTIONS[0],
@@ -390,6 +391,7 @@ const App: React.FC = () => {
       siteName: '',
       contactName: localStorage.getItem('order_contactName') || '',
       phone: localStorage.getItem('order_phone') || '',
+      email: localStorage.getItem('order_email') || '',
       deliveryDate1: '',
       deliveryDate2: '',
       delivery1Selection: { baseboard: false, storage: false },
@@ -430,14 +432,16 @@ const App: React.FC = () => {
     localStorage.setItem('order_company', info.company);
     localStorage.setItem('order_contactName', info.contactName);
     localStorage.setItem('order_phone', info.phone);
+    localStorage.setItem('order_email', info.email || '');
     localStorage.setItem('order_address_pref', addressPart.prefecture);
-  }, [order.customerInfo.company, order.customerInfo.contactName, order.customerInfo.phone, addressPart.prefecture]);
+  }, [order.customerInfo.company, order.customerInfo.contactName, order.customerInfo.phone, order.customerInfo.email, addressPart.prefecture]);
 
   useEffect(() => {
     localStorage.setItem('order_company', initialSettings.company);
     localStorage.setItem('order_contactName', initialSettings.contactName);
     localStorage.setItem('order_phone', initialSettings.phone);
-  }, [initialSettings.company, initialSettings.contactName, initialSettings.phone]);
+    localStorage.setItem('order_email', initialSettings.email || '');
+  }, [initialSettings.company, initialSettings.contactName, initialSettings.phone, initialSettings.email]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -661,7 +665,7 @@ const App: React.FC = () => {
         siteName: initialSettings.siteName, 
         contactName: initialSettings.contactName,
         phone: initialSettings.phone,
-        email: initialSettings.email
+        email: initialSettings.email || ''
       },
       storage: { ...prev.storage, color: initialSettings.defaultDoorColor },
       baseboards: prev.baseboards.map(b => {
@@ -839,6 +843,7 @@ const App: React.FC = () => {
       { key: 'siteName', label: '現場名' },
       { key: 'contactName', label: 'ご担当者名' },
       { key: 'phone', label: '電話番号' },
+      { key: 'email', label: 'メールアドレス' },
       { key: 'address', label: '納品先住所' },
     ];
     basicFields.forEach(f => { if (!order.customerInfo[f.key as keyof typeof order.customerInfo]) errors.push(`${f.label}が入力されていません。`); });
@@ -1165,7 +1170,7 @@ const App: React.FC = () => {
 
         const subject = `【新規注文依頼】${order.customerInfo.siteName}／${order.customerInfo.company}`;
         const contactEmail = order.customerInfo.email || '';
-        const body = `新しい注文書作成依頼が届きました。
+        const body = `新規注文書作成依頼が届きました。
 
 現場名: ${order.customerInfo.siteName}
 依頼会社: ${order.customerInfo.company}
@@ -1184,8 +1189,6 @@ const App: React.FC = () => {
 担当者：${order.customerInfo.contactName}
 電話番号：${order.customerInfo.phone}
 メールアドレス：${contactEmail || '未登録'}
-
-ご不明な点がございましたら、上記担当者まで直接お問い合わせください。
 
 本メールは柏木工オリジナルドア発注システムから自動送信されています。`;
         
@@ -2356,7 +2359,7 @@ const App: React.FC = () => {
           </div>
         </div>
 
-         <div className="grid grid-cols-4 gap-8 mb-12 bg-[#F5F5F7]/50 p-8 rounded-xl border border-[#E5E5E7]">
+         <div className="grid grid-cols-5 gap-4 mb-12 bg-[#F5F5F7]/50 p-8 rounded-xl border border-[#E5E5E7]">
           <div className="space-y-1.5">
             <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">会社名</label>
             <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="会社名" value={order.customerInfo.company} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, company: e.target.value}}))} />
@@ -2367,11 +2370,15 @@ const App: React.FC = () => {
           </div>
           <div className="space-y-1.5">
             <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">ご担当者様名</label>
-            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="ご担当者様名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, contactName: e.target.value}}))} />
+            <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="ご担当者名" value={order.customerInfo.contactName} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, contactName: e.target.value}}))} />
           </div>
           <div className="space-y-1.5">
             <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">電話番号</label>
             <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="電話番号" value={order.customerInfo.phone} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, phone: e.target.value}}))} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">メールアドレス</label>
+            <input type="email" className="w-full border border-[#E5E5E7] rounded-md p-2 bg-white text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all" placeholder="example@email.com" value={order.customerInfo.email || ''} onChange={e => setOrder(p => ({...p, customerInfo: {...p.customerInfo, email: e.target.value}}))} />
           </div>
           <div className="space-y-1.5 col-span-2">
             <label className="text-[10px] font-semibold text-[#86868B] ml-1 uppercase tracking-wider">納品先住所</label>
