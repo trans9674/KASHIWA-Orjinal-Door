@@ -1163,6 +1163,7 @@ const App: React.FC = () => {
         }
 
         const subject = `【新規注文依頼】${order.customerInfo.siteName}／${order.customerInfo.company}`;
+        const contactEmail = order.customerInfo.email || '';
         const body = `新しい注文書作成依頼が届きました。
 
 現場名: ${order.customerInfo.siteName}
@@ -1176,6 +1177,15 @@ const App: React.FC = () => {
 - 現場案内図
 - 平面図
 
+■ ご依頼担当者（お問い合わせ先）
+
+会社名：${order.customerInfo.company}
+担当者：${order.customerInfo.representative}
+電話番号：${order.customerInfo.phone}
+メールアドレス：${contactEmail || '未登録'}
+
+ご不明な点がございましたら、上記担当者まで直接お問い合わせください。
+
 本メールは柏木工オリジナルドア発注システムから自動送信されています。`;
         
         const response = await fetch('/api/send-mail', {
@@ -1183,6 +1193,8 @@ const App: React.FC = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 to: process.env.VITE_ALLOWED_TO_EMAIL,
+                cc: contactEmail || undefined,
+                replyTo: contactEmail || undefined,
                 subject,
                 text: body,
                 pdfBase64: pdfBase64Data,
@@ -2142,6 +2154,10 @@ const App: React.FC = () => {
                             <label className="text-[11px] font-medium text-[#86868B] ml-1">電話番号</label>
                             <input type="text" className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-[#F5F5F7]/30" placeholder="090-0000-0000" value={initialSettings.phone} onChange={e => setInitialSettings(p => ({...p, phone: e.target.value}))} />
                           </div>
+                        </div>
+                        <div className="space-y-1.5 mt-4">
+                          <label className="text-[11px] font-medium text-[#86868B] ml-1">メールアドレス</label>
+                          <input type="email" className="w-full border border-[#E5E5E7] rounded-md p-2 text-sm text-[#1D1D1F] focus:ring-1 focus:ring-[#0071E3] outline-none transition-all bg-[#F5F5F7]/30" placeholder="example@email.com" value={initialSettings.email || ''} onChange={e => setInitialSettings(p => ({...p, email: e.target.value}))} />
                         </div>
                       </div>
                     </div>

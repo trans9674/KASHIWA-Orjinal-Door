@@ -6,7 +6,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { to, subject, text, pdfBase64, filename, attachments: customAttachments } = req.body;
+  const { to, subject, text, pdfBase64, filename, attachments: customAttachments, cc, replyTo } = req.body;
 
   // 環境変数から設定を取得
   const smtpHost = process.env.SMTP_HOST;
@@ -58,6 +58,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const info = await transporter.sendMail({
       from: `"${senderFrom}" <${smtpUser}>`,
       to: allowedTo,
+      cc: cc,
+      replyTo: replyTo,
       subject: subject || '注文書送付依頼書',
       text: text,
       attachments: attachments
