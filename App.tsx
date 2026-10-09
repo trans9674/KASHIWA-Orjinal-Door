@@ -1571,17 +1571,26 @@ const App: React.FC = () => {
                 キャンセル
               </button>
               <button 
-                onClick={showConfirmation ? handleSendMail : () => {
+                onClick={showConfirmation ? handleSendMail : async () => {
                     if (!siteMapFile || !floorPlanFile) {
                         alert('現場案内図と平面図を選択してください。');
                         return;
                     }
-                    handleGenerateAndShowConfirm();
+                    setIsGenerating(true);
+                    try {
+                        const base64 = await generatePdfBlob();
+                        setPdfBase64(base64);
+                        setShowConfirmation(true);
+                    } catch (error) {
+                        alert("PDFの生成に失敗しました。再試行してください。");
+                    } finally {
+                        setIsGenerating(false);
+                    }
                 }}
-                disabled={isSending || (!showConfirmation && (!siteMapFile || !floorPlanFile))}
+                disabled={isSending || (!showConfirmation && (!siteMapFile || !floorPlanFile || isGenerating))}
                 className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm active:scale-[0.98] disabled:bg-[#F5F5F7] disabled:text-[#D1D1D6] disabled:border-[#E5E5E7] disabled:shadow-none disabled:cursor-not-allowed"
               >
-                {isSending ? '送信中...' : '注文書の作成を依頼する'}
+                {isSending ? '送信中...' : isGenerating ? 'PDF生成中...' : '注文書の作成を依頼する'}
               </button>
             </div>
           </div>
@@ -1726,23 +1735,9 @@ const App: React.FC = () => {
                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                    PDFプレビュー
                 </button>
-                <button onClick={async () => { 
-                  setIsMailModalOpen(true); 
-                  setIsEstimateSaved(false); 
-                  setShowConfirmation(false); 
-                  setIsGenerating(true);
-                  try {
-                    const base64 = await generatePdfBlob();
-                    setPdfBase64(base64);
-                    setShowConfirmation(true);
-                  } catch (error) {
-                    alert("PDFの生成に失敗しました。PDFプレビュー機能から再試行してください。");
-                  } finally {
-                    setIsGenerating(false);
-                  }
-                }} className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-[0.98]">
+                <button onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); setShowConfirmation(false); }} className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-[0.98]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
-                  注文書送付依頼
+                  注文書作成依頼
                 </button>
               </div>
             </div>
