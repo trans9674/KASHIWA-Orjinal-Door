@@ -1564,34 +1564,38 @@ const App: React.FC = () => {
             </div>
 
             <div className="mt-10 pt-8 border-t border-[#E5E5E7] flex justify-end gap-4">
-              <button 
-                onClick={() => setIsMailModalOpen(false)}
-                className="bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] px-8 py-3 rounded-md text-sm font-bold transition-all border border-[#E5E5E7]"
-              >
-                キャンセル
-              </button>
-              <button 
-                onClick={showConfirmation ? handleSendMail : async () => {
-                    if (!siteMapFile || !floorPlanFile) {
-                        alert('現場案内図と平面図を選択してください。');
-                        return;
-                    }
-                    setIsGenerating(true);
-                    try {
-                        const base64 = await generatePdfBlob();
-                        setPdfBase64(base64);
-                        setShowConfirmation(true);
-                    } catch (error) {
-                        alert("PDFの生成に失敗しました。再試行してください。");
-                    } finally {
-                        setIsGenerating(false);
-                    }
-                }}
-                disabled={isSending || (!showConfirmation && (!siteMapFile || !floorPlanFile || isGenerating))}
-                className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm active:scale-[0.98] disabled:bg-[#F5F5F7] disabled:text-[#D1D1D6] disabled:border-[#E5E5E7] disabled:shadow-none disabled:cursor-not-allowed"
-              >
-                {isSending ? '送信中...' : isGenerating ? 'PDF生成中...' : '注文書の作成を依頼する'}
-              </button>
+              {!isSent && (
+                <>
+                  <button 
+                    onClick={() => setIsMailModalOpen(false)}
+                    className="bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] px-8 py-3 rounded-md text-sm font-bold transition-all border border-[#E5E5E7]"
+                  >
+                    キャンセル
+                  </button>
+                  <button 
+                    onClick={showConfirmation ? handleSendMail : async () => {
+                        if (!siteMapFile || !floorPlanFile) {
+                            alert('現場案内図と平面図を選択してください。');
+                            return;
+                        }
+                        setIsGenerating(true);
+                        try {
+                            const base64 = await generatePdfBlob();
+                            setPdfBase64(base64);
+                            setShowConfirmation(true);
+                        } catch (error) {
+                            alert("PDFの生成に失敗しました。再試行してください。");
+                        } finally {
+                            setIsGenerating(false);
+                        }
+                    }}
+                    disabled={isSending || (!showConfirmation && (!siteMapFile || !floorPlanFile || isGenerating))}
+                    className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm active:scale-[0.98] disabled:bg-[#F5F5F7] disabled:text-[#D1D1D6] disabled:border-[#E5E5E7] disabled:shadow-none disabled:cursor-not-allowed"
+                  >
+                    {isSending ? '送信中...' : isGenerating ? 'PDF生成中...' : '注文書の作成を依頼する'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
