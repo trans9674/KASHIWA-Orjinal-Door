@@ -1052,9 +1052,23 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLaunchMail = () => {
-    const subject = "注文書送付依頼書";
-    const body = `柏木工株式会社
+  const [isSending, setIsSending] = useState(false);
+  const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
+
+  const handleSendMail = async () => {
+    if (!selectedPdf) {
+      alert("PDFファイルを選択してください。");
+      return;
+    }
+    
+    setIsSending(true);
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedPdf);
+      reader.onload = async () => {
+        const base64 = (reader.result as string).split(',')[1];
+        const subject = "注文書送付依頼書";
+        const body = `柏木工株式会社
 担当：滝下 様
 
 お世話になっております。
@@ -1070,18 +1084,40 @@ const App: React.FC = () => {
 ${order.memo}
 
 ---
-※重要※
-この後、下記3点のファイルを必ず添付して送信してください。
-1. 見積書PDF (先ほどダウンロードしたもの)
-2. 現地案内図
-3. 平面図
+注文書PDFを添付いたします。
 ---
 `;
-    
-    const mailtoUrl = `mailto:takishita@kashiwa-f.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoUrl;
-    setIsMailModalOpen(false);
+        
+        const response = await fetch('/api/send-mail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: 'takishita@kashiwa-f.com',
+            subject,
+            text: body,
+            pdfBase64: base64,
+            filename: selectedPdf.name
+          })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          alert('注文書送付依頼メールを送信しました。');
+          setIsMailModalOpen(false);
+        } else {
+          throw new Error(result.error || '送信に失敗しました。');
+        }
+      };
+      reader.onerror = () => {
+        throw new Error('ファイルの読み込みに失敗しました。');
+      };
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setIsSending(false);
+    }
   };
+
 
   const processOrderJson = useCallback((json: any) => {
     if (json && typeof json === 'object' && json.customerInfo && json.doors) {
@@ -1363,20 +1399,22 @@ ${order.memo}
                   </p>
               </div>
 
-              <div className="space-y-4">
+               <div className="space-y-4">
                 <h4 className="font-bold text-[#1D1D1F] text-[11px] uppercase tracking-widest border-b border-[#E5E5E7] pb-2">添付ファイル準備リスト</h4>
                 <div className="bg-[#F5F5F7] p-6 rounded-xl border border-[#E5E5E7] space-y-4 shadow-sm">
                   <label className="flex items-center gap-4 cursor-pointer p-3 rounded-lg hover:bg-white transition-all border border-transparent hover:border-[#E5E5E7] group">
                     <input type="checkbox" checked={isEstimateSaved} onChange={(e) => setIsEstimateSaved(e.target.checked)} className="w-5 h-5 rounded border-[#E5E5E7] text-[#0071E3] focus:ring-[#0071E3] transition-all" />
                     <span className={`font-bold text-sm ${isEstimateSaved ? 'text-[#1D1D1F]' : 'text-[#86868B]'}`}>1. 見積書PDFを保存しました</span>
                   </label>
-                  <div className="flex items-center gap-4 p-3 border border-transparent">
-                     <div className="w-5 h-5 flex items-center justify-center text-[#E5E5E7]"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg></div>
-                     <span className="font-bold text-sm text-[#86868B]">2. 現地案内図</span>
-                  </div>
-                   <div className="flex items-center gap-4 p-3 border border-transparent">
-                     <div className="w-5 h-5 flex items-center justify-center text-[#E5E5E7]"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16"><path d="M5 4a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm-.5 2.5A.5.5 0 0 1 5 6h6a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zM5 8a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1H5zm0 2a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1H5z"/></svg></div>
-                     <span className="font-bold text-sm text-[#86868B]">3. 平面図</span>
+                  
+                  <div className="space-y-2">
+                    <label className="block text-[11px] font-bold text-[#86868B]">送信するPDFファイルを選択:</label>
+                    <input 
+                      type="file" 
+                      accept=".pdf"
+                      onChange={(e) => setSelectedPdf(e.target.files?.[0] || null)}
+                      className="w-full text-sm text-[#1D1D1F] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#0071E3] file:text-white hover:file:bg-[#0077ED]"
+                    />
                   </div>
                 </div>
               </div>
@@ -1390,11 +1428,11 @@ ${order.memo}
                 キャンセル
               </button>
               <button 
-                onClick={handleLaunchMail}
-                disabled={!isEstimateSaved}
+                onClick={handleSendMail}
+                disabled={!isEstimateSaved || !selectedPdf || isSending}
                 className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm active:scale-[0.98] disabled:bg-[#F5F5F7] disabled:text-[#D1D1D6] disabled:border-[#E5E5E7] disabled:shadow-none disabled:cursor-not-allowed"
               >
-                メールアプリを起動
+                {isSending ? '送信中...' : 'メールを送信'}
               </button>
             </div>
           </div>
