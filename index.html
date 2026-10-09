@@ -7,6 +7,18 @@
     <title>柏木工 オリジナルドア 発注システム</title>
     <link rel="icon" type="image/svg+xml" href="/icon.svg">
     <link rel="manifest" href="/manifest.json">
+    <script>
+      // PDF保存時のファイル名を「現場名 柏木工見積書」にする
+      window.addEventListener('beforeprint', () => {
+        // 現場名入力欄の値を検索（複数の可能性があるため、最初に見つかったものを利用）
+        const siteNameInput = document.querySelector('input[placeholder="〇〇様邸"]') || document.querySelector('input[placeholder="TEST"]');
+        const siteName = siteNameInput?.value || '未設定現場';
+        document.title = `${siteName} 柏木工見積書`;
+      });
+      window.addEventListener('afterprint', () => {
+        document.title = "柏木工 オリジナルドア 発注システム";
+      });
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
