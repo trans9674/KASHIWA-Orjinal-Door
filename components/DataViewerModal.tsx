@@ -32,6 +32,22 @@ interface DataViewerModalProps {
     daiwa_1600: number;
     daiwa_2000: number;
   }>>;
+  emailSettings?: {
+    toEmail: string;
+    host: string;
+    port: number;
+    user: string;
+    pass: string;
+    from: string;
+  };
+  setEmailSettings?: React.Dispatch<React.SetStateAction<{
+    toEmail: string;
+    host: string;
+    port: number;
+    user: string;
+    pass: string;
+    from: string;
+  }>>;
 }
 
 export const DataViewerModal: React.FC<DataViewerModalProps> = ({ 
@@ -47,9 +63,11 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
   setHandleMaster,
   setBaseboardMaster,
   storageOptionPrices,
-  setStorageOptionPrices
+  setStorageOptionPrices,
+  emailSettings,
+  setEmailSettings
 }) => {
-  const [activeTab, setActiveTab] = useState<'door' | 'storage' | 'shipping' | 'handle' | 'baseboard'>('door');
+  const [activeTab, setActiveTab] = useState<'door' | 'storage' | 'shipping' | 'handle' | 'baseboard' | 'email'>('door');
   const [isAdding, setIsAdding] = useState(false);
   const fileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const pbFileInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
@@ -64,11 +82,44 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
     daiwa_2000: 4290
   });
 
+  const [localEmailSettings, setLocalEmailSettings] = useState({
+    toEmail: 'takishita@kashiwa-f.com',
+    host: '',
+    port: 587,
+    user: '',
+    pass: '',
+    from: ''
+  });
+
   useEffect(() => {
     if (storageOptionPrices) {
       setLocalOptionPrices(storageOptionPrices);
     }
   }, [storageOptionPrices]);
+
+  useEffect(() => {
+    if (emailSettings) {
+      setLocalEmailSettings(emailSettings);
+    }
+  }, [emailSettings]);
+
+  const handleSaveEmailSettings = async () => {
+    const metaString = JSON.stringify(localEmailSettings);
+    try {
+      const { data: existingRecord } = await supabase.from('baseboard_master').select('id').eq('product', '__email_settings_config__').maybeSingle();
+      if (existingRecord) {
+        await supabase.from('baseboard_master').update({ pb_image_url: metaString }).eq('id', existingRecord.id);
+      } else {
+        await supabase.from('baseboard_master').insert([{ product: '__email_settings_config__', pb_image_url: metaString }]);
+      }
+      if (setEmailSettings) {
+        setEmailSettings(localEmailSettings);
+      }
+      alert('メール送信設定を保存しました。');
+    } catch (e: any) {
+      alert('メール設定の保存に失敗しました: ' + e.message);
+    }
+  };
 
   const handleSaveStorageOptions = async () => {
     const metaString = JSON.stringify(localOptionPrices);
@@ -554,6 +605,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
           <button onClick={() => setActiveTab('storage')} className={`flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'storage' ? 'bg-white shadow-sm text-[#0071E3]' : 'text-[#86868B] hover:bg-black/[0.02] hover:text-[#1D1D1F]'}`}>玄関収納 価格一覧</button>
           <button onClick={() => setActiveTab('handle')} className={`flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'handle' ? 'bg-white shadow-sm text-[#0071E3]' : 'text-[#86868B] hover:bg-black/[0.02] hover:text-[#1D1D1F]'}`}>取手マスター</button>
           <button onClick={() => setActiveTab('baseboard')} className={`flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'baseboard' ? 'bg-white shadow-sm text-[#0071E3]' : 'text-[#86868B] hover:bg-black/[0.02] hover:text-[#1D1D1F]'}`}>巾木・ストッパー</button>
+          <button onClick={() => setActiveTab('email')} className={`flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'email' ? 'bg-white shadow-sm text-[#0071E3]' : 'text-[#86868B] hover:bg-black/[0.02] hover:text-[#1D1D1F]'}`}>メール送信設定</button>
           <button onClick={() => setActiveTab('shipping')} className={`flex-1 px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'shipping' ? 'bg-white shadow-sm text-[#0071E3]' : 'text-[#86868B] hover:bg-black/[0.02] hover:text-[#1D1D1F]'}`}>送料一覧</button>
         </div>
 
@@ -1046,7 +1098,96 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                   </div>
                 </div>
              </div>
-          ) : (
+          ) : activeTab === 'email' ? (
+            <div className="flex flex-col items-center p-8 bg-white h-full overflow-auto custom-scrollbar">
+              <div className="w-full max-w-2xl space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-1.5 h-6 bg-[#0071E3] rounded-full" />
+                  <h3 className="font-bold text-xl text-[#1D1D1F]">メール送信設定 <span className="text-xs font-normal text-[#86868B] ml-2 tracking-tight">注文書送付依頼のSMTP・宛先設定</span></h3>
+                </div>
+
+                <div className="bg-[#F5F5F7] p-8 rounded-2xl border border-[#E5E5E7] space-y-6">
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-[#1D1D1F]">注文書送付先アドレス (To)</label>
+                    <input 
+                      type="email"
+                      value={localEmailSettings.toEmail}
+                      onChange={e => setLocalEmailSettings(prev => ({ ...prev, toEmail: e.target.value }))}
+                      placeholder="takishita@kashiwa-f.com"
+                      className="w-full bg-white border border-[#E5E5E7] rounded-xl px-4 py-3 text-sm font-mono text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#0071E3]"
+                    />
+                    <p className="text-[11px] text-[#86868B]">※注文書送付依頼メールの宛先となるアドレスです。</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-[#1D1D1F]">SMTPホスト</label>
+                      <input 
+                        type="text"
+                        value={localEmailSettings.host}
+                        onChange={e => setLocalEmailSettings(prev => ({ ...prev, host: e.target.value }))}
+                        placeholder="smtp.example.com"
+                        className="w-full bg-white border border-[#E5E5E7] rounded-xl px-4 py-3 text-sm font-mono text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#0071E3]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-[#1D1D1F]">ポート番号</label>
+                      <input 
+                        type="number"
+                        value={localEmailSettings.port}
+                        onChange={e => setLocalEmailSettings(prev => ({ ...prev, port: parseInt(e.target.value) || 587 }))}
+                        placeholder="587"
+                        className="w-full bg-white border border-[#E5E5E7] rounded-xl px-4 py-3 text-sm font-mono text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#0071E3]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-[#1D1D1F]">メールアカウント (ユーザー名/送信元)</label>
+                      <input 
+                        type="text"
+                        value={localEmailSettings.user}
+                        onChange={e => setLocalEmailSettings(prev => ({ ...prev, user: e.target.value }))}
+                        placeholder="your-email@example.com"
+                        className="w-full bg-white border border-[#E5E5E7] rounded-xl px-4 py-3 text-sm font-mono text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#0071E3]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-[#1D1D1F]">パスワード (またはアプリパスワード)</label>
+                      <input 
+                        type="password"
+                        value={localEmailSettings.pass}
+                        onChange={e => setLocalEmailSettings(prev => ({ ...prev, pass: e.target.value }))}
+                        placeholder="••••••••"
+                        className="w-full bg-white border border-[#E5E5E7] rounded-xl px-4 py-3 text-sm font-mono text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#0071E3]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold text-[#1D1D1F]">送信者名 (表示名)</label>
+                    <input 
+                      type="text"
+                      value={localEmailSettings.from}
+                      onChange={e => setLocalEmailSettings(prev => ({ ...prev, from: e.target.value }))}
+                      placeholder="株式会社〇〇 担当者"
+                      className="w-full bg-white border border-[#E5E5E7] rounded-xl px-4 py-3 text-sm text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#0071E3]"
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <button 
+                      onClick={handleSaveEmailSettings}
+                      className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-8 py-3 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm"
+                    >
+                      メール送信設定を保存
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : activeTab === 'shipping' ? (
             <div className="flex flex-col items-center p-8 bg-white h-full overflow-auto custom-scrollbar">
               <div className="w-full max-w-3xl">
                 <div className="flex items-center gap-3 mb-6">
@@ -1092,7 +1233,7 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
         
         <div className="bg-[#F5F5F7] px-6 py-2.5 border-t border-[#E5E5E7] flex justify-between items-center text-[10px] text-[#86868B] font-medium select-none">

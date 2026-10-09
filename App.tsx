@@ -287,6 +287,14 @@ const App: React.FC = () => {
     daiwa_1600: 4070,
     daiwa_2000: 4290
   });
+  const [emailSettings, setEmailSettings] = useState({
+    toEmail: 'takishita@kashiwa-f.com',
+    host: '',
+    port: 587,
+    user: '',
+    pass: '',
+    from: ''
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -472,6 +480,17 @@ const App: React.FC = () => {
                 setStorageOptionPrices(prev => ({ ...prev, ...config }));
               } catch (e) {
                 console.warn('Failed to parse __storage_options_config__', e);
+              }
+            }
+
+            // __email_settings_config__ レコードの処理
+            const emailConfigRecord = bData.find(b => b.product === '__email_settings_config__');
+            if (emailConfigRecord && emailConfigRecord.pb_image_url) {
+              try {
+                const emailConfig = JSON.parse(emailConfigRecord.pb_image_url);
+                setEmailSettings(prev => ({ ...prev, ...emailConfig }));
+              } catch (e) {
+                console.warn('Failed to parse __email_settings_config__', e);
               }
             }
 
@@ -1266,6 +1285,8 @@ ${order.memo}
           setBaseboardMaster={setBaseboardMaster}
           storageOptionPrices={storageOptionPrices}
           setStorageOptionPrices={setStorageOptionPrices}
+          emailSettings={emailSettings}
+          setEmailSettings={setEmailSettings}
         />
       )}
 
