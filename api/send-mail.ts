@@ -21,8 +21,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // 送信先制限
-  if (to && to.trim().toLowerCase() !== allowedTo) {
-      return res.status(403).json({ success: false, error: '許可されていない送信先です。' });
+  const allowedList = allowedTo.split(',').map(email => email.trim().toLowerCase());
+  const recipientList = (to || '').split(',').map(email => email.trim().toLowerCase()).filter(Boolean);
+
+  const isAllowed = recipientList.every(r => allowedList.includes(r));
+  if (to && !isAllowed) {
+      return res.status(403).json({ success: false, error: '許可されていない送信先が含まれています。' });
   }
 
   try {
@@ -57,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const info = await transporter.sendMail({
       from: `"${senderFrom}" <${smtpUser}>`,
-      to: allowedTo,
+      to: to || allowedTo,
       cc: cc,
       replyTo: replyTo,
       subject: subject || '注文書送付依頼書',

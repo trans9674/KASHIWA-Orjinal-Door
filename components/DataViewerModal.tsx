@@ -1110,13 +1110,13 @@ export const DataViewerModal: React.FC<DataViewerModalProps> = ({
                   <div className="space-y-2">
                     <label className="block text-xs font-bold text-[#1D1D1F]">注文書送付先アドレス (To)</label>
                     <input 
-                      type="email"
+                      type="text"
                       value={localEmailSettings.toEmail}
                       onChange={e => setLocalEmailSettings(prev => ({ ...prev, toEmail: e.target.value }))}
-                      placeholder="takishita@kashiwa-f.com"
+                      placeholder="takishita@kashiwa-f.com, admin@example.com"
                       className="w-full bg-white border border-[#E5E5E7] rounded-xl px-4 py-3 text-sm font-mono text-[#1D1D1F] outline-none focus:ring-1 focus:ring-[#0071E3]"
                     />
-                    <p className="text-[11px] text-[#86868B]">※注文書送付依頼メールの宛先となるアドレスです。</p>
+                    <p className="text-[11px] text-[#86868B]">※注文書送付依頼メールの宛先となるアドレスです。複数のアドレスを登録する場合はカンマ（`,`）で区切って入力してください。</p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

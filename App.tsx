@@ -1192,11 +1192,12 @@ const App: React.FC = () => {
 
 本メールは柏木工オリジナルドア発注システムから自動送信されています。`;
         
+        const targetToEmail = emailSettings.toEmail || process.env.VITE_ALLOWED_TO_EMAIL || 'takishita@kashiwa-f.com';
         const response = await fetch('/api/send-mail', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                to: process.env.VITE_ALLOWED_TO_EMAIL,
+                to: targetToEmail,
                 cc: contactEmail || undefined,
                 replyTo: contactEmail || undefined,
                 subject,
@@ -1529,7 +1530,7 @@ const App: React.FC = () => {
                     <div className="bg-green-50 p-6 rounded-2xl border border-green-200 text-center">
                       <h3 className="text-xl font-bold text-green-800 mb-2">注文書作成依頼を送信しました</h3>
                       <p className="text-sm text-green-700">現場名: {order.customerInfo.siteName}</p>
-                      <p className="text-sm text-green-700">送信先: {process.env.VITE_ALLOWED_TO_EMAIL || 'takishita@kashiwa-f.com'}</p>
+                      <p className="text-sm text-green-700">送信先: {emailSettings.toEmail || process.env.VITE_ALLOWED_TO_EMAIL || 'takishita@kashiwa-f.com'}</p>
                       <p className="text-sm text-green-700">添付資料数: 3</p>
                     </div>
                     <div className="flex justify-center">
@@ -1563,7 +1564,7 @@ const App: React.FC = () => {
                        </div>
                        
                        <h4 className="font-bold text-[#1D1D1F] text-sm uppercase tracking-widest border-b border-[#E5E5E7] pb-2">■ 送信先</h4>
-                       <p className="text-sm">{process.env.VITE_ALLOWED_TO_EMAIL || 'takishita@kashiwa-f.com'}</p>
+                       <p className="text-sm">{emailSettings.toEmail || process.env.VITE_ALLOWED_TO_EMAIL || 'takishita@kashiwa-f.com'}</p>
                    </div>
                ) : (
                 <div className="space-y-6">
