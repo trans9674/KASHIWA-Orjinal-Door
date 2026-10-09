@@ -1097,6 +1097,9 @@ const App: React.FC = () => {
   };
 
   const handleGenerateAndShowConfirm = async () => {
+      // 既に確認画面が表示されている場合は何もしない
+      if (showConfirmation) return;
+
       setIsGenerating(true);
       try {
           const base64 = await generatePdfBlob();
