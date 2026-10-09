@@ -1059,26 +1059,41 @@ const App: React.FC = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const generatePdfBlob = async (): Promise<string> => {
-    const element = document.getElementById('estimate-content');
-    if (!element) throw new Error('見積書が見つかりません');
-
-    const opt = {
-      margin: 0,
-      filename: '見積書.pdf',
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    const pdf = await html2pdf().set(opt).from(element).toPdf().get('pdf');
-    const blob = pdf.output('blob');
+    const container = document.getElementById('main-estimate-container');
+    const originalClass = container?.className;
     
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+    // 一時的に表示状態にする
+    if (container && originalClass) {
+      container.className = originalClass.replace('opacity-0 h-0 overflow-hidden', 'opacity-100');
+    }
+
+    try {
+        const element = document.getElementById('estimate-content');
+        if (!element) throw new Error('見積書が見つかりません');
+
+        const opt = {
+          margin: 0,
+          filename: '見積書.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        const pdf = await html2pdf().set(opt).from(element).toPdf().get('pdf');
+        const blob = pdf.output('blob');
+        
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+    } finally {
+      // 戻す
+      if (container && originalClass) {
+        container.className = originalClass;
+      }
+    }
   };
 
   const handleGenerateAndShowConfirm = async () => {
@@ -2161,7 +2176,7 @@ ${order.memo}
         </div>
       )}
       
-       <div className={`max-w-[1550px] mx-auto p-12 bg-white border border-[#E5E5E7] shadow-sm my-12 transition-opacity duration-500 rounded-2xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen || isValidationModalOpen || isPbModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+       <div id="main-estimate-container" className={`max-w-[1550px] mx-auto p-12 bg-white border border-[#E5E5E7] shadow-sm my-12 transition-opacity duration-500 rounded-2xl ${isModalOpen || isEstimateModalOpen || isOrderFlowModalOpen || isMailModalOpen || isValidationModalOpen || isPbModalOpen ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
         <div className="flex justify-between items-center mb-10 border-b border-[#E5E5E7] pb-6">
           <div className="shrink-0 mr-4">
             <h1 className="text-2xl font-bold text-[#1D1D1F] tracking-tight whitespace-nowrap">柏木工 オリジナルドア 発注書</h1>
