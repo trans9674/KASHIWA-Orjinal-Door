@@ -2226,7 +2226,12 @@ ${order.memo}
                       詳細図一括出力
                     </button>
                     <button 
-                      onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); setIsMenuOpen(false); }}
+                      onClick={() => { 
+                        setIsMailModalOpen(true); 
+                        setIsEstimateSaved(false); 
+                        setIsMenuOpen(false); 
+                        handleGenerateAndShowConfirm();
+                      }}
                       className="w-full text-left px-5 py-3 hover:bg-[#F5F5F7] text-[#1D1D1F] font-bold flex items-center gap-3 transition-all"
                     >
                       <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
