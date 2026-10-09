@@ -10,6 +10,7 @@ import { PresentationBoard } from './components/PresentationBoard';
 import { COLORS, HANDLE_COLORS, DOOR_SPEC_MASTER, getFrameType, HINGED_HANDLES, SLIDING_HANDLES, DOOR_POINTS, getStoragePoints, getBaseboardPoints, resolveDoorDrawingUrl, getStorageDetailPdfUrl } from './constants';
 import { supabase } from './supabase';
 import { PDFDocument, degrees } from 'pdf-lib';
+import html2pdf from 'html2pdf.js';
 
 const SIMPLE_HANDLE_OPTIONS = ["セラミックホワイト", "マットブラック", "サテンニッケル"];
 const PB_OPTIONS = ["9.5", "12.5", "15.0"];
@@ -1053,7 +1054,45 @@ const App: React.FC = () => {
   };
 
   const [isSending, setIsSending] = useState(false);
-  const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const generatePdfBlob = async (): Promise<string> => {
+    const element = document.getElementById('estimate-content');
+    if (!element) throw new Error('見積書が見つかりません');
+
+    const opt = {
+      margin: 0,
+      filename: '見積書.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    const pdf = await html2pdf().set(opt).from(element).toPdf().get('pdf');
+    const blob = pdf.output('blob');
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const handleGenerateAndShowConfirm = async () => {
+      setIsGenerating(true);
+      try {
+          const base64 = await generatePdfBlob();
+          setPdfBase64(base64);
+          setShowConfirmation(true);
+      } catch (error) {
+          alert("PDFの生成に失敗しました");
+      } finally {
+          setIsGenerating(false);
+      }
+  };
 
   const handleSendMail = async () => {
     if (!selectedPdf) {
@@ -1216,6 +1255,23 @@ ${order.memo}
   };
 
   const handlePrintPdf = () => { window.print(); };
+
+  const handleGeneratePdfPreview = () => {
+    const element = document.getElementById('estimate-content');
+    if (!element) return;
+
+    const opt = {
+      margin: 0,
+      filename: '見積書.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(element).toPdf().get('pdf').then((pdf: any) => {
+        window.open(pdf.output('bloburl'), '_blank');
+    });
+  };
 
   const handlePasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1392,32 +1448,34 @@ ${order.memo}
             </div>
             
             <div className="space-y-8">
-              <div className="bg-[#F5F5F7] p-6 rounded-xl border border-red-200">
-                  <p className="font-bold text-red-600 text-sm flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                    重要：メールを起動する前に、必ず「PDF保存」ボタンから見積書を保存してください。
-                  </p>
-              </div>
 
-               <div className="space-y-4">
-                <h4 className="font-bold text-[#1D1D1F] text-[11px] uppercase tracking-widest border-b border-[#E5E5E7] pb-2">添付ファイル準備リスト</h4>
-                <div className="bg-[#F5F5F7] p-6 rounded-xl border border-[#E5E5E7] space-y-4 shadow-sm">
-                  <label className="flex items-center gap-4 cursor-pointer p-3 rounded-lg hover:bg-white transition-all border border-transparent hover:border-[#E5E5E7] group">
-                    <input type="checkbox" checked={isEstimateSaved} onChange={(e) => setIsEstimateSaved(e.target.checked)} className="w-5 h-5 rounded border-[#E5E5E7] text-[#0071E3] focus:ring-[#0071E3] transition-all" />
-                    <span className={`font-bold text-sm ${isEstimateSaved ? 'text-[#1D1D1F]' : 'text-[#86868B]'}`}>1. 見積書PDFを保存しました</span>
-                  </label>
-                  
-                  <div className="space-y-2">
-                    <label className="block text-[11px] font-bold text-[#86868B]">送信するPDFファイルを選択:</label>
-                    <input 
-                      type="file" 
-                      accept=".pdf"
-                      onChange={(e) => setSelectedPdf(e.target.files?.[0] || null)}
-                      className="w-full text-sm text-[#1D1D1F] file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#0071E3] file:text-white hover:file:bg-[#0077ED]"
-                    />
-                  </div>
+
+             <div className="space-y-8">
+               {showConfirmation ? (
+                   <div className="space-y-4">
+                       <h4 className="font-bold text-[#1D1D1F] text-[11px] uppercase tracking-widest border-b border-[#E5E5E7] pb-2">送信内容確認</h4>
+                       <div className="bg-[#F5F5F7] p-6 rounded-xl border border-[#E5E5E7] space-y-3">
+                           <p className="text-sm"><strong>送信先:</strong> matsuoka@transdesign.co.jp</p>
+                           <p className="text-sm"><strong>件名:</strong> 注文書送付依頼書</p>
+                           <p className="text-sm"><strong>添付ファイル:</strong> 現場名_柏木工見積書.pdf</p>
+                       </div>
+                       <button onClick={handleGeneratePdfPreview} className="text-[#0071E3] font-bold text-sm underline">PDFプレビューを確認</button>
+                   </div>
+               ) : (
+                <div className="space-y-4">
+                    <h4 className="font-bold text-[#1D1D1F] text-[11px] uppercase tracking-widest border-b border-[#E5E5E7] pb-2">添付ファイル準備リスト</h4>
+                    <div className="bg-[#F5F5F7] p-6 rounded-xl border border-[#E5E5E7] space-y-4 shadow-sm">
+                        <button 
+                            onClick={handleGenerateAndShowConfirm}
+                            disabled={isGenerating}
+                            className="w-full bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm"
+                        >
+                            {isGenerating ? 'PDF生成中...' : 'PDFを生成して送信準備'}
+                        </button>
+                    </div>
                 </div>
-              </div>
+               )}
+             </div>
             </div>
 
             <div className="mt-10 pt-8 border-t border-[#E5E5E7] flex justify-end gap-4">
@@ -1428,11 +1486,11 @@ ${order.memo}
                 キャンセル
               </button>
               <button 
-                onClick={handleSendMail}
-                disabled={!isEstimateSaved || !selectedPdf || isSending}
+                onClick={showConfirmation ? handleSendMail : () => setIsMailModalOpen(false)}
+                disabled={isSending}
                 className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm active:scale-[0.98] disabled:bg-[#F5F5F7] disabled:text-[#D1D1D6] disabled:border-[#E5E5E7] disabled:shadow-none disabled:cursor-not-allowed"
               >
-                {isSending ? '送信中...' : 'メールを送信'}
+                {isSending ? '送信中...' : showConfirmation ? '確認して送信' : 'キャンセル'}
               </button>
             </div>
           </div>
@@ -1573,6 +1631,10 @@ ${order.memo}
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                   PDF保存
                 </button>
+                <button onClick={handleGeneratePdfPreview} className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-[0.98]">
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                   PDFプレビュー
+                </button>
                 <button 
                   onClick={() => setIsPbModalOpen(true)}
                   className="bg-[#F5F5F7] border border-[#E5E5E7] hover:bg-[#E5E5E7] text-[#1D1D1F] px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-all active:scale-[0.98]"
@@ -1588,7 +1650,7 @@ ${order.memo}
             </div>
 
             <div className="flex justify-center w-full max-w-[1000px] print:block print:w-full print:max-w-none">
-              <div className="flex-grow w-full flex justify-center print:block">
+              <div id="estimate-content" className="flex-grow w-full flex justify-center print:block">
                 <div className="bg-white p-[15mm] shadow-2xl rounded-sm text-[#1D1D1F] w-full max-w-[210mm] min-h-[297mm] flex flex-col relative print:block print:shadow-none print:w-full print:max-w-none print:p-0 print:m-0 print:min-h-0 box-border">
                   <div className="flex justify-between items-start mb-10">
                     <div className="flex-1 mr-8">
