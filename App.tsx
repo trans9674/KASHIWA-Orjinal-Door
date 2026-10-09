@@ -1092,7 +1092,7 @@ ${order.memo}
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            to: 'takishita@kashiwa-f.com',
+            to: 'matsuoka@transdesign.co.jp',
             subject,
             text: body,
             pdfBase64: base64,

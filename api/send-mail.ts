@@ -14,14 +14,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
   const senderFrom = process.env.SMTP_FROM || smtpUser;
-  const allowedTo = process.env.ALLOWED_TO_EMAIL || 'takishita@kashiwa-f.com';
+  const allowedTo = (process.env.ALLOWED_TO_EMAIL || 'takishita@kashiwa-f.com').trim().toLowerCase();
 
   if (!smtpHost || !smtpUser || !smtpPass) {
     return res.status(500).json({ success: false, error: 'SMTP設定が正しく設定されていません。' });
   }
 
   // 送信先制限
-  if (to && to !== allowedTo) {
+  if (to && to.trim().toLowerCase() !== allowedTo) {
       return res.status(403).json({ success: false, error: '許可されていない送信先です。' });
   }
 
