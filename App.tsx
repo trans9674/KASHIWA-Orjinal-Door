@@ -1440,7 +1440,7 @@ ${order.memo}
                 <div className="w-12 h-12 bg-[#F5F5F7] text-[#0071E3] rounded-full flex items-center justify-center border border-[#E5E5E7] shadow-sm">
                   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                 </div>
-                <h3 className="text-2xl font-bold text-[#1D1D1F] tracking-tight">メール送信の準備</h3>
+                <h3 className="text-2xl font-bold text-[#1D1D1F] tracking-tight">注文書送付依頼</h3>
               </div>
                <button onClick={() => setIsMailModalOpen(false)} className="text-[#86868B] hover:text-[#1D1D1F] rounded-full p-2 hover:bg-[#F5F5F7] transition-all">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1490,7 +1490,7 @@ ${order.memo}
                 disabled={isSending}
                 className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm active:scale-[0.98] disabled:bg-[#F5F5F7] disabled:text-[#D1D1D6] disabled:border-[#E5E5E7] disabled:shadow-none disabled:cursor-not-allowed"
               >
-                {isSending ? '送信中...' : showConfirmation ? '確認して送信' : 'キャンセル'}
+                {isSending ? '送信中...' : showConfirmation ? '送信' : 'キャンセル'}
               </button>
             </div>
           </div>
@@ -2209,6 +2209,13 @@ ${order.memo}
                     >
                       <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
                       詳細図一括出力
+                    </button>
+                    <button 
+                      onClick={() => { setIsMailModalOpen(true); setIsEstimateSaved(false); setIsMenuOpen(false); }}
+                      className="w-full text-left px-5 py-3 hover:bg-[#F5F5F7] text-[#1D1D1F] font-bold flex items-center gap-3 transition-all"
+                    >
+                      <svg className="w-5 h-5 text-[#0071E3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
+                      注文書送付依頼
                     </button>
                     <div className="h-px bg-[#E5E5E7] my-1 mx-2"></div>
                     <button 
