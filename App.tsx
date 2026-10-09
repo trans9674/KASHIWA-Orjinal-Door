@@ -660,7 +660,8 @@ const App: React.FC = () => {
         company: initialSettings.company, 
         siteName: initialSettings.siteName, 
         contactName: initialSettings.contactName,
-        phone: initialSettings.phone
+        phone: initialSettings.phone,
+        email: initialSettings.email
       },
       storage: { ...prev.storage, color: initialSettings.defaultDoorColor },
       baseboards: prev.baseboards.map(b => {
@@ -1168,7 +1169,7 @@ const App: React.FC = () => {
 
 現場名: ${order.customerInfo.siteName}
 依頼会社: ${order.customerInfo.company}
-担当者名: ${order.customerInfo.representative}
+担当者名: ${order.customerInfo.contactName}
 電話番号: ${order.customerInfo.phone}
 備考: ${order.customerInfo.remarks || 'なし'}
 
@@ -1180,7 +1181,7 @@ const App: React.FC = () => {
 ■ ご依頼担当者（お問い合わせ先）
 
 会社名：${order.customerInfo.company}
-担当者：${order.customerInfo.representative}
+担当者：${order.customerInfo.contactName}
 電話番号：${order.customerInfo.phone}
 メールアドレス：${contactEmail || '未登録'}
 
