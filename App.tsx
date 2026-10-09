@@ -22,6 +22,48 @@ const generateId = () => {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 };
 
+const FileAttachmentArea = ({ title, file, setFile }: { title: string, file: File | null, setFile: (f: File | null) => void }) => {
+  const [isDragging, setIsDragging] = React.useState(false);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const f = e.dataTransfer.files[0];
+      if (['application/pdf', 'image/jpeg', 'image/jpg'].includes(f.type)) {
+        if (f.size <= 5 * 1024 * 1024) setFile(f);
+        else alert('ファイルサイズは5MB以下にしてください。');
+      } else alert('PDF、JPG、JPEGのみ対応しています。');
+    }
+  };
+  if (file) {
+    return (
+      <div className="bg-green-50 p-4 rounded-xl border border-green-200 text-sm">
+        <div className="flex justify-between items-center mb-2">
+           <span className="font-bold text-green-700 truncate">{file.name}</span>
+           <button onClick={() => setFile(null)} className="text-red-500 text-xs font-bold underline">削除</button>
+        </div>
+        <div className="text-xs text-green-700">{(file.size / 1024 / 1024).toFixed(2)} MB</div>
+      </div>
+    );
+  }
+  return (
+    <div onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }} onDragLeave={() => setIsDragging(false)} onDrop={handleDrop} className={`border-2 border-dashed p-6 rounded-xl text-center transition-all ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-[#E5E5E7] bg-[#F5F5F7]'}`}>
+        <p className="text-sm font-bold mb-2">{title}</p>
+        <label className="bg-white border border-[#E5E5E7] px-4 py-2 rounded-md text-xs font-bold cursor-pointer hover:bg-[#F5F5F7]">
+          ファイルを選択
+          <input type="file" accept=".pdf,.jpg,.jpeg" onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) {
+              if (f.size <= 5 * 1024 * 1024) setFile(f);
+              else alert('ファイルサイズは5MB以下にしてください。');
+            }
+          }} className="hidden"/>
+        </label>
+        <p className="text-[10px] text-[#86868B] mt-2">PDF / JPG / JPEG 対応</p>
+    </div>
+  );
+};
+
 // Canvasを使ってオーバーレイ画像（WD番号や仕様詳細）を生成するヘルパー関数
 const createDoorOverlayImage = async (door: DoorItem, index: number, siteName: string): Promise<string> => {
     const canvas = document.createElement('canvas');
@@ -306,6 +348,9 @@ const App: React.FC = () => {
   const [isDoorStopperBkModalOpen, setIsDoorStopperBkModalOpen] = useState(false);
   const [isHandleModalOpen, setIsHandleModalOpen] = useState(false);
   const [isHardwareModalOpen, setIsHardwareModalOpen] = useState(false);
+  const [siteMapFile, setSiteMapFile] = useState<File | null>(null);
+  const [floorPlanFile, setFloorPlanFile] = useState<File | null>(null);
+  const [isSent, setIsSent] = useState(false);
   const [isColorModalOpen, setIsColorModalOpen] = useState(false);
   const [isEstimateModalOpen, setIsEstimateModalOpen] = useState(false);
   const [isOrderFlowModalOpen, setIsOrderFlowModalOpen] = useState(false);
@@ -1102,54 +1147,61 @@ const App: React.FC = () => {
     
     setIsSending(true);
     try {
-      // const reader = new FileReader();
-      // reader.readAsDataURL(selectedPdf);
-      // reader.onload = async () => {
-        const base64 = pdfBase64;
-        const subject = "注文書送付依頼書";
-        const body = `柏木工株式会社
-担当：滝下 様
+        const attachments = [];
+        
+        if (siteMapFile) {
+            const base64 = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve((reader.result as string).split(',')[1]);
+                reader.readAsDataURL(siteMapFile);
+            });
+            attachments.push({ filename: siteMapFile.name, base64 });
+        }
+        
+        if (floorPlanFile) {
+            const base64 = await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve((reader.result as string).split(',')[1]);
+                reader.readAsDataURL(floorPlanFile);
+            });
+            attachments.push({ filename: floorPlanFile.name, base64 });
+        }
 
-お世話になっております。
-以下の案件について、注文書の作成をお願いいたします。
+        const subject = `【新規注文依頼】${order.customerInfo.siteName}／${order.customerInfo.company}`;
+        const body = `新しい注文書作成依頼が届きました。
 
-■お客様情報
-会社名：${order.customerInfo.company}
-ご担当者様名：${order.customerInfo.contactName}
-現場名：${order.customerInfo.siteName}
-電話番号：${order.customerInfo.phone}
+現場名: ${order.customerInfo.siteName}
+依頼会社: ${order.customerInfo.company}
+担当者名: ${order.customerInfo.representative}
+電話番号: ${order.customerInfo.phone}
+備考: ${order.customerInfo.remarks || 'なし'}
 
-■備考
-${order.memo}
+添付資料一覧:
+- 見視書PDF
+- 現場案内図
+- 平面図
 
----
-注文書PDFを添付いたします。
----
-`;
+本メールは柏木工オリジナルドア発注システムから自動送信されています。`;
         
         const response = await fetch('/api/send-mail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            to: 'matsuoka@transdesign.co.jp',
-            subject,
-            text: body,
-            pdfBase64: base64,
-            filename: '現場名_柏木工見積書.pdf'
-          })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                to: process.env.VITE_ALLOWED_TO_EMAIL,
+                subject,
+                text: body,
+                pdfBase64,
+                filename: `${order.customerInfo.siteName}_柏木工見積書.pdf`,
+                attachments
+            })
         });
         
         const result = await response.json();
         if (result.success) {
-          alert('注文書送付依頼メールを送信しました。');
-          setIsMailModalOpen(false);
+            setIsSent(true);
         } else {
-          throw new Error(result.error || '送信に失敗しました。');
+            throw new Error(result.error);
         }
-      // };
-      // reader.onerror = () => {
-      //   throw new Error('ファイルの読み込みに失敗しました');
-      // };
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -1432,7 +1484,8 @@ ${order.memo}
         </div>
       )}
 
-      {isMailModalOpen && (
+
+{isMailModalOpen && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center bg-black/10 backdrop-blur-md p-4 animate-in fade-in" onClick={() => setIsMailModalOpen(false)}>
           <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-2xl w-full animate-in zoom-in border border-[#E5E5E7]" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-8">
@@ -1440,7 +1493,7 @@ ${order.memo}
                 <div className="w-12 h-12 bg-[#F5F5F7] text-[#0071E3] rounded-full flex items-center justify-center border border-[#E5E5E7] shadow-sm">
                   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v10a2 2 0 002 2z" /></svg>
                 </div>
-                <h3 className="text-2xl font-bold text-[#1D1D1F] tracking-tight">注文書送付依頼</h3>
+                <h3 className="text-2xl font-bold text-[#1D1D1F] tracking-tight">注文書作成依頼</h3>
               </div>
                <button onClick={() => setIsMailModalOpen(false)} className="text-[#86868B] hover:text-[#1D1D1F] rounded-full p-2 hover:bg-[#F5F5F7] transition-all">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1451,27 +1504,59 @@ ${order.memo}
 
 
              <div className="space-y-8">
-               {showConfirmation ? (
-                   <div className="space-y-4">
-                       <h4 className="font-bold text-[#1D1D1F] text-[11px] uppercase tracking-widest border-b border-[#E5E5E7] pb-2">送信内容確認</h4>
-                       <div className="bg-[#F5F5F7] p-6 rounded-xl border border-[#E5E5E7] space-y-3">
-                           <p className="text-sm"><strong>送信先:</strong> matsuoka@transdesign.co.jp</p>
-                           <p className="text-sm"><strong>件名:</strong> 注文書送付依頼書</p>
-                           <p className="text-sm"><strong>添付ファイル:</strong> 現場名_柏木工見積書.pdf</p>
+               {isSent ? (
+                 <div className="space-y-6 animate-in fade-in">
+                    <div className="bg-green-50 p-6 rounded-2xl border border-green-200 text-center">
+                      <h3 className="text-xl font-bold text-green-800 mb-2">注文書作成依頼を送信しました</h3>
+                      <p className="text-sm text-green-700">現場名: {order.customerInfo.siteName}</p>
+                      <p className="text-sm text-green-700">送信先: {process.env.VITE_ALLOWED_TO_EMAIL || 'takishita@kashiwa-f.com'}</p>
+                      <p className="text-sm text-green-700">添付資料数: 3</p>
+                    </div>
+                    <div className="flex justify-center">
+                      <button onClick={() => { setIsSent(false); setIsMailModalOpen(false); }} className="bg-[#1D1D1F] text-white px-10 py-3 rounded-xl font-bold transition-all hover:bg-black">閉じる</button>
+                    </div>
+                 </div>
+               ) : showConfirmation ? (
+                   <div className="space-y-6">
+                       <h4 className="font-bold text-[#1D1D1F] text-sm uppercase tracking-widest border-b border-[#E5E5E7] pb-2">■ 依頼内容</h4>
+                       <div className="bg-[#F5F5F7] p-5 rounded-xl text-sm space-y-2">
+                           <p><strong>現場名:</strong> {order.customerInfo.siteName}</p>
+                           <p><strong>依頼会社:</strong> {order.customerInfo.company}</p>
+                           <p><strong>担当者名:</strong> {order.customerInfo.representative}</p>
+                           <p><strong>依頼先:</strong> 柏木工株式会社</p>
                        </div>
-                       <button onClick={handleGeneratePdfPreview} className="text-[#0071E3] font-bold text-sm underline">PDFプレビューを確認</button>
+                       
+                       <h4 className="font-bold text-[#1D1D1F] text-sm uppercase tracking-widest border-b border-[#E5E5E7] pb-2">■ 添付資料</h4>
+                       <div className="space-y-2">
+                           <div className="flex items-center justify-between text-sm p-3 bg-green-50 rounded-lg border border-green-100">
+                             <span>① 見積書PDF</span>
+                             <span className="text-green-700 font-bold">添付済み</span>
+                           </div>
+                           <div className="flex items-center justify-between text-sm p-3 bg-green-50 rounded-lg border border-green-100">
+                             <span>② 現場案内図</span>
+                             <span className="text-green-700 font-bold">添付済み</span>
+                           </div>
+                           <div className="flex items-center justify-between text-sm p-3 bg-green-50 rounded-lg border border-green-100">
+                             <span>③ 平面図</span>
+                             <span className="text-green-700 font-bold">添付済み</span>
+                           </div>
+                       </div>
+                       
+                       <h4 className="font-bold text-[#1D1D1F] text-sm uppercase tracking-widest border-b border-[#E5E5E7] pb-2">■ 送信先</h4>
+                       <p className="text-sm">{process.env.VITE_ALLOWED_TO_EMAIL || 'takishita@kashiwa-f.com'}</p>
                    </div>
                ) : (
-                <div className="space-y-4">
-                    <h4 className="font-bold text-[#1D1D1F] text-[11px] uppercase tracking-widest border-b border-[#E5E5E7] pb-2">添付ファイル準備リスト</h4>
-                    <div className="bg-[#F5F5F7] p-6 rounded-xl border border-[#E5E5E7] space-y-4 shadow-sm">
-                        <button 
-                            onClick={handleGenerateAndShowConfirm}
-                            disabled={isGenerating}
-                            className="w-full bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm"
-                        >
-                            {isGenerating ? 'PDF生成中...' : 'PDFを生成して送信準備'}
-                        </button>
+                <div className="space-y-6">
+                    <h4 className="font-bold text-[#1D1D1F] text-sm uppercase tracking-widest border-b border-[#E5E5E7] pb-2">■ 添付資料</h4>
+                    <div className="space-y-4">
+                        <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] text-sm">
+                           <div className="flex justify-between items-center">
+                             <span>① 見積書PDF</span>
+                             <span className="text-green-700 font-bold text-xs bg-green-100 px-2 py-1 rounded">自動添付済み</span>
+                           </div>
+                        </div>
+                        <FileAttachmentArea title="② 現場案内図（PDF/JPEG）" file={siteMapFile} setFile={setSiteMapFile} />
+                        <FileAttachmentArea title="③ 平面図（PDF/JPEG）" file={floorPlanFile} setFile={setFloorPlanFile} />
                     </div>
                 </div>
                )}
@@ -1486,11 +1571,17 @@ ${order.memo}
                 キャンセル
               </button>
               <button 
-                onClick={showConfirmation ? handleSendMail : () => setIsMailModalOpen(false)}
-                disabled={isSending}
+                onClick={showConfirmation ? handleSendMail : () => {
+                    if (!siteMapFile || !floorPlanFile) {
+                        alert('現場案内図と平面図を選択してください。');
+                        return;
+                    }
+                    handleGenerateAndShowConfirm();
+                }}
+                disabled={isSending || (!showConfirmation && (!siteMapFile || !floorPlanFile))}
                 className="bg-[#0071E3] hover:bg-[#0077ED] text-white px-10 py-3 rounded-md text-sm font-bold transition-all shadow-sm active:scale-[0.98] disabled:bg-[#F5F5F7] disabled:text-[#D1D1D6] disabled:border-[#E5E5E7] disabled:shadow-none disabled:cursor-not-allowed"
               >
-                {isSending ? '送信中...' : showConfirmation ? '送信' : 'キャンセル'}
+                {isSending ? '送信中...' : '注文書の作成を依頼する'}
               </button>
             </div>
           </div>

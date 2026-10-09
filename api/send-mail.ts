@@ -6,7 +6,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
-  const { to, subject, text, pdfBase64, filename } = req.body;
+  const { to, subject, text, pdfBase64, filename, attachments: customAttachments } = req.body;
 
   // 環境変数から設定を取得
   const smtpHost = process.env.SMTP_HOST;
@@ -42,6 +42,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         filename: filename || 'order.pdf',
         content: Buffer.from(pdfBase64, 'base64')
       });
+    }
+
+    if (Array.isArray(customAttachments)) {
+      for (const att of customAttachments) {
+        if (att.base64 && att.filename) {
+          attachments.push({
+            filename: att.filename,
+            content: Buffer.from(att.base64, 'base64')
+          });
+        }
+      }
     }
 
     const info = await transporter.sendMail({
